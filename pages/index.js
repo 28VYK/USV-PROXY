@@ -326,7 +326,8 @@ export default function Home() {
           display: flex;
           justify-content: center;
           align-items: center;
-          min-height: calc(100vh - 180px);
+          min-height: calc(100vh - 220px);
+          padding-bottom: 20px;
         }
 
         .login-card {

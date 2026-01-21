@@ -16,7 +16,11 @@ Un reverse proxy care:
 
 - Acceptă conexiuni **TLS moderne** de la browsere
 - Comunică cu serverul PeopleSoft folosind **TLS legacy**
-- Oferă o interfață curată pentru vizualizarea notelor
+
+## 🖼️ Screenshot
+
+![Login Page](public/docs/login.png)
+![Grades View](public/docs/grades.png)
 
 ## 🚀 Instalare (pentru dezvoltare locală)
 
