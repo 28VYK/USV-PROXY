@@ -19,8 +19,14 @@ Un reverse proxy care:
 
 ## 🖼️ Screenshot
 
-[![Login Page](https://i.imgur.com/lJePqXW.png)](https://imgur.com/lJePqXW)
-[![Grades View](https://i.imgur.com/Ns0imhd.png)](https://imgur.com/Ns0imhd)
+## 🖼️ Screenshot
+
+<a href="https://imgur.com/lJePqXW" target="_blank">
+  <img src="https://i.imgur.com/lJePqXW.png" alt="Login Page" />
+</a>
+<a href="https://imgur.com/Ns0imhd" target="_blank">
+  <img src="https://i.imgur.com/Ns0imhd.png" alt="Grades View" />
+</a>
 
 ## 🚀 Instalare (pentru dezvoltare locală)
 
