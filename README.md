@@ -19,8 +19,6 @@ Un reverse proxy care:
 
 ## 🖼️ Screenshot
 
-## 🖼️ Screenshot
-
 <a href="https://imgur.com/lJePqXW" target="_blank">
   <img src="https://i.imgur.com/lJePqXW.png" alt="Login Page" />
 </a>
