@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: "standalone",
   // Allow legacy SSL connections in API routes
   experimental: {
     serverComponentsExternalPackages: ['https', 'tls']
