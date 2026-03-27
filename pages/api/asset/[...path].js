@@ -10,6 +10,97 @@ import { URL } from 'url';
 
 const PEOPLESOFT_BASE = 'https://scolaritate.usv.ro';
 
+function encodeSessionCookie(cookieValue) {
+  return Buffer.from(cookieValue || '', 'utf8').toString('base64url');
+}
+
+function parseCookiePairs(cookieString = '') {
+  return cookieString
+    .split(';')
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) => {
+      const separatorIndex = part.indexOf('=');
+      if (separatorIndex <= 0) {
+        return null;
+      }
+
+      return {
+        key: part.slice(0, separatorIndex),
+        value: part.slice(separatorIndex + 1),
+      };
+    })
+    .filter(Boolean);
+}
+
+function extractCookiePairsFromSetCookie(setCookieHeaders = []) {
+  return (setCookieHeaders || [])
+    .map((entry) => String(entry || '').split(';')[0]?.trim())
+    .filter(Boolean)
+    .map((entry) => {
+      const separatorIndex = entry.indexOf('=');
+      if (separatorIndex <= 0) {
+        return null;
+      }
+
+      return {
+        key: entry.slice(0, separatorIndex),
+        value: entry.slice(separatorIndex + 1),
+      };
+    })
+    .filter(Boolean);
+}
+
+function mergeCookieState(existingCookieString, ...setCookieLists) {
+  const cookieMap = new Map();
+
+  parseCookiePairs(existingCookieString).forEach(({ key, value }) => {
+    cookieMap.set(key, value);
+  });
+
+  setCookieLists.forEach((setCookieList) => {
+    extractCookiePairsFromSetCookie(setCookieList).forEach(({ key, value }) => {
+      cookieMap.set(key, value);
+    });
+  });
+
+  return Array.from(cookieMap.entries())
+    .map(([key, value]) => `${key}=${value}`)
+    .join('; ');
+}
+
+function parseCookies(header = '') {
+  return header
+    .split(';')
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .reduce((accumulator, cookiePart) => {
+      const separatorIndex = cookiePart.indexOf('=');
+      if (separatorIndex <= 0) {
+        return accumulator;
+      }
+
+      const key = cookiePart.slice(0, separatorIndex);
+      const value = cookiePart.slice(separatorIndex + 1);
+      accumulator[key] = value;
+      return accumulator;
+    }, {});
+}
+
+function getSessionCookiesFromRequest(req) {
+  try {
+    const parsed = parseCookies(req.headers.cookie || '');
+    const encoded = parsed.PS_PROXY_SESSION;
+    if (!encoded) {
+      return '';
+    }
+
+    return Buffer.from(encoded, 'base64url').toString('utf8');
+  } catch {
+    return '';
+  }
+}
+
 function createLegacyAgent() {
   return new https.Agent({
     rejectUnauthorized: false,
@@ -93,7 +184,19 @@ export default async function handler(req, res) {
     
     console.log(`[ASSET] Fetching: ${fullUrl}`);
 
-    const response = await legacyRequest(fullUrl);
+    const sessionCookies = getSessionCookiesFromRequest(req);
+    const response = await legacyRequest(fullUrl, {
+      headers: sessionCookies ? { Cookie: sessionCookies } : {},
+    });
+
+    const mergedCookies = mergeCookieState(sessionCookies, response.headers['set-cookie'] || []);
+    if (mergedCookies) {
+      const encodedSession = encodeSessionCookie(mergedCookies);
+      res.setHeader(
+        'Set-Cookie',
+        `PS_PROXY_SESSION=${encodedSession}; Path=/; HttpOnly; SameSite=Lax; Max-Age=7200`
+      );
+    }
 
     // Handle 404 and other errors
     if (response.status === 404) {
@@ -102,10 +205,14 @@ export default async function handler(req, res) {
 
     // Set appropriate content type
     const contentType = response.headers['content-type'] || 'application/octet-stream';
-    
-    // Set cache headers for static assets
+
     res.setHeader('Content-Type', contentType);
-    res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 1 day
+
+    if (contentType.includes('text/html')) {
+      res.setHeader('Cache-Control', 'no-store');
+    } else {
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+    }
     
     // Handle different content types
     if (contentType.includes('text/css')) {
@@ -121,18 +228,9 @@ export default async function handler(req, res) {
       });
       res.send(cssContent);
     } else if (contentType.includes('text/html')) {
-      // For HTML responses (shouldn't happen often for assets), rewrite URLs
-      let htmlContent = response.body.toString('utf-8');
-      htmlContent = htmlContent
-        .replace(/src="\/([^"]+)"/g, 'src="/api/asset/$1"')
-        .replace(/href="\/([^"]+\.css[^"]*)"/g, 'href="/api/asset/$1"');
-      res.send(htmlContent);
+      res.send(response.body.toString('utf-8'));
     } else if (contentType.includes('javascript') || contentType.includes('text/plain')) {
-      // For JS files, also rewrite any hardcoded paths
-      let jsContent = response.body.toString('utf-8');
-      jsContent = jsContent.replace(/'\/PT90SYS\//g, "'/api/asset/PT90SYS/");
-      jsContent = jsContent.replace(/"\/PT90SYS\//g, '"/api/asset/PT90SYS/');
-      res.send(jsContent);
+      res.send(response.body.toString('utf-8'));
     } else {
       // For binary files (images, etc), send as-is
       res.send(response.body);

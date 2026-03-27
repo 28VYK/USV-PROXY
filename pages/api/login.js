@@ -12,6 +12,10 @@ import { URL } from 'url';
 const PEOPLESOFT_BASE = 'https://scolaritate.usv.ro';
 const LOGIN_PATH = '/psp/PT90SYS/?&cmd=login&languageCd=ROM';
 
+function encodeSessionCookie(cookieValue) {
+  return Buffer.from(cookieValue || '', 'utf8').toString('base64url');
+}
+
 /**
  * Create a custom HTTPS agent that allows legacy SSL/TLS connections
  */
@@ -193,25 +197,58 @@ export default async function handler(req, res) {
       finalUrl = PEOPLESOFT_BASE + LOGIN_PATH;
     }
 
-    // Process the HTML to fix URLs - route through our proxy
+    const toAssetProxyUrl = (rawUrl = '') => {
+      const value = String(rawUrl || '').trim();
+      if (!value || value.startsWith('data:') || value.startsWith('javascript:') || value.startsWith('#')) {
+        return value;
+      }
+
+      if (value.startsWith('/api/asset/')) {
+        return value;
+      }
+
+      if (value.startsWith('/')) {
+        return `/api/asset${value}`;
+      }
+
+      if (value.startsWith('https://scolaritate.usv.ro/')) {
+        return `/api/asset/${value.slice('https://scolaritate.usv.ro/'.length)}`;
+      }
+
+      if (value.startsWith('http://scolaritate.usv.ro/')) {
+        return `/api/asset/${value.slice('http://scolaritate.usv.ro/'.length)}`;
+      }
+
+      return value;
+    };
+
+    const rewriteTagAttribute = (inputHtml, tagName, attributeName) => {
+      const regex = new RegExp(`(<${tagName}[^>]*\\s${attributeName}=["'])([^"']+)(["'][^>]*>)`, 'gi');
+      return inputHtml.replace(regex, (_, prefix, attributeValue, suffix) => {
+        return `${prefix}${toAssetProxyUrl(attributeValue)}${suffix}`;
+      });
+    };
+
+    portalHtml = rewriteTagAttribute(portalHtml, 'script', 'src');
+    portalHtml = rewriteTagAttribute(portalHtml, 'img', 'src');
+    portalHtml = rewriteTagAttribute(portalHtml, 'iframe', 'src');
+    portalHtml = rewriteTagAttribute(portalHtml, 'frame', 'src');
+    portalHtml = rewriteTagAttribute(portalHtml, 'input', 'src');
+    portalHtml = rewriteTagAttribute(portalHtml, 'link', 'href');
     portalHtml = portalHtml
-      // Route ALL src attributes through asset proxy (images, scripts)
-      .replace(/src="\/([^"]+)"/g, 'src="/api/asset/$1"')
-      .replace(/src='\/([^']+)'/g, "src='/api/asset/$1'")
-      // Route CSS link tags through asset proxy
-      .replace(/href="\/([^"]+\.css[^"]*)"/g, 'href="/api/asset/$1"')
-      // Route script imports
-      .replace(/href="\/cs\/([^"]+)"/g, 'href="/api/asset/cs/$1"')
-      // Keep other links as data attributes for JavaScript handling
-      .replace(/href="\/([^"]+)"/g, 'href="#" data-proxy-href="/$1"')
-      // Rewrite form actions
-      .replace(/action="\/([^"]+)"/g, 'action="#" data-original-action="/$1"')
-      // Fix any absolute URLs to the PeopleSoft server
-      .replace(/https:\/\/scolaritate\.usv\.ro\//g, '/api/asset/')
-      // Fix url() in inline styles
-      .replace(/url\(['"]?\/([^'")]+)['"]?\)/g, "url('/api/asset/$1')")
-      // Fix background attribute
-      .replace(/background="\/([^"]+)"/g, 'background="/api/asset/$1"');
+      .replace(/background="([^"]+)"/gi, (_, value) => `background="${toAssetProxyUrl(value)}"`)
+      .replace(/background='([^']+)'/gi, (_, value) => `background='${toAssetProxyUrl(value)}'`)
+      .replace(/url\((['"]?)([^'"\)]+)\1\)/gi, (_, quote, value) => {
+        const rewritten = toAssetProxyUrl(value);
+        const wrappedQuote = quote || "'";
+        return `url(${wrappedQuote}${rewritten}${wrappedQuote})`;
+      });
+
+    const encodedSession = encodeSessionCookie(sessionCookies);
+    res.setHeader(
+      'Set-Cookie',
+      `PS_PROXY_SESSION=${encodedSession}; Path=/; HttpOnly; SameSite=Lax; Max-Age=7200`
+    );
 
     return res.status(200).json({
       success: true,

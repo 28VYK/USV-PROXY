@@ -1,10 +1,9 @@
-version: '3.8'
 services:
   usv-proxy:
     build: .
     container_name: usv-proxy
     ports:
-      - "3000:3000"
+      - "${HOST_PORT:-3001}:3000"
     restart: always
     # Limitari clare de RAM aplicate la nivel de Docker daemon (Containerul va fi oprit de Docker inainte sa ocupe prea mult VPS-ul)
     deploy:

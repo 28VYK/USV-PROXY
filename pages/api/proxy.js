@@ -10,6 +10,97 @@ import { URL } from 'url';
 
 const PEOPLESOFT_BASE = 'https://scolaritate.usv.ro';
 
+function parseCookies(header = '') {
+  return header
+    .split(';')
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .reduce((accumulator, cookiePart) => {
+      const separatorIndex = cookiePart.indexOf('=');
+      if (separatorIndex <= 0) {
+        return accumulator;
+      }
+
+      const key = cookiePart.slice(0, separatorIndex);
+      const value = cookiePart.slice(separatorIndex + 1);
+      accumulator[key] = value;
+      return accumulator;
+    }, {});
+}
+
+function getSessionCookiesFromRequest(req) {
+  try {
+    const parsed = parseCookies(req.headers.cookie || '');
+    const encoded = parsed.PS_PROXY_SESSION;
+    if (!encoded) {
+      return '';
+    }
+
+    return Buffer.from(encoded, 'base64url').toString('utf8');
+  } catch {
+    return '';
+  }
+}
+
+function encodeSessionCookie(cookieValue) {
+  return Buffer.from(cookieValue || '', 'utf8').toString('base64url');
+}
+
+function parseCookiePairs(cookieString = '') {
+  return cookieString
+    .split(';')
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) => {
+      const separatorIndex = part.indexOf('=');
+      if (separatorIndex <= 0) {
+        return null;
+      }
+
+      return {
+        key: part.slice(0, separatorIndex),
+        value: part.slice(separatorIndex + 1),
+      };
+    })
+    .filter(Boolean);
+}
+
+function extractCookiePairsFromSetCookie(setCookieHeaders = []) {
+  return (setCookieHeaders || [])
+    .map((entry) => String(entry || '').split(';')[0]?.trim())
+    .filter(Boolean)
+    .map((entry) => {
+      const separatorIndex = entry.indexOf('=');
+      if (separatorIndex <= 0) {
+        return null;
+      }
+
+      return {
+        key: entry.slice(0, separatorIndex),
+        value: entry.slice(separatorIndex + 1),
+      };
+    })
+    .filter(Boolean);
+}
+
+function mergeCookieState(existingCookieString, ...setCookieLists) {
+  const cookieMap = new Map();
+
+  parseCookiePairs(existingCookieString).forEach(({ key, value }) => {
+    cookieMap.set(key, value);
+  });
+
+  setCookieLists.forEach((setCookieList) => {
+    extractCookiePairsFromSetCookie(setCookieList).forEach(({ key, value }) => {
+      cookieMap.set(key, value);
+    });
+  });
+
+  return Array.from(cookieMap.entries())
+    .map(([key, value]) => `${key}=${value}`)
+    .join('; ');
+}
+
 /**
  * Create a custom HTTPS agent that allows legacy SSL/TLS connections
  */
@@ -75,26 +166,55 @@ function legacyRequest(url, options = {}) {
  * Process HTML to fix relative URLs - route through our proxy
  */
 function processHtml(html, baseUrl) {
-  let processed = html
-    // Route ALL src attributes through asset proxy (images, scripts)
-    .replace(/src="\/([^"]+)"/g, 'src="/api/asset/$1"')
-    .replace(/src='\/([^']+)'/g, "src='/api/asset/$1'")
-    // Route CSS link tags through asset proxy
-    .replace(/href="\/([^"]+\.css[^"]*)"/g, 'href="/api/asset/$1"')
-    // Route /cs/ paths (PeopleSoft cache servlet) through asset proxy
-    .replace(/href="\/cs\/([^"]+)"/g, 'href="/api/asset/cs/$1"')
-    // Route other links through data attributes for JS handling
-    .replace(/href="\/([^"]+)"/g, 'href="#" data-proxy-href="/$1"')
-    // Fix form actions
-    .replace(/action="\/([^"]+)"/g, 'action="#" data-original-action="/$1"')
-    .replace(/action="([^"#][^"]*)"/g, 'action="#" data-original-action="$1"')
-    // Fix absolute URLs to PeopleSoft
-    .replace(/https:\/\/scolaritate\.usv\.ro\//g, '/api/asset/')
-    // Fix url() in inline styles
-    .replace(/url\(['"]?\/([^'")]+)['"]?\)/g, "url('/api/asset/$1')")
-    // Fix background attribute
-    .replace(/background="\/([^"]+)"/g, 'background="/api/asset/$1"')
-    ;
+  const toAssetProxyUrl = (rawUrl = '') => {
+    const value = String(rawUrl || '').trim();
+    if (!value || value.startsWith('data:') || value.startsWith('javascript:') || value.startsWith('#')) {
+      return value;
+    }
+
+    if (value.startsWith('/api/asset/')) {
+      return value;
+    }
+
+    if (value.startsWith('/')) {
+      return `/api/asset${value}`;
+    }
+
+    if (value.startsWith('https://scolaritate.usv.ro/')) {
+      return `/api/asset/${value.slice('https://scolaritate.usv.ro/'.length)}`;
+    }
+
+    if (value.startsWith('http://scolaritate.usv.ro/')) {
+      return `/api/asset/${value.slice('http://scolaritate.usv.ro/'.length)}`;
+    }
+
+    return value;
+  };
+
+  const rewriteTagAttribute = (inputHtml, tagName, attributeName) => {
+    const regex = new RegExp(`(<${tagName}[^>]*\\s${attributeName}=["'])([^"']+)(["'][^>]*>)`, 'gi');
+    return inputHtml.replace(regex, (_, prefix, attributeValue, suffix) => {
+      return `${prefix}${toAssetProxyUrl(attributeValue)}${suffix}`;
+    });
+  };
+
+  let processed = html;
+
+  processed = rewriteTagAttribute(processed, 'script', 'src');
+  processed = rewriteTagAttribute(processed, 'img', 'src');
+  processed = rewriteTagAttribute(processed, 'iframe', 'src');
+  processed = rewriteTagAttribute(processed, 'frame', 'src');
+  processed = rewriteTagAttribute(processed, 'input', 'src');
+  processed = rewriteTagAttribute(processed, 'link', 'href');
+
+  processed = processed
+    .replace(/background="([^"]+)"/gi, (_, value) => `background="${toAssetProxyUrl(value)}"`)
+    .replace(/background='([^']+)'/gi, (_, value) => `background='${toAssetProxyUrl(value)}'`)
+    .replace(/url\((['"]?)([^'"\)]+)\1\)/gi, (_, quote, value) => {
+      const rewritten = toAssetProxyUrl(value);
+      const wrappedQuote = quote || "'";
+      return `url(${wrappedQuote}${rewritten}${wrappedQuote})`;
+    });
 
   return processed;
 }
@@ -104,7 +224,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { url, cookies, method = 'GET', body } = req.body;
+  const { url, cookies: bodyCookies, method = 'GET', body, headers = {} } = req.body;
+  const cookies = bodyCookies || getSessionCookiesFromRequest(req);
 
   if (!url) {
     return res.status(400).json({ error: 'Missing URL' });
@@ -116,42 +237,79 @@ export default async function handler(req, res) {
     
     console.log(`[PROXY] Fetching: ${fullUrl}`);
 
-    const response = await legacyRequest(fullUrl, {
-      method,
-      headers: cookies ? { 'Cookie': cookies } : {},
+    const normalizedMethod = String(method || 'GET').toUpperCase();
+
+    const requestHeaders = {
+      ...(cookies ? { Cookie: cookies } : {}),
+      ...headers,
+    };
+
+    if (normalizedMethod === 'POST' && body && !requestHeaders['Content-Type'] && !requestHeaders['content-type']) {
+      requestHeaders['Content-Type'] = 'application/x-www-form-urlencoded';
+      requestHeaders['Content-Length'] = Buffer.byteLength(body);
+    }
+
+    let response = await legacyRequest(fullUrl, {
+      method: normalizedMethod,
+      headers: requestHeaders,
       body,
     });
 
     console.log(`[PROXY] Response status: ${response.status}`);
 
-    // Handle redirects
-    if (response.status === 302 || response.status === 301) {
-      const redirectUrl = response.headers.location;
-      console.log(`[PROXY] Redirect to: ${redirectUrl}`);
-      
-      // Follow the redirect
-      const redirectResponse = await legacyRequest(
-        redirectUrl.startsWith('http') ? redirectUrl : PEOPLESOFT_BASE + redirectUrl,
-        {
-          headers: cookies ? { 'Cookie': cookies } : {},
-        }
-      );
-      
-      return res.status(200).json({
-        success: true,
-        html: processHtml(redirectResponse.body, PEOPLESOFT_BASE),
-        originalUrl: fullUrl,
-        finalUrl: redirectUrl,
+    const redirectStatuses = new Set([301, 302, 303, 307, 308]);
+    const maxRedirects = 8;
+    let redirectsFollowed = 0;
+    let finalUrl = fullUrl;
+    let activeCookies = cookies;
+    let activeMethod = normalizedMethod;
+
+    while (redirectStatuses.has(response.status) && response.headers.location && redirectsFollowed < maxRedirects) {
+      const redirectUrl = response.headers.location.startsWith('http')
+        ? response.headers.location
+        : PEOPLESOFT_BASE + response.headers.location;
+
+      activeCookies = mergeCookieState(activeCookies, response.cookies);
+      finalUrl = redirectUrl;
+      redirectsFollowed += 1;
+
+      console.log(`[PROXY] Redirect ${redirectsFollowed} -> ${redirectUrl}`);
+
+      const nextMethod = (response.status === 307 || response.status === 308) ? activeMethod : 'GET';
+      const nextHeaders = {
+        ...headers,
+        ...(activeCookies ? { Cookie: activeCookies } : {}),
+      };
+
+      delete nextHeaders['Content-Length'];
+      delete nextHeaders['content-length'];
+
+      response = await legacyRequest(redirectUrl, {
+        method: nextMethod,
+        headers: nextHeaders,
       });
+
+      activeMethod = nextMethod;
     }
 
     // Process and return the HTML
     const processedHtml = processHtml(response.body, PEOPLESOFT_BASE);
 
+    const mergedCookies = mergeCookieState(activeCookies, response.cookies);
+    if (mergedCookies) {
+      const encodedSession = encodeSessionCookie(mergedCookies);
+      res.setHeader(
+        'Set-Cookie',
+        `PS_PROXY_SESSION=${encodedSession}; Path=/; HttpOnly; SameSite=Lax; Max-Age=7200`
+      );
+    }
+
     return res.status(200).json({
       success: true,
       html: processedHtml,
       originalUrl: fullUrl,
+      finalUrl,
+      redirectsFollowed,
       status: response.status,
     });
 
