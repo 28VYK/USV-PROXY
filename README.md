@@ -16,15 +16,14 @@ Un reverse proxy care:
 
 - Acceptă conexiuni **TLS moderne** de la browsere
 - Comunică cu serverul PeopleSoft folosind **TLS legacy**
+- **NOU:** Oferă funcționalitate **"Ține-mă minte"** (sesiune persistentă) cu auto-login în fundal, eliminând nevoia de a reintroduce datele la fiecare vizită.
 
-## 🖼️ Screenshot
+## 🖼️ Screenshot-uri
 
-<a href="https://imgur.com/lJePqXW" target="_blank">
-  <img src="https://i.imgur.com/lJePqXW.png" alt="Login Page" />
-</a>
-<a href="https://imgur.com/Ns0imhd" target="_blank">
-  <img src="https://i.imgur.com/Ns0imhd.png" alt="Grades View" />
-</a>
+> **Notă:** Capturile de ecran de mai jos reflectă funcționalitățile recente: opțiunea de auto-login și vizualizarea notelor.
+
+<img src="./public/login.png" alt="Login Page" />
+<img src="./public/grades.png" alt="Grades View" />
 
 ## 🚀 Instalare (pentru dezvoltare locală)
 
@@ -66,10 +65,10 @@ usv-proxy/
 
 ## 🔐 Securitate
 
-- **NU stochează** parole sau credențiale
-- **NU stochează** date personale sau note
-- Toate datele sunt transmise direct către/de la serverul USV
-- Codul este open-source și poate fi auditat
+- **NU stochează parole sau date pe server** - Datele sunt transmise direct către/de la serverul USV.
+- Dacă se folosește funcția **"Ține-mă minte"**, credențialele sunt stocate exclusiv **local, în browser-ul utilizatorului** (via `localStorage`), niciodată pe server.
+- **NU stochează** date personale sau note.
+- Codul este open-source și poate fi auditat.
 
 ## 🏢 Propunere pentru Implementare Instituțională
 
