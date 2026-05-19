@@ -14,7 +14,7 @@ services:
     devices:
       - /dev/net/tun:/dev/net/tun
       
-    # Load all credentials from .env (gitignored - VPN, environment variables, etc. stay private)
+    # Load all credentials from .env (gitignored - VPN and environment variables stay private)
     env_file:
       - .env
     
