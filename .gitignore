@@ -46,3 +46,6 @@ yarn-error.log*
 *.tar.gz
 *.zip
 *.tar
+
+# Agent rules (hidden from GitHub)
+/.agents/
