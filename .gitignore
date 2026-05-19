@@ -34,3 +34,10 @@ yarn-error.log*
 /utils/session-validator.js
 /pages/api/session-sync.js
 /vpn/*.json
+
+# SSH keys and PEM certificates (bulletproof lock)
+/bot_key
+/bot_key.pub
+/*.pem
+/ai_key.pem
+/fixed_ai_key.pem
