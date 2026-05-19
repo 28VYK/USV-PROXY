@@ -1,37 +1,37 @@
-# USV Scolaritate - Reverse Proxy
+# USV Portal - Next.js Reverse Proxy 🎓
 
-Soluție pentru accesarea platformei `scolaritate.usv.ro` din browsere moderne.
+O soluție completă, modernă și ultra-premium pentru accesarea platformei `scolaritate.usv.ro` din orice browser, pe orice dispozitiv.
 
 ## 🔴 Problema
 
-Platforma PeopleSoft folosește protocoale TLS învechite (TLS 1.0) care sunt blocate de browserele moderne din motive de securitate:
-
+Platforma oficială PeopleSoft folosește protocoale TLS învechite (TLS 1.0) blocate automat de browserele moderne din motive de securitate:
 - Chrome: `ERR_SSL_VERSION_OR_CIPHER_MISMATCH`
 - Firefox: `SSL_ERROR_NO_CYPHER_OVERLAP`
 - Edge: conexiune refuzată
 
-## ✅ Soluția
+## ✅ Soluția USV Portal
 
-Un reverse proxy care:
+Un proxy modern care intermediază conexiunea, oferind în același timp o interfață cu un design nou, optimizat și mult mai rapid.
 
-- Acceptă conexiuni **TLS moderne** de la browsere
-- Comunică cu serverul PeopleSoft folosind **TLS legacy**
-- **NOU:** Oferă funcționalitate **"Ține-mă minte"** (sesiune persistentă) cu auto-login în fundal, eliminând nevoia de a reintroduce datele la fiecare vizită.
+### 🌟 Funcționalități noi (Versiunea Revizuită)
+- **UI/UX Premium:** Interfață complet refăcută cu design glassmorphism, animații fluide și culori ambientale.
+- **Sesiuni Persistente ("Ține-mă minte"):** Sistem securizat de auto-login în fundal via `localStorage` (credidențialele tale nu părăsesc niciodată dispozitivul propriu către servere terțe, în afară de USV).
+- **Filtrare Avansată:** Vizualizează instant situația școlară cu suport pentru filtrare per semestru.
+- **Design Responsiv:** Optimizat impecabil atât pe mobil, cât și pe desktop.
+- **Modul Comunitate (Donate):** Posibilitatea de a susține proiectul independent pentru a acoperi costurile de mentenanță.
 
-## 🖼️ Screenshot-uri
+## 🌐 Live Preview
 
-> **Notă:** Capturile de ecran de mai jos reflectă funcționalitățile recente: opțiunea de auto-login și vizualizarea notelor.
+Poți testa un **preview al interfeței de login** direct la:  
+👉 **[proxy-usv.vercel.app](https://proxy-usv.vercel.app/)**
 
-<img src="./public/login.png" alt="Login Page" />
-<img src="./public/grades.png" alt="Grades View" />
+
 
 ## 🚀 Instalare (pentru dezvoltare locală)
 
 ### Cerințe
-
 - Node.js 18+
-- npm
-- VPN USV conectat
+- npm sau yarn
 
 ### Pași
 
@@ -47,86 +47,60 @@ npm install
 npm run dev
 ```
 
-Accesează `http://localhost:3000` cu VPN-ul USV activ.
+Accesează `http://localhost:3000` (sau portul tău configurat).
 
 ## 📁 Structura Proiectului
 
-```
+```text
 usv-proxy/
 ├── pages/
-│   ├── index.js              # Frontend - pagina de login și note
+│   ├── index.js              # Frontend - interfața nouă și dashboard-ul de note
 │   └── api/
-│       ├── login.js          # Proxy pentru autentificare PeopleSoft
-│       ├── proxy.js          # Proxy pentru navigare în portal
-│       └── asset/[...path].js # Proxy pentru resurse statice
+│       ├── login.js          # Route proxy pentru PeopleSoft login
+│       ├── proxy.js          # Route proxy pentru navigare date
+│       └── asset/[...path].js # Route proxy pentru resurse CSS/JS legacy
 ├── next.config.js            # Configurare Next.js
 └── package.json
 ```
 
-## 🔐 Securitate
+## 🔐 Securitate și Confidențialitate
 
-- **NU stochează parole sau date pe server** - Datele sunt transmise direct către/de la serverul USV.
-- Dacă se folosește funcția **"Ține-mă minte"**, credențialele sunt stocate exclusiv **local, în browser-ul utilizatorului** (via `localStorage`), niciodată pe server.
-- **NU stochează** date personale sau note.
-- Codul este open-source și poate fi auditat.
+- **Fără stocare pe server:** Platforma **NU** stochează sub nicio formă parolele, notele sau datele personale pe un server propriu. Conexiunea se face direct între browser și serverul USV.
+- Funcția "Ține-mă minte" stochează datele exclusiv **local, în browser-ul utilizatorului**.
+- Codul sursă este open-source, oferind transparență maximă pentru audit.
 
-## 🏢 Propunere pentru Implementare Instituțională
+## 🏢 Propunere de Implementare Instituțională
 
-Pentru ca platforma să funcționeze direct din `scolaritate.usv.ro` cu orice browser modern, recomandăm configurarea unui reverse proxy Nginx în infrastructura universității:
-
-### Configurare Nginx Minimală
+Pentru ca universitatea să poată remedia problema la sursă, am documentat o configurație simplă de Nginx care poate fi implementată de departamentul IT:
 
 ```nginx
 server {
     listen 443 ssl http2;
     server_name scolaritate.usv.ro;
 
-    # Certificate SSL moderne
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_certificate /etc/ssl/certs/usv.crt;
     ssl_certificate_key /etc/ssl/private/usv.key;
-    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256;
 
     location / {
-        # Proxy către serverul PeopleSoft intern
         proxy_pass https://peoplesoft-intern.usv.ro;
-
-        # Permite TLS legacy pentru PeopleSoft
         proxy_ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
-        proxy_ssl_ciphers ALL;
         proxy_ssl_verify off;
-
-        # Headers
         proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
 ```
 
-### Avantaje ale implementării instituționale:
-
-- ✅ Zero modificări necesare pentru studenți
-- ✅ Funcționează cu orice browser modern
-- ✅ Nu necesită browsere vechi sau configurații speciale
-- ✅ VPN-ul rămâne obligatoriu pentru acces
-- ✅ Serverul PeopleSoft nu necesită modificări
-
 ## 🛠️ Tehnologii Folosite
-
-- [Next.js](https://nextjs.org/) - Framework React
-- [Node.js](https://nodejs.org/) - Runtime
-- HTTPS Agent personalizat pentru TLS legacy
+- [Next.js](https://nextjs.org/) - Framework de React
+- [Node.js](https://nodejs.org/) - Backend Runtime
+- TLS Legacy HTTPS Agent
 
 ## 📝 Licență
-
 MIT License - Proiect open-source în scop educațional.
 
 ## 👤 Autor
-
-Proiect dezvoltat de un student USV pentru a facilita accesul la note.
+Proiect 100% independent, dezvoltat de un student pentru studenți.
 
 ---
-
-**Notă:** Acest proiect nu este afiliat oficial cu Universitatea Ștefan cel Mare Suceava.
+**Notă importantă:** Acest proiect **nu** este afiliat sau recunoscut oficial de Universitatea "Ștefan cel Mare" din Suceava.
