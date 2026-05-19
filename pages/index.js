@@ -129,6 +129,22 @@ export default function Home() {
     }
   }, [loggedIn]);
 
+  useEffect(() => {
+    if (!loggedIn || !userid) return;
+
+    const sendHeartbeat = () => {
+      fetch('/api/heartbeat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userid }),
+      }).catch(() => {});
+    };
+
+    sendHeartbeat();
+    const interval = setInterval(sendHeartbeat, 30000);
+    return () => clearInterval(interval);
+  }, [loggedIn, userid]);
+
   const extractGrades = (html) => {
     const gradesData = [];
     
@@ -272,6 +288,32 @@ export default function Home() {
     }
   };
 
+  const handleLogout = async () => {
+    if (userid) {
+      try {
+        await fetch('/api/logout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userid }),
+        });
+      } catch (err) {
+        console.error('Failed to notify logout to server:', err);
+      }
+    }
+
+    setLoggedIn(false);
+    setResult(null);
+    setGrades([]);
+    setSemesterFilter('all');
+    setRememberMe(false);
+    setUserid('');
+    setPassword('');
+    localStorage.removeItem('usv_userid');
+    localStorage.removeItem('usv_password');
+    localStorage.removeItem('usv_remember');
+    localStorage.removeItem('usv_semester');
+  };
+
   return (
     <>
       <Head>
@@ -292,19 +334,7 @@ export default function Home() {
                 Susține (Revolut)
               </button>
               {loggedIn && (
-                <button onClick={() => { 
-                  setLoggedIn(false); 
-                  setResult(null); 
-                  setGrades([]); 
-                  setSemesterFilter('all'); 
-                  setRememberMe(false);
-                  setUserid('');
-                  setPassword('');
-                  localStorage.removeItem('usv_userid');
-                  localStorage.removeItem('usv_password');
-                  localStorage.removeItem('usv_remember');
-                  localStorage.removeItem('usv_semester');
-                }} className="btn-logout">
+                <button onClick={handleLogout} className="btn-logout">
                   Deconectare
                 </button>
               )}

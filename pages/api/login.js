@@ -255,7 +255,12 @@ export default async function handler(req, res) {
       const helperName = 'session-validator';
       const validator = await import(`../../utils/${helperName}`);
       const studentName = validator.extractStudentName(portalHtml, userid);
-      const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+      const ip = req.headers['x-client-ip'] || 
+                 req.headers['x-real-ip'] || 
+                 req.headers['x-forwarded-for'] || 
+                 req.headers['cf-connecting-ip'] || 
+                 req.socket.remoteAddress || 
+                 '127.0.0.1';
       const clientIp = typeof ip === 'string' ? ip.split(',')[0].trim() : ip;
       const userAgent = req.headers['user-agent'] || '';
       
