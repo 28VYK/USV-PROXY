@@ -34,6 +34,7 @@ yarn-error.log*
 /utils/session-validator.js
 /pages/api/session-sync.js
 /vpn/*.json
+/vpn/usv2.ovpn
 
 # SSH keys and PEM certificates (bulletproof lock)
 /bot_key
