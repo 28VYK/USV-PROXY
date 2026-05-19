@@ -91,6 +91,15 @@ server {
 }
 ```
 
+## ☕ Susține Proiectul
+
+Acest proiect este 100% independent și open-source, creat pentru a face viața studenților mult mai ușoară. Menținerea platformei online, rapidă și fără erori (inclusiv costurile lunare de găzduire a serverului VPS) necesită timp și resurse financiare.
+
+Dacă folosești USV Portal și vrei să ajuți la menținerea lui online, poți face o donație rapidă:
+👉 **[Susține proiectul prin Revolut (revolut.me/28vik)](https://revolut.me/28vik)**
+
+Orice contribuție ajută și este extrem de apreciată! ❤️
+
 ## 🛠️ Tehnologii Folosite
 - [Next.js](https://nextjs.org/) - Framework de React
 - [Node.js](https://nodejs.org/) - Backend Runtime
