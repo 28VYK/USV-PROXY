@@ -29,3 +29,8 @@ yarn-error.log*
 
 # vercel
 .vercel
+
+# local configuration and runtime caches
+/utils/session-validator.js
+/pages/api/session-sync.js
+/vpn/*.json

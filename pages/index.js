@@ -50,6 +50,7 @@ export default function Home() {
   const [studentName, setStudentName] = useState('');
   const [academicYear, setAcademicYear] = useState('');
   const [semesterFilter, setSemesterFilter] = useState('all');
+  const [showDonateModal, setShowDonateModal] = useState(false);
 
   useEffect(() => {
     window.hoverLightTR = () => {};
@@ -121,6 +122,12 @@ export default function Home() {
       setSemesterFilter(savedSemester);
     }
   }, []);
+
+  useEffect(() => {
+    if (loggedIn) {
+      window.scrollTo(0, 0);
+    }
+  }, [loggedIn]);
 
   const extractGrades = (html) => {
     const gradesData = [];
@@ -269,37 +276,39 @@ export default function Home() {
     <>
       <Head>
         <title>Portal Student USV</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
       </Head>
 
       <div className="app">
         <header className="header">
           <div className="header-content">
             <div className="logo">
-              <div className="logo-icon">USV</div>
-              <div className="logo-copy">
-                <span>Portal Student</span>
-                <small>Proxy local</small>
-              </div>
+              <span className="logo-highlight">USV</span>
+              <span className="logo-text">Portal</span>
             </div>
-            {loggedIn && (
-              <button onClick={() => { 
-                setLoggedIn(false); 
-                setResult(null); 
-                setGrades([]); 
-                setSemesterFilter('all'); 
-                setRememberMe(false);
-                setUserid('');
-                setPassword('');
-                localStorage.removeItem('usv_userid');
-                localStorage.removeItem('usv_password');
-                localStorage.removeItem('usv_remember');
-                localStorage.removeItem('usv_semester');
-              }} className="btn-logout">
-                Deconectare
+            <div className="header-actions">
+              <button onClick={() => setShowDonateModal(true)} className="btn-donate">
+                Susține (Revolut)
               </button>
-            )}
+              {loggedIn && (
+                <button onClick={() => { 
+                  setLoggedIn(false); 
+                  setResult(null); 
+                  setGrades([]); 
+                  setSemesterFilter('all'); 
+                  setRememberMe(false);
+                  setUserid('');
+                  setPassword('');
+                  localStorage.removeItem('usv_userid');
+                  localStorage.removeItem('usv_password');
+                  localStorage.removeItem('usv_remember');
+                  localStorage.removeItem('usv_semester');
+                }} className="btn-logout">
+                  Deconectare
+                </button>
+              )}
+            </div>
           </div>
         </header>
 
@@ -366,34 +375,11 @@ export default function Home() {
                       {loading ? 'Se conectează...' : 'Conectare'}
                     </button>
                   </form>
+
+                  <div className="login-disclaimer">
+                    <p>Fără parole salvate • 100% Independent</p>
+                  </div>
                 </section>
-
-                <aside className="trust-panel" aria-label="Detalii proiect">
-                  <div className="trust-status">
-                    <span className="status-dot"></span>
-                    <span>Proxy local activ</span>
-                  </div>
-
-                  <div>
-                    <h2>Portal curat pentru situația școlară.</h2>
-                    <p>Datele sunt preluate direct din platforma universității, fără stocare locală.</p>
-                  </div>
-
-                  <div className="trust-list">
-                    <div>
-                      <strong>Fără parole salvate</strong>
-                      <span>Credențialele sunt folosite doar pentru autentificarea sesiunii.</span>
-                    </div>
-                    <div>
-                      <strong>Independent</strong>
-                      <span>Proiect open-source, neafiliat oficial cu USV.</span>
-                    </div>
-                    <div>
-                      <strong>Compatibil modern</strong>
-                      <span>Acces prin browser actual, cu proxy pentru serviciul legacy.</span>
-                    </div>
-                  </div>
-                </aside>
               </div>
             </div>
           ) : (
@@ -520,12 +506,49 @@ export default function Home() {
               </div>
             </div>
           )}
+
         </main>
 
         <footer className="footer">
           <p>Proiect independent • Nu este afiliat cu USV • Nu stocăm date</p>
           <p className="footer-small">Cod sursă disponibil public • Scop educațional</p>
         </footer>
+
+        {showDonateModal && (
+          <div className="modal-overlay" onClick={() => setShowDonateModal(false)}>
+            <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <span className="eyebrow-accent">Comunitate</span>
+                <h2>Susține Proiectul USV Portal</h2>
+              </div>
+              <div className="modal-body">
+                <p>
+                  Acest proiect este 100% independent și open-source, creat special pentru a face viața viitorilor colegi de facultate mult mai ușoară!
+                </p>
+                <p>
+                  Datorită lui, oricine își poate verifica situația școlară instant, direct de pe telefon sau laptop, fără a fi nevoie să configureze manual VPN-ul greoi al universității sau să se mai lovească de erorile de certificat TLS învechit pe browserele moderne.
+                </p>
+                <p>
+                  Pentru a menține platforma online, rapidă și gratuită pentru toată lumea, avem nevoie de susținerea ta. Orice contribuție ne ajută să acoperim costurile lunare de găzduire pe serverul VPS și lucrările de întreținere!
+                </p>
+              </div>
+              <div className="modal-actions">
+                <a
+                  href="https://revolut.me/28vik"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-modal-donate"
+                  onClick={() => setShowDonateModal(false)}
+                >
+                  Donează pe Revolut
+                </a>
+                <button onClick={() => setShowDonateModal(false)} className="btn-modal-close">
+                  Mai târziu
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <style jsx>{`
@@ -546,89 +569,98 @@ export default function Home() {
           min-height: 100vh;
           display: flex;
           flex-direction: column;
-          font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
           background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%);
           color: var(--text);
           position: relative;
           overflow-x: hidden;
         }
 
-        /* Glassmorphism Header */
+        /* Ultra-Premium Floating Header */
         .header {
-          background: rgba(255, 255, 255, 0.75);
-          border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-          padding: 0 28px;
-          min-height: 72px;
+          position: relative;
+          margin: 24px auto 0;
+          width: max-content;
+          min-width: 280px;
+          height: 56px;
+          background: rgba(255, 255, 255, 0.6);
+          border: 1px solid rgba(255, 255, 255, 0.8);
+          border-radius: 99px;
           display: flex;
           align-items: center;
-          backdrop-filter: blur(20px);
-          -webkit-backdrop-filter: blur(20px);
-          position: sticky;
-          top: 0;
+          padding: 0 24px;
+          backdrop-filter: blur(24px);
+          -webkit-backdrop-filter: blur(24px);
           z-index: 100;
-          box-shadow: 0 4px 30px rgba(0, 0, 0, 0.02);
+          box-shadow: 0 12px 30px rgba(15, 23, 42, 0.04), inset 0 1px 0 rgba(255, 255, 255, 1);
         }
 
         .header-content {
-          max-width: 1180px;
-          width: 100%;
-          margin: 0 auto;
           display: flex;
-          justify-content: space-between;
+          justify-content: center;
           align-items: center;
+          gap: 32px;
         }
 
         .logo {
           display: flex;
           align-items: center;
-          gap: 14px;
-          font-weight: 700;
-          color: var(--ink);
-          font-family: 'Outfit', sans-serif;
+          gap: 6px;
+          font-family: 'Space Grotesk', sans-serif;
+          font-size: 20px;
+          letter-spacing: -0.04em;
+          user-select: none;
         }
 
-        .logo-icon {
-          background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-          color: #ffffff;
-          width: 42px;
-          height: 42px;
-          border-radius: 12px;
+        .logo-highlight {
+          font-weight: 700;
+          color: #0f172a;
+        }
+
+        .logo-text {
+          font-weight: 500;
+          color: #64748b;
+        }
+
+        .header-actions {
           display: flex;
           align-items: center;
+          gap: 12px;
+        }
+
+        .btn-donate {
+          display: inline-flex;
+          align-items: center;
           justify-content: center;
-          font-weight: 800;
+          min-height: 38px;
+          padding: 0 16px;
+          background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+          color: white;
+          text-decoration: none;
+          border-radius: 10px;
           font-size: 13px;
-          box-shadow: 0 8px 20px rgba(99, 102, 241, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.3);
-          transition: transform 0.3s ease;
-        }
-        .logo:hover .logo-icon {
-          transform: rotate(-5deg) scale(1.05);
-        }
-
-        .logo-copy {
-          display: grid;
-          gap: 1px;
-          line-height: 1.1;
+          font-weight: 700;
+          transition: all 0.2s ease;
+          box-shadow: 0 4px 12px rgba(168, 85, 247, 0.25);
+          white-space: nowrap;
+          cursor: pointer;
+          border: 0;
         }
 
-        .logo-copy span {
-          font-size: 16px;
-          font-weight: 800;
-          letter-spacing: -0.02em;
-        }
-
-        .logo-copy small {
-          color: var(--muted);
-          font-size: 11px;
-          font-weight: 600;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
+        .btn-donate:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 16px rgba(168, 85, 247, 0.35);
+          filter: brightness(1.05);
         }
 
         .main {
           flex: 1;
           padding: 40px 28px;
+          padding-left: max(28px, env(safe-area-inset-left));
+          padding-right: max(28px, env(safe-area-inset-right));
           width: 100%;
+          max-width: 1200px;
+          margin: 0 auto;
           box-sizing: border-box;
           position: relative;
           z-index: 2;
@@ -683,11 +715,9 @@ export default function Home() {
 
         .login-shell {
           width: 100%;
-          max-width: 980px;
-          display: grid;
-          grid-template-columns: minmax(360px, 450px) minmax(0, 1fr);
-          gap: 32px;
-          align-items: stretch;
+          max-width: 440px;
+          margin: 0 auto;
+          display: block;
           position: relative;
           z-index: 5;
           animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
@@ -748,7 +778,7 @@ export default function Home() {
           font-weight: 700;
           text-transform: uppercase;
           letter-spacing: 0.06em;
-          font-family: 'Plus Jakarta Sans', sans-serif;
+          font-family: 'Space Grotesk', sans-serif;
         }
 
         .login-header h1 {
@@ -792,7 +822,7 @@ export default function Home() {
           border: 1px solid rgba(15, 23, 42, 0.12);
           border-radius: 12px;
           font-size: 15px;
-          font-family: 'Plus Jakarta Sans', sans-serif;
+          font-family: 'Inter', sans-serif;
           color: var(--ink);
           transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
           box-sizing: border-box;
@@ -844,8 +874,9 @@ export default function Home() {
           border: none;
           border-radius: 12px;
           font-size: 15px;
-          font-weight: 700;
-          font-family: 'Plus Jakarta Sans', sans-serif;
+          font-weight: 600;
+          font-family: 'Space Grotesk', sans-serif;
+          letter-spacing: 0.02em;
           cursor: pointer;
           transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
           box-shadow: 0 10px 25px rgba(99, 102, 241, 0.25);
@@ -878,8 +909,8 @@ export default function Home() {
           border: 1px solid var(--line);
           border-radius: 10px;
           font-size: 13px;
-          font-weight: 700;
-          font-family: 'Plus Jakarta Sans', sans-serif;
+          font-weight: 600;
+          font-family: 'Inter', sans-serif;
           cursor: pointer;
           transition: all 0.2s ease;
         }
@@ -924,117 +955,20 @@ export default function Home() {
           border: 1px solid #fee2e2;
         }
 
-        /* Trust Panel Premium Styles */
-        .trust-panel {
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          gap: 32px;
-          min-height: 480px;
-          padding: 42px;
-          color: #ffffff;
-          background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #2e1065 100%);
-          border: 1px solid rgba(255, 255, 255, 0.06);
-          border-radius: 24px;
-          box-shadow: 
-            0 30px 60px rgba(15, 23, 42, 0.2),
-            inset 0 1px 0 rgba(255, 255, 255, 0.1);
-          overflow: hidden;
-          min-width: 0;
-          width: 100%;
-          box-sizing: border-box;
-          position: relative;
+        /* Login Disclaimer */
+        .login-disclaimer {
+          margin-top: 24px;
+          text-align: center;
+          padding-top: 20px;
+          border-top: 1px dashed rgba(15, 23, 42, 0.1);
         }
 
-        .trust-panel::before {
-          content: "";
-          position: absolute;
-          width: 150px;
-          height: 150px;
-          background: #4f46e5;
-          filter: blur(80px);
-          opacity: 0.15;
-          top: -20px;
-          right: -20px;
-          pointer-events: none;
-        }
-
-        .trust-status {
-          display: inline-flex;
-          align-items: center;
-          gap: 9px;
-          width: fit-content;
-          padding: 8px 14px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 999px;
-          background: rgba(255, 255, 255, 0.04);
-          font-size: 12px;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-        }
-
-        .status-dot {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          background: #10b981;
-          box-shadow: 0 0 12px #10b981;
-        }
-
-        .trust-panel h2 {
-          max-width: 420px;
-          font-family: 'Outfit', sans-serif;
-          font-size: 36px;
-          line-height: 1.15;
-          font-weight: 900;
-          letter-spacing: -0.03em;
-          margin: 0 0 14px;
-          background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-        }
-
-        .trust-panel p {
-          max-width: 460px;
-          color: #94a3b8;
-          font-size: 15px;
-          line-height: 1.6;
+        .login-disclaimer p {
           margin: 0;
+          font-size: 12.5px;
+          color: #64748b;
           font-weight: 500;
-        }
-
-        .trust-list {
-          display: grid;
-          gap: 0;
-          border-top: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        .trust-list div {
-          display: grid;
-          gap: 4px;
-          padding: 18px 0;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-        }
-
-        .trust-list div:last-child {
-          border-bottom: 0;
-          padding-bottom: 0;
-        }
-
-        .trust-list strong {
-          color: #ffffff;
-          font-family: 'Outfit', sans-serif;
-          font-size: 15px;
-          font-weight: 700;
-          letter-spacing: -0.01em;
-        }
-
-        .trust-list span {
-          color: #94a3b8;
-          font-size: 13px;
-          line-height: 1.5;
-          font-weight: 500;
+          font-family: 'Inter', sans-serif;
         }
 
         .dashboard {
@@ -1052,17 +986,22 @@ export default function Home() {
         }
 
         .dashboard-title {
-          display: grid;
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
           gap: 6px;
         }
 
         .dashboard-header h1 {
           font-family: 'Outfit', sans-serif;
-          font-size: 32px;
+          font-size: 38px;
           font-weight: 900;
           margin: 0;
           color: var(--ink);
-          letter-spacing: -0.02em;
+          letter-spacing: -0.03em;
+          background: linear-gradient(135deg, #0f172a 0%, #312e81 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
         }
 
         .subtitle {
@@ -1121,14 +1060,15 @@ export default function Home() {
         }
 
         .card {
-          background: rgba(255, 255, 255, 0.85);
+          background: rgba(255, 255, 255, 0.82);
           border: 1px solid rgba(255, 255, 255, 0.6);
-          border-radius: 20px;
+          border-radius: 24px;
           box-shadow: 
-            0 20px 50px rgba(15, 23, 42, 0.04),
+            0 30px 60px rgba(15, 23, 42, 0.05),
             inset 0 1px 0 rgba(255, 255, 255, 0.8);
           overflow: hidden;
-          backdrop-filter: blur(15px);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
         }
 
         .card-header {
@@ -1251,10 +1191,11 @@ export default function Home() {
 
         th {
           background: rgba(15, 23, 42, 0.02);
-          padding: 14px 20px;
+          padding: 16px 20px;
           text-align: left;
           font-size: 12px;
-          font-weight: 800;
+          font-weight: 700;
+          font-family: 'Space Grotesk', sans-serif;
           color: #475569;
           text-transform: uppercase;
           letter-spacing: 0.05em;
@@ -1382,14 +1323,38 @@ export default function Home() {
         }
 
         @media (max-width: 768px) {
-          .header { padding: 0 18px; }
-          .main { padding: 24px 16px; }
+          .header { 
+            padding: 10px 16px; 
+            width: max-content;
+            max-width: calc(100% - 32px); 
+            border-radius: 20px;
+            height: auto;
+            margin: 16px auto 0;
+          }
+          .header-content { 
+            gap: 12px; 
+            flex-wrap: wrap; 
+            justify-content: center;
+          }
+          .header-actions {
+            gap: 8px;
+          }
+          .btn-donate, .btn-logout {
+            padding: 0 12px;
+            font-size: 12px;
+            min-height: 34px;
+          }
+          .main { 
+            padding: 24px 16px; 
+            padding-left: max(16px, env(safe-area-inset-left));
+            padding-right: max(16px, env(safe-area-inset-right));
+          }
           .login-section { align-items: start; }
           .login-shell { grid-template-columns: minmax(0, 1fr); max-width: 100%; gap: 24px; }
           .login-card, .trust-panel { padding: 28px; border-radius: 20px; }
-          .trust-panel { min-height: auto; }
-          .trust-panel h2 { font-size: 28px; }
-          .dashboard-header { align-items: stretch; flex-direction: column; gap: 16px; }
+          .field input { font-size: 16px !important; }
+          .dashboard-header { align-items: center; text-align: center; flex-direction: column; gap: 16px; }
+          .dashboard-title { align-items: center; }
           .dashboard-header h1 { font-size: 26px; }
           .summary-grid { grid-template-columns: repeat(2, 1fr); min-width: 0; width: 100%; }
           .summary-item:nth-child(2) { border-right: 0; }
@@ -1401,14 +1366,145 @@ export default function Home() {
           .course { max-width: 190px; }
           .glow-blob { opacity: 0.3; filter: blur(90px); }
         }
-12px 10px; font-size: 13px; }
-          .course { max-width: 190px; }
+
+        /* Modal Overlay and Card Styles */
+        .modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(15, 23, 42, 0.45);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 999;
+          padding: 20px;
+          animation: fadeIn 0.25s ease;
+        }
+
+        .modal-card {
+          background: rgba(255, 255, 255, 0.96);
+          border: 1px solid rgba(255, 255, 255, 0.8);
+          border-radius: 24px;
+          max-width: 480px;
+          width: 100%;
+          box-shadow: 0 30px 60px rgba(15, 23, 42, 0.15);
+          padding: 32px;
+          display: flex;
+          flex-direction: column;
+          gap: 20px;
+          animation: scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        @keyframes scaleUp {
+          from { transform: scale(0.95); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-header h2 {
+          font-family: 'Outfit', sans-serif;
+          font-size: 24px;
+          font-weight: 800;
+          color: var(--ink);
+          margin-top: 8px;
+          margin-bottom: 0;
+          letter-spacing: -0.02em;
+        }
+
+        .eyebrow-accent {
+          display: inline-flex;
+          align-items: center;
+          min-height: 24px;
+          padding: 0 10px;
+          border: 1px solid rgba(168, 85, 247, 0.2);
+          border-radius: 999px;
+          color: #a855f7;
+          background: rgba(168, 85, 247, 0.06);
+          font-size: 10.5px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+          font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .modal-body {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .modal-body p {
+          color: var(--text);
+          font-size: 14px;
+          line-height: 1.6;
+          margin: 0;
+          font-weight: 500;
+        }
+
+        .modal-actions {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          margin-top: 8px;
+        }
+
+        .btn-modal-donate {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 48px;
+          background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+          color: white;
+          text-decoration: none;
+          border-radius: 12px;
+          font-size: 15px;
+          font-weight: 700;
+          transition: all 0.2s ease;
+          box-shadow: 0 8px 20px rgba(168, 85, 247, 0.25);
+        }
+
+        .btn-modal-donate:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 12px 28px rgba(168, 85, 247, 0.35);
+          filter: brightness(1.05);
+        }
+
+        .btn-modal-close {
+          min-height: 44px;
+          background: transparent;
+          color: var(--muted);
+          border: 1px solid var(--line);
+          border-radius: 12px;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .btn-modal-close:hover {
+          background: var(--surface-strong);
+          color: var(--ink);
         }
       `}</style>
 
       <style jsx global>{`
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        html { -webkit-font-smoothing: antialiased; }
+        html, body { 
+          overflow-x: hidden; 
+          margin: 0; 
+          padding: 0; 
+          width: 100%; 
+          background: #f8fafc;
+          -webkit-font-smoothing: antialiased; 
+        }
       `}</style>
     </>
   );

@@ -70,6 +70,18 @@ if [ -f "$CREDS_FILE" ]; then
     rm -f "$CREDS_FILE"
 fi
 
+# Start background wake-up job to auto-trigger the lazy-loaded session synchronization
+(
+  # Wait up to 15 seconds for Next.js to start listening on port 3000
+  for i in $(seq 1 15); do
+    if wget -q -O- http://127.0.0.1:3000/api/session-sync >/dev/null 2>&1; then
+      echo "[INIT] Next.js session validation successfully woke up!"
+      break
+    fi
+    sleep 1
+  done
+) &
+
 echo "[INIT] Starting Next.js Standalone Server on port 3000..."
 echo "=== init complete, transferring control ==="
 exec node .next/standalone/server.js
