@@ -14,10 +14,9 @@ services:
     devices:
       - /dev/net/tun:/dev/net/tun
       
-    # Pass VPN credentials and configurations
-    environment:
-      - VPN_USER=${VPN_USER:-}
-      - VPN_PASS=${VPN_PASS:-}
+    # Load all credentials from .env (gitignored - VPN, environment variables, etc. stay private)
+    env_file:
+      - .env
     
     # Mount persistent folder for OpenVPN configuration and logs
     volumes:

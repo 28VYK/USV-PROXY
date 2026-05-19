@@ -41,3 +41,8 @@ yarn-error.log*
 /*.pem
 /ai_key.pem
 /fixed_ai_key.pem
+
+# Deployment archives (VPS upload bundles - never commit these)
+*.tar.gz
+*.zip
+*.tar
