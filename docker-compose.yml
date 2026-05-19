@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   usv-proxy:
     build: .
@@ -5,7 +7,23 @@ services:
     ports:
       - "${HOST_PORT:-3001}:3000"
     restart: always
-    # Limitari clare de RAM aplicate la nivel de Docker daemon (Containerul va fi oprit de Docker inainte sa ocupe prea mult VPS-ul)
+    
+    # Required capabilities and devices for OpenVPN split-tunneling inside the container
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+      
+    # Pass VPN credentials and configurations
+    environment:
+      - VPN_USER=${VPN_USER:-}
+      - VPN_PASS=${VPN_PASS:-}
+    
+    # Mount persistent folder for OpenVPN configuration and logs
+    volumes:
+      - ./vpn:/app/vpn
+      
+    # Clear memory limits applied at the Docker daemon level to ensure VPS stability (OOM prevention)
     deploy:
       resources:
         limits:

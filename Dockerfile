@@ -1,34 +1,35 @@
 FROM node:18-alpine
 
-# Setam un director de lucru pentru a rula aplicatia
+# Install OpenVPN and iproute2 (for advanced routing commands inside the container)
+RUN apk add --no-cache openvpn iproute2
+
+# Set working directory
 WORKDIR /app
 
-# Setam NODE_ENV pentru productie
+# Set NODE_ENV for production
 ENV NODE_ENV=production
-
-# Gid-ul si Uid-ul folosite de sistemul intern de la Alpine (izolare si memorie mica)
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nextjs -u 1001
 
 COPY package*.json ./
 RUN npm ci --omit=dev
 
-# Am transferat deja doar fisierele necesare in directorul curent.
-COPY --chown=nextjs:nodejs . ./
+# Copy all project files
+COPY . .
 
+# Build the Next.js application
 RUN npm run build
 
-# Pentru output standalone, server.js cauta static assets in .next/standalone/.next/static
+# For standalone output, Next.js server.js looks for static assets in .next/standalone/.next/static
 RUN mkdir -p .next/standalone/.next && cp -R .next/static .next/standalone/.next/static
 
-# Reducem numarul de procese, setam heap limitat in V8 (120MB)
+# Limit heap memory in V8 engine to 120MB for low-memory VPS stability
 ENV NODE_OPTIONS="--max-old-space-size=120"
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-USER nextjs
+# Make entrypoint script executable
+RUN chmod +x /app/entrypoint.sh
 
 EXPOSE 3000
 
-# Pornim serverul standalone generat de Next
-CMD ["node", ".next/standalone/server.js"]
+# Run the entrypoint script (must run as root inside container to establish VPN and modify internal container routing)
+ENTRYPOINT ["/bin/sh", "/app/entrypoint.sh"]
