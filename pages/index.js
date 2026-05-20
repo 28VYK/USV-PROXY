@@ -9,7 +9,10 @@ const SEMESTER_OPTIONS = [
 
 const SEMESTER_ORDER = {
   'SEM 1': 1,
-  'SEM 2': 2
+  'SR1': 2,
+  'SEM 2': 3,
+  'SR2': 4,
+  'SRE': 5
 };
 
 function normalizeGradeText(value) {
@@ -21,7 +24,14 @@ function normalizeGradeText(value) {
 
 function detectSemester(cells) {
   const text = normalizeGradeText(cells.join(' '));
+  const sesiune = normalizeGradeText(cells[2] || '');
 
+  // Detect restanțe first
+  if (sesiune === 'SR1' || /\bSR\s*1\b/.test(text)) return 'SR1';
+  if (sesiune === 'SR2' || /\bSR\s*2\b/.test(text)) return 'SR2';
+  if (sesiune === 'SRE' || /\bSRE\b/.test(text)) return 'SRE';
+
+  // Detect normal semesters
   if (/\b(?:SEM(?:ESTRUL)?\.?|SM)\s*1\b/.test(text)) {
     return 'SEM 1';
   }
@@ -240,8 +250,20 @@ export default function Home() {
 
   const semesterCounts = useMemo(() => {
     return grades.reduce((counts, grade) => {
-      if (grade.semester) {
-        counts[grade.semester] = (counts[grade.semester] || 0) + 1;
+      if (!grade.semester) return counts;
+      
+      const s = grade.semester;
+      // Map Restante Sem 1 to SEM 1
+      if (['SEM 1', 'SR1'].includes(s)) {
+        counts['SEM 1'] = (counts['SEM 1'] || 0) + 1;
+      }
+      // Map Restante Sem 2 to SEM 2
+      if (['SEM 2', 'SR2'].includes(s)) {
+        counts['SEM 2'] = (counts['SEM 2'] || 0) + 1;
+      }
+      // Catch SRE and any other exotic semester formats
+      if (!['SEM 1', 'SEM 2', 'SR1', 'SR2'].includes(s)) {
+        counts[s] = (counts[s] || 0) + 1;
       }
 
       return counts;
@@ -251,7 +273,19 @@ export default function Home() {
   const displayedGrades = useMemo(() => {
     return grades
       .map((grade, index) => ({ ...grade, originalIndex: index }))
-      .filter(grade => semesterFilter === 'all' || grade.semester === semesterFilter)
+      .filter(grade => {
+        if (semesterFilter === 'all') return true;
+        
+        if (semesterFilter === 'SEM 1') {
+          return ['SEM 1', 'SR1'].includes(grade.semester);
+        }
+        
+        if (semesterFilter === 'SEM 2') {
+          return ['SEM 2', 'SR2'].includes(grade.semester);
+        }
+        
+        return grade.semester === semesterFilter;
+      })
       .sort((a, b) => {
         const semesterDifference = getSemesterOrder(a.semester) - getSemesterOrder(b.semester);
 
