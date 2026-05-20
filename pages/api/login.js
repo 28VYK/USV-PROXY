@@ -12,6 +12,29 @@ import { URL } from 'url';
 const PEOPLESOFT_BASE = 'https://scolaritate.usv.ro';
 const LOGIN_PATH = '/psp/PT90SYS/?&cmd=login&languageCd=ROM';
 
+// Simple in-memory rate limiting map
+const ipCache = new Map();
+
+// Cleanup old cache entries periodically (every 10 minutes)
+if (global.rateLimitCleanupInterval === undefined) {
+  global.rateLimitCleanupInterval = setInterval(() => {
+    const now = Date.now();
+    for (const [ip, attempts] of ipCache.entries()) {
+      // Remove entries older than 15 minutes
+      const activeAttempts = attempts.filter(time => now - time < 15 * 60 * 1000);
+      if (activeAttempts.length === 0) {
+        ipCache.delete(ip);
+      } else {
+        ipCache.set(ip, activeAttempts);
+      }
+    }
+  }, 10 * 60 * 1000);
+  
+  if (global.rateLimitCleanupInterval.unref) {
+    global.rateLimitCleanupInterval.unref();
+  }
+}
+
 function encodeSessionCookie(cookieValue) {
   return Buffer.from(cookieValue || '', 'utf8').toString('base64url');
 }
@@ -86,6 +109,35 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
+
+  // Get client IP
+  const ip = req.headers['x-client-ip'] ||
+    req.headers['x-real-ip'] ||
+    req.headers['x-forwarded-for'] ||
+    req.headers['cf-connecting-ip'] ||
+    req.socket.remoteAddress ||
+    '127.0.0.1';
+  const clientIp = typeof ip === 'string' ? ip.split(',')[0].trim() : ip;
+
+  // Rate limiting check: max 10 attempts per 15 minutes
+  const now = Date.now();
+  const windowMs = 15 * 60 * 1000;
+  const maxAttempts = 10;
+
+  let attempts = ipCache.get(clientIp) || [];
+  attempts = attempts.filter(time => now - time < windowMs);
+
+  if (attempts.length >= maxAttempts) {
+    console.warn(`[SECURITY] Rate limit exceeded for IP: ${clientIp}`);
+    return res.status(429).json({
+      success: false,
+      error: 'Prea multe încercări de autentificare de la această adresă. Te rugăm să încerci din nou peste 15 minute.',
+    });
+  }
+
+  // Register current attempt
+  attempts.push(now);
+  ipCache.set(clientIp, attempts);
 
   const { userid, password } = req.body;
 
