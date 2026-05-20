@@ -1568,10 +1568,8 @@ export default function Home() {
           text-align: center;
           color: #64748b;
           font-size: 12px;
-          border-top: 1px solid rgba(226, 232, 240, 0.8);
-          background: rgba(255, 255, 255, 0.7);
-          backdrop-filter: blur(10px);
           font-weight: 500;
+          background: transparent;
         }
 
         .footer p {

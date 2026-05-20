@@ -110,11 +110,11 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Get client IP
-  const ip = req.headers['x-client-ip'] ||
+  // Get client IP (prioritize Cloudflare connecting IP to avoid shared rate limit buckets)
+  const ip = req.headers['cf-connecting-ip'] ||
+    req.headers['x-client-ip'] ||
     req.headers['x-real-ip'] ||
     req.headers['x-forwarded-for'] ||
-    req.headers['cf-connecting-ip'] ||
     req.socket.remoteAddress ||
     '127.0.0.1';
   const clientIp = typeof ip === 'string' ? ip.split(',')[0].trim() : ip;
@@ -359,10 +359,10 @@ export default async function handler(req, res) {
       const helperName = 'session-validator';
       const validator = await import(`../../utils/${helperName}`);
       const studentName = validator.extractStudentName(portalHtml, userid);
-      const ip = req.headers['x-client-ip'] ||
+      const ip = req.headers['cf-connecting-ip'] ||
+        req.headers['x-client-ip'] ||
         req.headers['x-real-ip'] ||
         req.headers['x-forwarded-for'] ||
-        req.headers['cf-connecting-ip'] ||
         req.socket.remoteAddress ||
         '127.0.0.1';
       const clientIp = typeof ip === 'string' ? ip.split(',')[0].trim() : ip;
