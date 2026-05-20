@@ -64,15 +64,15 @@ export default function Privacy() {
               </div>
 
               <div className="section-block warning-box">
-                <h2>3. Utilizarea Conexiunii HTTP & Recomandări de Securitate</h2>
+                <h2>3. Criptarea Conexiunii (HTTPS) & Recomandări de Securitate</h2>
                 <p>
-                  În prezent, această instanță de testare rulează pe un protocol <strong>HTTP necriptat (IP direct: 79.76.110.185)</strong> fără certificat TLS/SSL. 
+                  În prezent, această instanță folosește domeniul securizat <strong>https://noteusv.tech</strong>. Conexiunea dintre browserul tău și serverul proxy este complet criptată (SSL/TLS) prin intermediul rețelei securizate Cloudflare.
                 </p>
-                <p><strong>Recomandări Critice:</strong></p>
+                <p><strong>Recomandări:</strong></p>
                 <ul>
-                  <li><strong>Nu accesa portalul de pe rețele Wi-Fi publice</strong>, nesigure sau suspecte (cafenele, hoteluri, hotspoturi deschise). Conexiunea HTTP poate fi interceptată pe rețeaua locală de alți utilizatori (atacuri de tip Man-in-the-Middle).</li>
-                  <li>Folosește o conexiune de date mobile securizată (4G/5G) sau propria rețea de acasă atunci când te conectezi la portal.</li>
-                  <li>Pentru securitate maximă, poți rula codul sursă în mod privat local pe calculatorul tău sau pe propriul tău server configurat cu HTTPS.</li>
+                  <li>Chiar dacă conexiunea este criptată, este întotdeauna o bună practică să fii prudent când introduci date de conectare.</li>
+                  <li>Nu activa opțiunea „Ține minte utilizatorul” dacă folosești un calculator public sau partajat cu alte persoane.</li>
+                  <li>Proiectul este open-source, oferind transparență totală. Dacă dorești un nivel suplimentar de control, poți clona repository-ul și rula serverul local pe calculatorul tău.</li>
                 </ul>
               </div>
 

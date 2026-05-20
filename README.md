@@ -18,8 +18,8 @@ O soluție completă, modernă și ultra-premium pentru accesarea platformei `sc
 → [Security Policy](./SECURITY.md)
 
 ## 🌐 Platforma este LIVE
-Poți accesa și folosi platforma chiar acum (doar pentru studenții USV) la adresa:
-👉 **[http://79.76.110.185:8080/](http://79.76.110.185:8080/)**
+Poți accesa și folosi platforma chiar acum (doar pentru studenții USV) la adresa securizată:
+👉 **[https://noteusv.tech](https://noteusv.tech)**
 
 ---
 
