@@ -6,8 +6,6 @@ O soluție completă, modernă și ultra-premium pentru accesarea platformei `sc
 Poți accesa și folosi platforma chiar acum (doar pentru studenții USV) la adresa:
 👉 **[http://79.76.110.185:8080/](http://79.76.110.185:8080/)**
 
-*(Notă: Preview-ul inițial de Vercel (proxy-usv.vercel.app) a fost înlocuit de instanța de producție pe VPS, care include toate noile funcționalități.)*
-
 ---
 
 ## 🔴 Problema
