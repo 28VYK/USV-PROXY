@@ -1,108 +1,106 @@
 # USV Portal - Next.js Reverse Proxy 🎓
 
-O soluție completă, modernă și ultra-premium pentru accesarea platformei `scolaritate.usv.ro` din orice browser, pe orice dispozitiv.
+O soluție completă, modernă și ultra-premium pentru accesarea platformei `scolaritate.usv.ro` din orice browser, pe orice dispozitiv. 
+
+## 🌐 Platforma este LIVE
+Poți accesa și folosi platforma chiar acum (doar pentru studenții USV) la adresa:
+👉 **[http://79.76.110.185:8080/](http://79.76.110.185:8080/)**
+
+*(Notă: Preview-ul inițial de Vercel (proxy-usv.vercel.app) a fost înlocuit de instanța de producție pe VPS, care include toate noile funcționalități.)*
+
+---
 
 ## 🔴 Problema
-
-Platforma oficială PeopleSoft folosește protocoale TLS învechite (TLS 1.0) blocate automat de browserele moderne din motive de securitate:
+Platforma oficială PeopleSoft folosește protocoale TLS învechite (TLS 1.0) care sunt blocate automat de browserele moderne din motive de securitate:
 - Chrome: `ERR_SSL_VERSION_OR_CIPHER_MISMATCH`
 - Firefox: `SSL_ERROR_NO_CYPHER_OVERLAP`
-- Edge: conexiune refuzată
+- Edge: Conexiune refuzată
 
 ## ✅ Soluția USV Portal
+Un proxy modern care intermediază conexiunea la nivel local pe server (via VPN), oferind în același timp o interfață cu un design nou, ultra-optimizat și mult mai rapid.
 
-Un proxy modern care intermediază conexiunea, oferind în același timp o interfață cu un design nou, optimizat și mult mai rapid.
-
-### 🌟 Funcționalități noi (Versiunea Revizuită)
-- **UI/UX Premium:** Interfață complet refăcută cu design glassmorphism, animații fluide și culori ambientale.
-- **Sesiuni Persistente ("Ține-mă minte"):** Sistem securizat de auto-login în fundal via `localStorage` (credidențialele tale nu părăsesc niciodată dispozitivul propriu către servere terțe, în afară de USV).
+### 🌟 Funcționalități Cheie
+- **Istoric Multi-An (Nou 🔥):** Platforma descoperă automat și inteligent toți anii de studiu asociați contului tău. Poți naviga prin notele tale din anii trecuți, totul într-o singură interfață.
+- **Smart Filtering pentru Restanțe (Nou 🧠):** Ai restanțe? Platforma le mapează acum inteligent. Notele din `SR1` (Restanță Semestrul 1) sunt asignate vizual Semestrului 1, `SR2` la Semestrul 2, iar `SRE` (Reexaminări) sunt evidențiate în secțiunea generală, pentru ca nicio notă să nu se piardă.
+- **Sesiuni Persistente ("Ține-mă minte"):** Sistem securizat de auto-login în fundal via `localStorage`. Credențialele tale nu părăsesc niciodată dispozitivul către baze de date terțe.
+- **UI/UX Premium:** Interfață complet refăcută cu design glassmorphism, animații fluide și culori ambientale care îți fac plăcere să le folosești.
 - **Filtrare Avansată:** Vizualizează instant situația școlară cu suport pentru filtrare per semestru.
 - **Design Responsiv:** Optimizat impecabil atât pe mobil, cât și pe desktop.
-- **Modul Comunitate (Donate):** Posibilitatea de a susține proiectul independent pentru a acoperi costurile de mentenanță.
+- **Modul Comunitate (Donate):** Posibilitatea de a susține proiectul independent pentru a acoperi costurile de mentenanță ale serverului.
 
-## 🌐 Live Preview
+---
 
-Poți testa un **preview al interfeței de login** direct la:  
-👉 **[proxy-usv.vercel.app](https://proxy-usv.vercel.app/)**
+## 🚀 Rulare și Instalare (pentru dezvoltare locală)
 
-
-
-## 🚀 Instalare (pentru dezvoltare locală)
+Platforma include un fișier de Docker gata pregătit. Pentru ca requesturile să meargă în rețeaua internă a universității, containerul configurează și o conexiune OpenVPN.
 
 ### Cerințe
-- Node.js 18+
-- npm sau yarn
+- Node.js 18+ (Dacă rulezi doar local fără Docker)
+- Docker & Docker Compose
+- Fișier valid `usv2.ovpn` pentru VPN-ul USV
+- Credențiale pentru VPN în fișierul `.env`
 
 ### Pași
 
 ```bash
 # Clonează repository-ul
-git clone https://github.com/YOUR_USERNAME/usv-proxy.git
-cd usv-proxy
+git clone https://github.com/28VYK/USV-PROXY.git
+cd USV-PROXY
 
-# Instalează dependențele
-npm install
+# Adaugă setările de environment (.env) 
+# Trebuie să conțină OPENVPN_USER și OPENVPN_PASS
 
-# Pornește serverul de dezvoltare
-npm run dev
+# Construiește și rulează containerul în background
+docker compose up --build -d
 ```
 
-Accesează `http://localhost:3000` (sau portul tău configurat).
+Accesează `http://localhost:8080` pentru interfață.
+
+---
 
 ## 📁 Structura Proiectului
 
 ```text
 usv-proxy/
 ├── pages/
-│   ├── index.js              # Frontend - interfața nouă și dashboard-ul de note
+│   ├── index.js              # Frontend - interfața principală, logica de fetch, istoric & UI
 │   └── api/
 │       ├── login.js          # Route proxy pentru PeopleSoft login
-│       ├── proxy.js          # Route proxy pentru navigare date
-│       └── asset/[...path].js # Route proxy pentru resurse CSS/JS legacy
-├── next.config.js            # Configurare Next.js
+│       ├── proxy.js          # Route proxy pentru extragerea datelor
+│       ├── session-sync.js   # Menține sesiunea PeopleSoft activă
+│       └── asset/[...path].js # Reverse proxy pentru resurse CSS/JS legacy
+├── vpn/
+│   └── usv2.ovpn             # Fișierul de configurare VPN
+├── docker-compose.yml        # Configurare servicii Docker
+├── Dockerfile                # Configurația de imagine Docker cu clientul OpenVPN încorporat
+├── next.config.js            # Configurare Next.js (Standalone build output)
 └── package.json
 ```
 
-## 🔐 Securitate și Confidențialitate
+---
 
-- **Fără stocare pe server:** Platforma **NU** stochează sub nicio formă parolele, notele sau datele personale pe un server propriu. Conexiunea se face direct între browser și serverul USV.
-- Funcția "Ține-mă minte" stochează datele exclusiv **local, în browser-ul utilizatorului**.
+## 🔐 Securitate și Confidențialitate
+- **Fără stocare pe server:** Platforma **NU** stochează sub nicio formă parolele, notele sau datele personale într-o bază de date proprie. Conexiunea se face live (în timp real) între browser-ul tău și serverul USV.
+- **Auto-Login Securizat:** Funcția "Ține-mă minte" stochează datele exclusiv **local, în browser-ul tău** (`localStorage`).
 - Codul sursă este open-source, oferind transparență maximă pentru audit.
 
-## 🏢 Propunere de Implementare Instituțională
-
-Pentru ca universitatea să poată remedia problema la sursă, am documentat o configurație simplă de Nginx care poate fi implementată de departamentul IT:
-
-```nginx
-server {
-    listen 443 ssl http2;
-    server_name scolaritate.usv.ro;
-
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_certificate /etc/ssl/certs/usv.crt;
-    ssl_certificate_key /etc/ssl/private/usv.key;
-
-    location / {
-        proxy_pass https://peoplesoft-intern.usv.ro;
-        proxy_ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
-        proxy_ssl_verify off;
-        proxy_set_header Host $host;
-    }
-}
-```
+---
 
 ## ☕ Susține Proiectul
 
-Acest proiect este 100% independent și open-source, creat pentru a face viața studenților mult mai ușoară. Menținerea platformei online, rapidă și fără erori (inclusiv costurile lunare de găzduire a serverului VPS) necesită timp și resurse financiare.
+Acest proiect este 100% independent și open-source, creat din frustrarea lipsei unei platforme funcționale și pentru a face viața studenților mai ușoară. Menținerea platformei online, ultra-rapidă și fără erori (inclusiv costurile lunare de găzduire a serverului VPS) necesită timp și resurse financiare.
 
-Dacă folosești USV Portal și vrei să ajuți la menținerea lui online, poți face o donație rapidă:
+Dacă folosești USV Portal cu plăcere și vrei să ajuți la menținerea lui online, poți face o donație rapidă, oricât de mică:
 👉 **[Susține proiectul prin Revolut (revolut.me/28vik)](https://revolut.me/28vik)**
 
-Orice contribuție ajută și este extrem de apreciată! ❤️
+Orice contribuție ajută enorm comunitatea să aibă acces în continuare la platformă! ❤️
+
+---
 
 ## 🛠️ Tehnologii Folosite
-- [Next.js](https://nextjs.org/) - Framework de React
+- [Next.js](https://nextjs.org/) - Framework de React (App Logic & API Routes)
 - [Node.js](https://nodejs.org/) - Backend Runtime
+- [Docker](https://www.docker.com/) - Containerizare (Node + OpenVPN)
 - TLS Legacy HTTPS Agent
 
 ## 📝 Licență
