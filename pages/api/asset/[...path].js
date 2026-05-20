@@ -135,6 +135,23 @@ function legacyRequest(url, options = {}, maxRedirects = 5) {
         const redirectUrl = res.headers.location.startsWith('http') 
           ? res.headers.location 
           : PEOPLESOFT_BASE + res.headers.location;
+
+        // Security check: only redirect to USV domains to prevent SSRF/Open Redirect
+        try {
+          const parsedRedirect = new URL(redirectUrl);
+          const redirectHostname = parsedRedirect.hostname.toLowerCase();
+          const isRedirectValidUsv = redirectHostname === 'scolaritate.usv.ro' || redirectHostname === 'usv.ro' || redirectHostname.endsWith('.usv.ro');
+          
+          if (!isRedirectValidUsv) {
+            console.warn(`[SECURITY] Blocked redirect SSRF attempt in asset proxy: ${redirectUrl}`);
+            reject(new Error('Access denied: Redirect target must be a USV domain.'));
+            return;
+          }
+        } catch (e) {
+          reject(new Error('Invalid redirect URL format in asset proxy.'));
+          return;
+        }
+
         console.log(`[ASSET] Following redirect to: ${redirectUrl}`);
         resolve(legacyRequest(redirectUrl, options, maxRedirects - 1));
         return;

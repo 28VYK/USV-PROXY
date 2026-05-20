@@ -234,6 +234,20 @@ export default async function handler(req, res) {
   try {
     // Build full URL
     const fullUrl = url.startsWith('http') ? url : PEOPLESOFT_BASE + url;
+
+    // Security validation: ensure the target is strictly inside the USV domain tree to prevent SSRF (Open Proxy abuse)
+    try {
+      const parsedDestination = new URL(fullUrl);
+      const hostname = parsedDestination.hostname.toLowerCase();
+      const isValidUsv = hostname === 'scolaritate.usv.ro' || hostname === 'usv.ro' || hostname.endsWith('.usv.ro');
+      
+      if (!isValidUsv) {
+        console.warn(`[SECURITY] Blocked SSRF attempt to non-USV domain: ${fullUrl}`);
+        return res.status(403).json({ success: false, error: 'Acces refuzat: Proxy-ul poate fi utilizat exclusiv pentru domenii oficiale USV.' });
+      }
+    } catch (e) {
+      return res.status(400).json({ success: false, error: 'Format URL invalid.' });
+    }
     
     console.log(`[PROXY] Fetching: ${fullUrl}`);
 
@@ -268,6 +282,20 @@ export default async function handler(req, res) {
       const redirectUrl = response.headers.location.startsWith('http')
         ? response.headers.location
         : PEOPLESOFT_BASE + response.headers.location;
+
+      // Security validation: ensure the redirect destination is also inside the USV domain tree
+      try {
+        const parsedRedirect = new URL(redirectUrl);
+        const redirectHostname = parsedRedirect.hostname.toLowerCase();
+        const isRedirectValidUsv = redirectHostname === 'scolaritate.usv.ro' || redirectHostname === 'usv.ro' || redirectHostname.endsWith('.usv.ro');
+        
+        if (!isRedirectValidUsv) {
+          console.warn(`[SECURITY] Blocked redirect SSRF attempt to non-USV domain: ${redirectUrl}`);
+          return res.status(403).json({ success: false, error: 'Acces refuzat: Redirect către domeniu non-USV blocat.' });
+        }
+      } catch (e) {
+        return res.status(400).json({ success: false, error: 'Format redirect URL invalid.' });
+      }
 
       activeCookies = mergeCookieState(activeCookies, response.cookies);
       finalUrl = redirectUrl;

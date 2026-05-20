@@ -162,50 +162,19 @@ export default function Home() {
     window.hoverOffTR = () => {};
     window.setupTimeout = () => {};
     window.cancelBubble = true;
+    // Clean up legacy saved passwords from previous versions for security
+    if (localStorage.getItem('usv_password')) {
+      localStorage.removeItem('usv_password');
+    }
 
     const savedUser = localStorage.getItem('usv_userid');
-    const savedPass = localStorage.getItem('usv_password');
     const savedRemember = localStorage.getItem('usv_remember') === 'true';
 
-    if (savedUser && savedPass && savedRemember) {
+    if (savedUser && savedRemember) {
       setUserid(savedUser);
-      setPassword(savedPass);
       setRememberMe(true);
-      
-      const performAutoLogin = async () => {
-        setLoading(true);
-        try {
-          const loginRes = await fetch('/api/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userid: savedUser, password: savedPass }),
-          });
-          const loginData = await loginRes.json();
-          
-          if (loginData.success) {
-            setStudentName(formatUseridAsName(savedUser));
-            setLoggedIn(true);
-            setResult(loginData);
-
-            await fetchGrades(loginData.cookies);
-          } else {
-            localStorage.removeItem('usv_userid');
-            localStorage.removeItem('usv_password');
-            localStorage.removeItem('usv_remember');
-            setError(loginData.error || 'Autentificare eșuată');
-          }
-        } catch (err) {
-          setError('Eroare de conexiune la auto-autentificare');
-        } finally {
-          setLoading(false);
-          setIsInitializing(false);
-        }
-      };
-
-      performAutoLogin();
-    } else {
-      setIsInitializing(false);
     }
+    setIsInitializing(false);
 
     const savedSemester = localStorage.getItem('usv_semester');
     if (savedSemester) {
@@ -333,11 +302,9 @@ export default function Home() {
         setResult(data);
         if (rememberMe) {
           localStorage.setItem('usv_userid', trimmedUserid);
-          localStorage.setItem('usv_password', password);
           localStorage.setItem('usv_remember', 'true');
         } else {
           localStorage.removeItem('usv_userid');
-          localStorage.removeItem('usv_password');
           localStorage.removeItem('usv_remember');
         }
         await fetchGrades(data.cookies);
@@ -345,7 +312,6 @@ export default function Home() {
         setError(data.error || 'Autentificare eșuată');
         if (rememberMe) {
           localStorage.removeItem('usv_userid');
-          localStorage.removeItem('usv_password');
           localStorage.removeItem('usv_remember');
         }
       }
@@ -599,7 +565,7 @@ export default function Home() {
                           onChange={(e) => setRememberMe(e.target.checked)}
                           disabled={loading}
                         />
-                        <span>Ține-mă minte (rămâi conectat)</span>
+                        <span>Ține minte utilizatorul</span>
                       </label>
                     </div>
 
