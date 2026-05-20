@@ -5,352 +5,321 @@ export default function Privacy() {
   return (
     <>
       <Head>
-        <title>Confidențialitate & Disclaimer - Portal Student USV</title>
+        <title>Confidențialitate & Disclaimer — USV Portal</title>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@600;700;800&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet" />
       </Head>
 
       <div className="app">
-        {/* Ambient Glow Blobs */}
-        <div className="glow-blob glow-blob-1"></div>
-        <div className="glow-blob glow-blob-2"></div>
-
         {/* Header */}
         <header className="header">
           <div className="logo">
             <span className="logo-highlight">USV</span>
-            <span className="logo-text">Proxy</span>
+            <span className="logo-text">Portal</span>
           </div>
         </header>
 
         <main className="main">
-          <section className="privacy-card">
-            <div className="privacy-header">
-              <span className="eyebrow">Transparență Totală</span>
-              <h1>Politică de Confidențialitate & Disclaimer</h1>
-              <p>Informații importante despre securitatea datelor tale și modul în care funcționează acest proiect.</p>
+          <article className="doc">
+
+            {/* Title block */}
+            <div className="doc-header">
+              <p className="doc-label">Document public · Actualizat Mai 2026</p>
+              <h1>Politică de Confidențialitate<br />& Disclaimer</h1>
+              <p className="doc-subtitle">
+                Informații despre cum funcționează acest proiect și cum sunt gestionate datele tale.
+              </p>
             </div>
 
-            <div className="privacy-body">
-              <div className="section-block">
-                <h2>1. Caracterul Neoficial al Soluției</h2>
-                <p>
-                  Această aplicație este un <strong>proiect independent (Proof of Concept)</strong> și nu este afiliat, asociat, autorizat, susținut sau în vreun fel legat oficial de Universitatea „Ștefan cel Mare” din Suceava (USV).
-                </p>
-                <p>
-                  Scopul acestui proxy este de a oferi o interfață modernă, rapidă și adaptată pentru dispozitive mobile pentru portalul studențesc (PeopleSoft), ocolind limitările tehnice și de design ale platformei originale.
-                </p>
-              </div>
+            <div className="divider" />
 
-              <div className="section-block">
-                <h2>2. Cum sunt gestionate datele tale</h2>
-                <div className="data-flow-box">
-                  <div className="data-flow-step">
-                    <span className="step-num">1</span>
-                    <p>Introduci datele în browserul tău local.</p>
-                  </div>
-                  <div className="data-flow-step">
-                    <span className="step-num">2</span>
-                    <p>Serverul nostru (Proxy) le trimite direct către scolaritate.usv.ro prin VPN-ul universitar.</p>
-                  </div>
-                  <div className="data-flow-step">
-                    <span className="step-num">3</span>
-                    <p>USV întoarce notele tale, iar serverul le formatează și le trimite înapoi în browserul tău.</p>
-                  </div>
+            {/* Section 1 */}
+            <section className="section">
+              <h2>1. Caracterul Neoficial al Soluției</h2>
+              <p>
+                Această aplicație este un <strong>proiect independent (Proof of Concept)</strong> și nu este afiliat, asociat, autorizat sau în vreun fel legat oficial de Universitatea „Ștefan cel Mare" din Suceava.
+              </p>
+              <p>
+                Scopul este de a oferi o interfață modernă pentru portalul studențesc PeopleSoft, ocolind limitările tehnice ale platformei originale care blochează accesul din browserele moderne.
+              </p>
+            </section>
+
+            {/* Section 2 */}
+            <section className="section">
+              <h2>2. Cum sunt gestionate datele tale</h2>
+              <div className="flow">
+                <div className="flow-step">
+                  <span className="flow-index">01</span>
+                  <p>Introduci datele de conectare în browserul tău local.</p>
                 </div>
-                <p>
-                  Serverul proxy este <strong>stateless</strong>: nu deține o bază de date cu studenți sau parole și nu stochează parolele sau datele tale cu caracter personal pe disc. Tranzitul datelor prin proxy este necesar exclusiv pentru că serverul USV nu acceptă conexiuni directe din afara rețelei universitare decât printr-un VPN pe care proxy-ul îl are configurat intern.
-                </p>
+                <div className="flow-step">
+                  <span className="flow-index">02</span>
+                  <p>Serverul proxy le transmite direct către <code>scolaritate.usv.ro</code> prin VPN-ul universitar intern.</p>
+                </div>
+                <div className="flow-step">
+                  <span className="flow-index">03</span>
+                  <p>USV răspunde cu datele tale, serverul le formatează și le returnează browserului tău.</p>
+                </div>
               </div>
+              <p className="note">
+                Serverul este <strong>stateless</strong> — nu există baze de date, nu se stochează parole sau date personale pe disc. Datele există exclusiv în memorie pe durata sesiunii.
+              </p>
+            </section>
 
-              <div className="section-block warning-box">
-                <h2>3. Criptarea Conexiunii (HTTPS) & Recomandări de Securitate</h2>
-                <p>
-                  În prezent, această instanță folosește domeniul securizat <strong>https://noteusv.tech</strong>. Conexiunea dintre browserul tău și serverul proxy este complet criptată (SSL/TLS) prin intermediul rețelei securizate Cloudflare.
-                </p>
-                <p><strong>Recomandări:</strong></p>
+            {/* Section 3 */}
+            <section className="section">
+              <h2>3. Criptarea Conexiunii (HTTPS)</h2>
+              <p>
+                Platforma este accesibilă la <strong>https://noteusv.tech</strong>. Conexiunea dintre browser și server este complet criptată prin rețeaua Cloudflare (SSL/TLS).
+              </p>
+              <div className="callout">
+                <p><strong>Recomandări de securitate:</strong></p>
                 <ul>
-                  <li>Chiar dacă conexiunea este criptată, este întotdeauna o bună practică să fii prudent când introduci date de conectare.</li>
-                  <li>Nu activa opțiunea „Ține minte utilizatorul” dacă folosești un calculator public sau partajat cu alte persoane.</li>
-                  <li>Proiectul este open-source, oferind transparență totală. Dacă dorești un nivel suplimentar de control, poți clona repository-ul și rula serverul local pe calculatorul tău.</li>
+                  <li>Nu activa „Ține minte utilizatorul" pe calculatoare publice sau partajate.</li>
+                  <li>Utilizează întotdeauna conexiunea HTTPS — nu accesa portalul pe rețele Wi-Fi nesecurizate.</li>
+                  <li>Codul este open-source — poți clona repository-ul și rula serverul local pentru control deplin.</li>
                 </ul>
               </div>
+            </section>
 
-              <div className="section-block">
-                <h2>4. Declinarea Răspunderii (Disclaimer)</h2>
-                <p>
-                  Serviciul este furnizat „ca atare” (as is), fără niciun fel de garanție explicită sau implicită. Autorul proiectului nu își asumă răspunderea pentru:
-                </p>
-                <ul>
-                  <li>Eventuale erori, indisponibilitate a serverelor sau disfuncționalități ale platformei USV.</li>
-                  <li>Orice incident de securitate cauzat de utilizarea pe conexiuni necriptate sau rețele Wi-Fi publice.</li>
-                  <li>Orice blocare a contului ca urmare a utilizării repetate sau incorecte a API-ului de login.</li>
-                </ul>
-              </div>
-            </div>
+            {/* Section 4 */}
+            <section className="section">
+              <h2>4. Declinarea Răspunderii (Disclaimer)</h2>
+              <p>
+                Serviciul este furnizat „ca atare" (as is), fără nicio garanție explicită sau implicită. Autorul nu își asumă răspunderea pentru:
+              </p>
+              <ul>
+                <li>Erori, indisponibilitate sau disfuncționalități ale platformei USV.</li>
+                <li>Incidente de securitate cauzate de utilizarea pe rețele nesecurizate.</li>
+                <li>Blocarea contului ca urmare a utilizării incorecte a API-ului de autentificare.</li>
+              </ul>
+            </section>
 
-            <div className="privacy-footer">
+            <div className="divider" />
+
+            <footer className="doc-footer">
               <Link href="/" className="btn-back">
-                ← Înapoi la Autentificare
+                ← Înapoi la autentificare
               </Link>
-            </div>
-          </section>
+            </footer>
+
+          </article>
         </main>
       </div>
 
       <style jsx>{`
         .app {
-          --ink: #0f172a;
-          --text: #334155;
-          --muted: #64748b;
-          --line: #e2e8f0;
-          --line-strong: #cbd5e1;
-          --paper: #ffffff;
-          --surface: #f8fafc;
-          --surface-strong: #f1f5f9;
-          --blue: #4f46e5;
-          --blue-dark: #3730a3;
-          --amber: #f59e0b;
-          --amber-dark: #b45309;
-          
           min-height: 100vh;
           display: flex;
           flex-direction: column;
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-          background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%);
-          color: var(--text);
-          position: relative;
-          overflow-x: hidden;
+          background: #fafafa;
+          color: #1a1a1a;
         }
 
-        .glow-blob {
-          position: absolute;
-          border-radius: 50%;
-          filter: blur(130px);
-          opacity: 0.4;
-          z-index: 1;
-          pointer-events: none;
-          mix-blend-mode: multiply;
-          animation: pulse 10s ease-in-out infinite alternate;
-        }
-
-        .glow-blob-1 {
-          width: 450px;
-          height: 450px;
-          background: radial-gradient(circle, rgba(99, 102, 241, 0.45) 0%, rgba(139, 92, 246, 0) 70%);
-          top: -10%;
-          left: 10%;
-        }
-
-        .glow-blob-2 {
-          width: 400px;
-          height: 400px;
-          background: radial-gradient(circle, rgba(168, 85, 247, 0.4) 0%, rgba(236, 72, 153, 0) 70%);
-          bottom: 10%;
-          right: 15%;
-        }
-
-        @keyframes pulse {
-          0% { transform: translateY(0) scale(1); }
-          100% { transform: translateY(20px) scale(1.05); }
-        }
-
+        /* ── Header ── */
         .header {
-          position: relative;
-          margin: 24px auto 0;
-          width: max-content;
-          min-width: 200px;
-          height: 56px;
-          background: rgba(255, 255, 255, 0.6);
-          border: 1px solid rgba(255, 255, 255, 0.8);
-          border-radius: 99px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 0 24px;
-          backdrop-filter: blur(24px);
-          -webkit-backdrop-filter: blur(24px);
-          z-index: 100;
-          box-shadow: 0 12px 30px rgba(15, 23, 42, 0.04), inset 0 1px 0 rgba(255, 255, 255, 1);
+          padding: 20px 32px;
+          border-bottom: 1px solid #ebebeb;
+          background: #fff;
         }
 
         .logo {
           display: flex;
           align-items: center;
-          gap: 6px;
+          gap: 5px;
           font-family: 'Space Grotesk', sans-serif;
-          font-size: 20px;
-          letter-spacing: -0.04em;
+          font-size: 18px;
+          letter-spacing: -0.03em;
           user-select: none;
+          width: fit-content;
         }
 
         .logo-highlight {
-          font-weight: 700;
+          font-weight: 600;
           color: #0f172a;
         }
 
         .logo-text {
           font-weight: 500;
-          color: #64748b;
+          color: #94a3b8;
         }
 
+        /* ── Main ── */
         .main {
           flex: 1;
-          padding: 40px 24px;
+          padding: 48px 24px 80px;
           width: 100%;
-          max-width: 800px;
+          max-width: 680px;
           margin: 0 auto;
           box-sizing: border-box;
-          position: relative;
-          z-index: 2;
         }
 
-        .privacy-card {
-          background: rgba(255, 255, 255, 0.7);
-          backdrop-filter: blur(40px);
-          -webkit-backdrop-filter: blur(40px);
-          border: 1px solid rgba(255, 255, 255, 0.8);
-          border-radius: 24px;
-          padding: 40px;
-          box-shadow: 0 20px 50px rgba(15, 23, 42, 0.06), 
-                      inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        /* ── Document ── */
+        .doc-header {
+          margin-bottom: 36px;
         }
 
-        .privacy-header {
-          margin-bottom: 32px;
-          text-align: left;
-        }
-
-        .eyebrow {
-          display: inline-flex;
-          align-items: center;
-          min-height: 24px;
-          padding: 0 10px;
-          border: 1px solid rgba(99, 102, 241, 0.2);
-          border-radius: 999px;
-          color: var(--blue);
-          background: rgba(99, 102, 241, 0.05);
-          font-size: 11px;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.06em;
-          margin-bottom: 12px;
-          font-family: 'Space Grotesk', sans-serif;
-        }
-
-        .privacy-header h1 {
-          font-family: 'Outfit', sans-serif;
-          font-size: 32px;
-          font-weight: 900;
-          color: var(--ink);
-          letter-spacing: -0.03em;
-          line-height: 1.15;
-          margin-bottom: 12px;
-        }
-
-        .privacy-header p {
-          color: var(--muted);
-          font-size: 15px;
-          line-height: 1.5;
+        .doc-label {
+          font-size: 12px;
           font-weight: 500;
+          color: #94a3b8;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          margin-bottom: 16px;
         }
 
-        .privacy-body {
-          display: flex;
-          flex-direction: column;
-          gap: 28px;
-        }
-
-        .section-block h2 {
+        h1 {
           font-family: 'Outfit', sans-serif;
-          font-size: 18px;
+          font-size: 34px;
           font-weight: 800;
-          color: var(--ink);
-          margin-bottom: 12px;
+          color: #0f172a;
+          line-height: 1.15;
+          letter-spacing: -0.03em;
+          margin: 0 0 14px;
+        }
+
+        .doc-subtitle {
+          font-size: 15px;
+          color: #64748b;
+          line-height: 1.55;
+          margin: 0;
+        }
+
+        .divider {
+          height: 1px;
+          background: #ebebeb;
+          margin: 32px 0;
+        }
+
+        /* ── Sections ── */
+        .section {
+          margin-bottom: 36px;
+        }
+
+        h2 {
+          font-family: 'Outfit', sans-serif;
+          font-size: 17px;
+          font-weight: 700;
+          color: #0f172a;
+          margin: 0 0 12px;
           letter-spacing: -0.01em;
         }
 
-        .section-block p {
+        p {
           font-size: 14.5px;
-          line-height: 1.6;
-          color: var(--text);
-          margin-bottom: 10px;
+          line-height: 1.65;
+          color: #374151;
+          margin: 0 0 10px;
         }
 
-        .section-block p:last-child {
+        p:last-child {
           margin-bottom: 0;
         }
 
-        .section-block ul {
-          padding-left: 20px;
-          margin-top: 8px;
+        ul {
+          padding-left: 18px;
+          margin: 8px 0 0;
         }
 
-        .section-block li {
+        li {
           font-size: 14px;
+          line-height: 1.65;
+          color: #374151;
+          margin-bottom: 6px;
+        }
+
+        strong {
+          color: #0f172a;
+          font-weight: 600;
+        }
+
+        code {
+          font-family: 'SF Mono', 'Fira Code', monospace;
+          font-size: 13px;
+          background: #f1f5f9;
+          padding: 1px 5px;
+          border-radius: 4px;
+          color: #334155;
+        }
+
+        /* ── Flow steps ── */
+        .flow {
+          display: flex;
+          flex-direction: column;
+          gap: 0;
+          margin: 16px 0;
+          border: 1px solid #e5e7eb;
+          border-radius: 12px;
+          overflow: hidden;
+        }
+
+        .flow-step {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          padding: 14px 18px;
+          border-bottom: 1px solid #f1f5f9;
+        }
+
+        .flow-step:last-child {
+          border-bottom: none;
+        }
+
+        .flow-index {
+          font-family: 'Space Grotesk', sans-serif;
+          font-size: 12px;
+          font-weight: 600;
+          color: #94a3b8;
+          letter-spacing: 0.04em;
+          flex-shrink: 0;
+          width: 22px;
+        }
+
+        .flow-step p {
+          font-size: 13.5px;
+          line-height: 1.5;
+          color: #374151;
+          margin: 0;
+        }
+
+        /* ── Note / Callout ── */
+        .note {
+          font-size: 13.5px;
+          color: #64748b;
+          background: #f8fafc;
+          border-left: 3px solid #e2e8f0;
+          padding: 12px 16px;
+          border-radius: 0 8px 8px 0;
+          margin-top: 16px !important;
           line-height: 1.6;
-          color: var(--text);
+        }
+
+        .callout {
+          background: #f8fafc;
+          border: 1px solid #e5e7eb;
+          border-radius: 10px;
+          padding: 18px 20px;
+          margin-top: 14px;
+        }
+
+        .callout p {
+          font-size: 13.5px;
+          color: #374151;
           margin-bottom: 8px;
         }
 
-        .warning-box {
-          background: rgba(245, 158, 11, 0.06);
-          border: 1px solid rgba(245, 158, 11, 0.2);
-          padding: 24px;
-          border-radius: 16px;
-        }
-
-        .warning-box h2 {
-          color: var(--amber-dark);
-        }
-
-        .warning-box li strong {
-          color: #78350f;
-        }
-
-        .data-flow-box {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-          margin: 16px 0;
-          background: rgba(15, 23, 42, 0.02);
-          border: 1px solid var(--line);
-          padding: 20px;
-          border-radius: 16px;
-        }
-
-        .data-flow-step {
-          display: flex;
-          gap: 12px;
-          align-items: flex-start;
-        }
-
-        .step-num {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 24px;
-          height: 24px;
-          border-radius: 50%;
-          background: var(--blue);
-          color: white;
-          font-size: 12px;
-          font-weight: 700;
-          flex-shrink: 0;
-        }
-
-        .data-flow-step p {
-          font-size: 13.5px;
-          line-height: 1.45;
+        .callout ul {
           margin: 0;
-          color: var(--text);
-          font-weight: 500;
         }
 
-        .privacy-footer {
-          margin-top: 40px;
-          border-top: 1px solid var(--line);
-          padding-top: 24px;
+        .callout li {
+          font-size: 13.5px;
+          color: #4b5563;
+        }
+
+        /* ── Footer ── */
+        .doc-footer {
           display: flex;
           justify-content: flex-start;
         }
@@ -358,38 +327,37 @@ export default function Privacy() {
         .btn-back {
           display: inline-flex;
           align-items: center;
-          justify-content: center;
-          min-height: 44px;
-          padding: 0 20px;
-          background: var(--paper);
-          color: var(--ink);
+          height: 40px;
+          padding: 0 18px;
+          background: #fff;
+          color: #374151;
           text-decoration: none;
-          border: 1px solid var(--line);
-          border-radius: 12px;
-          font-size: 14px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          box-shadow: 0 2px 4px rgba(15, 23, 42, 0.02);
+          border: 1px solid #e5e7eb;
+          border-radius: 8px;
+          font-size: 13.5px;
+          font-weight: 500;
+          transition: all 0.15s ease;
+          font-family: 'Inter', sans-serif;
         }
 
         .btn-back:hover {
-          background: var(--surface-strong);
-          border-color: var(--line-strong);
-          transform: translateY(-1px);
+          background: #f8fafc;
+          border-color: #cbd5e1;
+          color: #0f172a;
         }
 
+        /* ── Mobile ── */
         @media (max-width: 640px) {
-          .privacy-card {
-            padding: 24px 16px;
+          .header {
+            padding: 16px 20px;
           }
 
-          .privacy-header h1 {
+          h1 {
             font-size: 26px;
           }
 
           .main {
-            padding: 20px 12px;
+            padding: 32px 16px 60px;
           }
         }
       `}</style>
