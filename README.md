@@ -2,6 +2,21 @@
 
 O soluție completă, modernă și ultra-premium pentru accesarea platformei `scolaritate.usv.ro` din orice browser, pe orice dispozitiv. 
 
+## ⚠️ Disclaimer & Politică de Confidențialitate
+
+**Acest proiect NU este afiliat oficial cu Universitatea „Ștefan cel Mare” Suceava.** Este o soluție independentă (Proof of Concept) creată de un student.
+
+### Informații importante despre date
+- Proiectul funcționează ca **reverse proxy** → toate cererile (inclusiv utilizator + parolă) trec temporar prin serverul nostru.
+- **Nu stocăm nimic persistent** pe server: fără bază de date, fără stocare de parole sau note.
+- Datele sunt procesate temporar exclusiv în memoria RAM pentru realizarea conexiunii de proxy.
+- Codul este complet open-source pentru audit.
+
+**Utilizarea se face pe propria răspundere.**
+
+→ [Citește Politica completă de Confidențialitate](./PRIVACY.md)
+→ [Security Policy](./SECURITY.md)
+
 ## 🌐 Platforma este LIVE
 Poți accesa și folosi platforma chiar acum (doar pentru studenții USV) la adresa:
 👉 **[http://79.76.110.185:8080/](http://79.76.110.185:8080/)**
@@ -80,7 +95,7 @@ usv-proxy/
 ## 🔐 Securitate și Confidențialitate
 - **Fără stocare pe server:** Platforma **NU** stochează sub nicio formă parolele, notele sau datele personale într-o bază de date proprie. Conexiunea se face live (în timp real) între browser-ul tău și serverul USV.
 - **Auto-Login Securizat:** Funcția "Ține-mă minte" stochează datele exclusiv **local, în browser-ul tău** (`localStorage`).
-- Codul sursă este open-source, oferind transparență maximă pentru audit.
+- **Politici dedicate**: Citește [Politica de Confidențialitate](./PRIVACY.md) și [Politica de Securitate](./SECURITY.md) pentru toate detaliile despre modul în care sunt securizate conexiunile și gestionate datele.
 
 ---
 

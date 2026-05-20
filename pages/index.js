@@ -554,6 +554,14 @@ export default function Home() {
                   
                   {error && <div className="alert alert-error">{error}</div>}
 
+                  <div className="security-banner">
+                    <span className="security-banner-icon">⚠️</span>
+                    <span className="security-banner-text">
+                      <strong>Atenție:</strong> Acesta este un proxy neoficial și independent. Datele tale sunt utilizate exclusiv pentru conectarea la portalul USV.
+                      <a href="/privacy" className="security-banner-link">Detalii și riscuri</a>
+                    </span>
+                  </div>
+
                   <form onSubmit={handleLogin}>
                     <div className="field">
                       <label>Utilizator</label>
@@ -765,7 +773,17 @@ export default function Home() {
 
         <footer className="footer">
           <p>Proiect independent • Nu este afiliat cu USV • Nu stocăm date</p>
-          <p className="footer-small">Cod sursă disponibil public • Scop educațional</p>
+          <p className="footer-small">
+            <a href="https://github.com/28VYK/USV-PROXY" target="_blank" rel="noopener noreferrer" className="footer-link">
+              Cod sursă disponibil public
+            </a>
+            {' • '}
+            <span>Scop educațional</span>
+            {' • '}
+            <a href="/privacy" className="footer-link">
+              Politică de Confidențialitate & Disclaimer
+            </a>
+          </p>
         </footer>
 
         {showDonateModal && (
@@ -909,7 +927,7 @@ export default function Home() {
 
         .main {
           flex: 1;
-          padding: 40px 28px;
+          padding: 24px 28px;
           padding-left: max(28px, env(safe-area-inset-left));
           padding-right: max(28px, env(safe-area-inset-right));
           width: 100%;
@@ -926,7 +944,7 @@ export default function Home() {
           align-items: center;
           justify-items: center;
           width: 100%;
-          min-height: calc(100vh - 210px);
+          min-height: calc(100vh - 200px);
           position: relative;
         }
 
@@ -998,7 +1016,7 @@ export default function Home() {
             0 30px 60px rgba(15, 23, 42, 0.05),
             0 12px 24px rgba(15, 23, 42, 0.03),
             inset 0 1px 0 rgba(255, 255, 255, 0.8);
-          padding: 42px;
+          padding: 28px 32px;
           min-width: 0;
           width: 100%;
           box-sizing: border-box;
@@ -1016,7 +1034,7 @@ export default function Home() {
         }
 
         .login-header {
-          margin-bottom: 32px;
+          margin-bottom: 18px;
         }
 
         .eyebrow {
@@ -1039,7 +1057,7 @@ export default function Home() {
           font-family: 'Outfit', sans-serif;
           font-size: 34px;
           font-weight: 900;
-          margin: 16px 0 10px;
+          margin: 8px 0 4px;
           color: var(--ink);
           letter-spacing: -0.03em;
           background: linear-gradient(135deg, #0f172a 0%, #312e81 100%);
@@ -1056,7 +1074,7 @@ export default function Home() {
         }
 
         .field {
-          margin-bottom: 22px;
+          margin-bottom: 14px;
         }
 
         .field label {
@@ -1104,7 +1122,7 @@ export default function Home() {
         }
 
         .field-checkbox {
-          margin-bottom: 26px;
+          margin-bottom: 18px;
           margin-top: -8px;
         }
 
@@ -1220,9 +1238,9 @@ export default function Home() {
 
         /* Login Disclaimer */
         .login-disclaimer {
-          margin-top: 24px;
+          margin-top: 14px;
           text-align: center;
-          padding-top: 20px;
+          padding-top: 12px;
           border-top: 1px dashed rgba(15, 23, 42, 0.1);
         }
 
@@ -1565,7 +1583,7 @@ export default function Home() {
         }
 
         .footer {
-          padding: 24px 28px;
+          padding: 16px 28px;
           text-align: center;
           color: #64748b;
           font-size: 12px;
@@ -1582,7 +1600,19 @@ export default function Home() {
         .footer-small {
           font-size: 11px !important;
           margin-top: 5px !important;
-          opacity: 0.8;
+          opacity: 0.9;
+        }
+
+        .footer-link {
+          color: var(--blue);
+          text-decoration: none;
+          font-weight: 600;
+          transition: color 0.15s ease;
+        }
+
+        .footer-link:hover {
+          color: var(--blue-dark);
+          text-decoration: underline;
         }
 
         @media (max-width: 768px) {
@@ -1845,6 +1875,57 @@ export default function Home() {
 
         @keyframes spin {
           to { transform: rotate(360deg); }
+        }
+
+        /* Security Banner & Privacy Link Styles */
+        .security-banner {
+          display: flex;
+          gap: 10px;
+          padding: 8px 12px;
+          background: rgba(245, 158, 11, 0.07);
+          border: 1px solid rgba(245, 158, 11, 0.2);
+          border-radius: 12px;
+          margin-bottom: 12px;
+          font-size: 12px;
+          line-height: 1.45;
+          color: #b45309;
+          text-align: left;
+        }
+
+        .security-banner-icon {
+          font-size: 14px;
+          flex-shrink: 0;
+          margin-top: 1px;
+        }
+
+        .security-banner-text strong {
+          color: #78350f;
+          font-weight: 700;
+        }
+
+        .security-banner-link {
+          color: var(--blue);
+          text-decoration: underline;
+          font-weight: 600;
+          margin-left: 4px;
+          transition: color 0.15s ease;
+        }
+
+        .security-banner-link:hover {
+          color: var(--blue-dark);
+        }
+
+        .privacy-link {
+          color: var(--blue);
+          text-decoration: none;
+          font-weight: 600;
+          font-size: 12px;
+          transition: color 0.15s ease;
+        }
+
+        .privacy-link:hover {
+          color: var(--blue-dark);
+          text-decoration: underline;
         }
       `}</style>
 
