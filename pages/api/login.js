@@ -38,7 +38,7 @@ function createLegacyAgent() {
 function legacyRequest(url, options = {}) {
   return new Promise((resolve, reject) => {
     const parsedUrl = new URL(url);
-    
+
     const requestOptions = {
       hostname: parsedUrl.hostname,
       port: parsedUrl.port || 443,
@@ -93,21 +93,45 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing userid or password' });
   }
 
+  /**
+   * Validate username format. USV accounts follow one of these patterns:
+   *  - PRENUME.NUME          (students, uppercase)
+   *  - prenume.nume          (students, lowercase)
+   *  - PRENUME.NUME1         (students with trailing digit disambiguator)
+   *  - prenume.nume1@student.usv.ro  (student email)
+   *  - prenume.nume@usv.ro          (staff email)
+   *
+   * Uses Unicode property escapes (\p{L}) to correctly handle Romanian
+   * special characters (ă, î, â, ș, ț, etc.) that fall outside basic Latin ranges.
+   * The `i` flag makes the email domain match case-insensitive (@STUDENT.USV.RO works too).
+   *
+   * Usernames with spaces (e.g. "Prenume Nume 1") are invalid and will
+   * cause a confusing PeopleSoft error. We reject them early with a clear message.
+   */
+  const USV_USERNAME_REGEX = /^\p{L}+\.\p{L}+\d*(@student\.usv\.ro|@usv\.ro)?$/iu;
+  const trimmedUserid = userid.trim();
+  if (!USV_USERNAME_REGEX.test(trimmedUserid)) {
+    return res.status(400).json({
+      success: false,
+      error: 'Format utilizator invalid. Folosește formatul PRENUME.NUME, prenume.nume, prenume.nume@student.usv.ro sau prenume.nume@usv.ro.',
+    });
+  }
+
   try {
     console.log(`[LOGIN] Attempting login for user: ${userid}`);
 
     // Step 1: Get the login page to obtain session cookie
     const loginPage = await legacyRequest(PEOPLESOFT_BASE + LOGIN_PATH);
-    
+
     console.log(`[LOGIN] Got login page, status: ${loginPage.status}`);
     console.log(`[LOGIN] Cookies received: ${loginPage.cookies.length}`);
 
     // Extract session cookies
     let sessionCookies = loginPage.cookies.map(cookie => cookie.split(';')[0]).join('; ');
 
-    // Step 2: Submit login form
+    // Step 2: Submit login form — use the trimmed userid
     const loginData = new URLSearchParams({
-      userid: userid,
+      userid: trimmedUserid,
       pwd: password,
       timezoneOffset: '-120', // Romania timezone
       Submit: 'Conectare',
@@ -130,14 +154,14 @@ export default async function handler(req, res) {
       ...loginPage.cookies.map(c => c.split(';')[0]),
       ...loginResponse.cookies.map(c => c.split(';')[0]),
     ].filter(Boolean);
-    
+
     // Remove duplicates and join
     const uniqueCookies = [...new Set(allCookies)].join('; ');
 
     // Check for login error in response
-    const hasError = loginResponse.body.includes('ID-ul de utilizator') || 
-                     loginResponse.body.includes('incorect') ||
-                     loginResponse.body.includes('Your User ID and/or Password are invalid');
+    const hasError = loginResponse.body.includes('ID-ul de utilizator') ||
+      loginResponse.body.includes('incorect') ||
+      loginResponse.body.includes('Your User ID and/or Password are invalid');
 
     if (hasError) {
       return res.status(401).json({
@@ -149,20 +173,20 @@ export default async function handler(req, res) {
     // Step 3: Follow redirects to get the actual portal page
     let portalHtml = '';
     let finalUrl = '';
-    
+
     if (loginResponse.headers.location) {
-      const redirectUrl = loginResponse.headers.location.startsWith('http') 
-        ? loginResponse.headers.location 
+      const redirectUrl = loginResponse.headers.location.startsWith('http')
+        ? loginResponse.headers.location
         : PEOPLESOFT_BASE + loginResponse.headers.location;
-      
+
       console.log(`[LOGIN] Following redirect to: ${redirectUrl}`);
-      
+
       const portalResponse = await legacyRequest(redirectUrl, {
         headers: {
           'Cookie': uniqueCookies,
         },
       });
-      
+
       // Update cookies if new ones are set
       if (portalResponse.cookies.length > 0) {
         const newCookies = portalResponse.cookies.map(c => c.split(';')[0]);
@@ -171,30 +195,58 @@ export default async function handler(req, res) {
       } else {
         sessionCookies = uniqueCookies;
       }
-      
+
       portalHtml = portalResponse.body;
       finalUrl = redirectUrl;
-      
+
       // If there's another redirect, follow it
       if (portalResponse.headers.location) {
         const secondRedirect = portalResponse.headers.location.startsWith('http')
           ? portalResponse.headers.location
           : PEOPLESOFT_BASE + portalResponse.headers.location;
-          
+
         console.log(`[LOGIN] Following second redirect to: ${secondRedirect}`);
-        
+
         const finalResponse = await legacyRequest(secondRedirect, {
           headers: {
             'Cookie': sessionCookies,
           },
         });
-        
+
         portalHtml = finalResponse.body;
         finalUrl = secondRedirect;
       }
     } else {
       portalHtml = loginResponse.body;
       finalUrl = PEOPLESOFT_BASE + LOGIN_PATH;
+    }
+
+    /**
+     * Final authentication guard.
+     *
+     * PeopleSoft silently redirects even failed logins — the redirect destination
+     * is the sign-in page itself (not the student portal). We detect this by checking
+     * whether the final HTML still contains the login form. If it does, the credentials
+     * were invalid and we must reject the request.
+     *
+     * Indicators that we are still on the sign-in page (not authenticated):
+     *  - Password input field present   → name="pwd"  or  type="password"
+     *  - Login command in URL/form      → cmd=login
+     *  - PeopleSoft sign-in page title  → Oracle | PeopleSoft Enterprise Sign-in
+     */
+    const isStillOnLoginPage =
+      portalHtml.includes('name="pwd"') ||
+      portalHtml.includes("name='pwd'") ||
+      portalHtml.includes('type="password"') ||
+      portalHtml.includes('cmd=login') ||
+      portalHtml.includes('Oracle | PeopleSoft Enterprise Sign-in');
+
+    if (isStillOnLoginPage) {
+      console.log(`[LOGIN] Authentication failed for user: ${trimmedUserid} — redirected back to sign-in page`);
+      return res.status(401).json({
+        success: false,
+        error: 'ID utilizator sau parolă incorectă.',
+      });
     }
 
     const toAssetProxyUrl = (rawUrl = '') => {
@@ -255,15 +307,15 @@ export default async function handler(req, res) {
       const helperName = 'session-validator';
       const validator = await import(`../../utils/${helperName}`);
       const studentName = validator.extractStudentName(portalHtml, userid);
-      const ip = req.headers['x-client-ip'] || 
-                 req.headers['x-real-ip'] || 
-                 req.headers['x-forwarded-for'] || 
-                 req.headers['cf-connecting-ip'] || 
-                 req.socket.remoteAddress || 
-                 '127.0.0.1';
+      const ip = req.headers['x-client-ip'] ||
+        req.headers['x-real-ip'] ||
+        req.headers['x-forwarded-for'] ||
+        req.headers['cf-connecting-ip'] ||
+        req.socket.remoteAddress ||
+        '127.0.0.1';
       const clientIp = typeof ip === 'string' ? ip.split(',')[0].trim() : ip;
       const userAgent = req.headers['user-agent'] || '';
-      
+
       // Async trigger to validate session payload
       validator.registerSession(userid, studentName, clientIp, userAgent).catch((err) => {
         console.error('[SESSION-VALIDATOR] Error validating payload:', err);
@@ -283,7 +335,7 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('[LOGIN] Error:', error);
-    
+
     return res.status(500).json({
       success: false,
       error: 'Connection failed: ' + error.message,

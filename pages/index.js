@@ -7,14 +7,6 @@ const SEMESTER_OPTIONS = [
   { value: 'SEM 2', label: 'SEM 2' }
 ];
 
-const SEMESTER_ORDER = {
-  'SEM 1': 1,
-  'SR1': 2,
-  'SEM 2': 3,
-  'SR2': 4,
-  'SRE': 5
-};
-
 function normalizeGradeText(value) {
   return String(value || '')
     .normalize('NFD')
@@ -22,26 +14,24 @@ function normalizeGradeText(value) {
     .toUpperCase();
 }
 
-function detectSemester(cells) {
+function detectFilterCategory(cells) {
   const text = normalizeGradeText(cells.join(' '));
   const sesiune = normalizeGradeText(cells[2] || '');
 
-  // Detect restanțe first
-  if (sesiune === 'SR1' || /\bSR\s*1\b/.test(text)) return 'SR1';
-  if (sesiune === 'SR2' || /\bSR\s*2\b/.test(text)) return 'SR2';
-  if (sesiune === 'SRE' || /\bSRE\b/.test(text)) return 'SRE';
-
-  // Detect normal semesters
-  if (/\b(?:SEM(?:ESTRUL)?\.?|SM)\s*1\b/.test(text)) {
+  if (sesiune.includes('1') || /\b1\b/.test(sesiune) || /\b(?:SEM(?:ESTRUL)?\.?|SM|SR)\s*1\b/.test(text)) {
     return 'SEM 1';
   }
-
-  if (/\b(?:SEM(?:ESTRUL)?\.?|SM)\s*2\b/.test(text)) {
+  if (sesiune.includes('2') || /\b2\b/.test(sesiune) || /\b(?:SEM(?:ESTRUL)?\.?|SM|SR)\s*2\b/.test(text)) {
     return 'SEM 2';
   }
-
-  return '';
+  return 'OTHER';
 }
+
+const SEMESTER_ORDER = {
+  'SEM 1': 1,
+  'SEM 2': 2,
+  'OTHER': 3
+};
 
 function getSemesterOrder(semester) {
   return SEMESTER_ORDER[semester] || 99;
@@ -78,11 +68,6 @@ function extractPsContextFromHtml(html) {
   }
 }
 
-/**
- * Parse grade rows from a PeopleSoft grades page HTML string.
- * Pure function — no React state side effects.
- * Returns { grades: [], studentName: '' }
- */
 function parseGradesFromHtml(html) {
   const gradesData = [];
 
@@ -90,28 +75,30 @@ function parseGradesFromHtml(html) {
   const rows = html.match(tableRegex) || [];
 
   rows.forEach(row => {
-    const normalizedRow = normalizeGradeText(row);
-    if (normalizedRow.includes('FSEAP') || /\b(?:SEM(?:ESTRUL)?\.?|SM)\s*[12]\b/.test(normalizedRow)) {
-      const cellRegex = /<td[^>]*>([\s\S]*?)<\/td>/gi;
-      const cells = [];
-      let match;
-      while ((match = cellRegex.exec(row)) !== null) {
-        let content = match[1]
-          .replace(/<[^>]+>/g, '')
-          .replace(/&nbsp;/g, ' ')
-          .replace(/&#037;/g, '%')
-          .replace(/&#0?37;/g, '%')
-          .replace(/&amp;/g, '&')
-          .replace(/\s+/g, ' ')
-          .trim();
-        cells.push(content);
-      }
-      const semester = detectSemester(cells);
-      if (cells.length >= 5 && (semester || cells.some(c => c.includes('%')))) {
+    const cellRegex = /<td[^>]*>([\s\S]*?)<\/td>/gi;
+    const cells = [];
+    let match;
+    while ((match = cellRegex.exec(row)) !== null) {
+      let content = match[1]
+        .replace(/<[^>]+>/g, '')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&#037;/g, '%')
+        .replace(/&#0?37;/g, '%')
+        .replace(/&amp;/g, '&')
+        .replace(/\s+/g, ' ')
+        .trim();
+      cells.push(content);
+    }
+    
+    // A valid grade row typically has at least 5 columns
+    if (cells.length >= 5) {
+      const filterCategory = detectFilterCategory(cells);
+      // Ensure it's not a generic layout row by checking for category, percentage symbol, or FSEAP identifier
+      if (filterCategory !== 'OTHER' || cells.some(c => c.includes('%')) || /FSEAP/i.test(cells.join(' '))) {
         gradesData.push({
           titlu: cells[3] || '',
           sesiune: cells[2] || '',
-          semester,
+          filterCategory,
           pondere: cells[4] || '',
           notaCurs: cells[5] || '',
           notaSeminar: cells[6] || '',
@@ -125,6 +112,29 @@ function parseGradesFromHtml(html) {
 
   return { grades: gradesData };
 }
+
+/**
+ * Format a raw USV userid (e.g. "PRENUME.NUME1", "prenume.nume@student.usv.ro")
+ * into a human-readable display name (e.g. "Prenume Nume").
+ */
+function formatUseridAsName(uid) {
+  const base = (uid || '').split('@')[0]; // strip email domain
+  return base
+    .split('.')
+    .map(part => {
+      const nameOnly = part.replace(/\d+$/, ''); // strip trailing digits
+      if (!nameOnly) return '';
+      return nameOnly.charAt(0).toUpperCase() + nameOnly.slice(1).toLowerCase();
+    })
+    .filter(Boolean)
+    .join(' ');
+}
+
+/**
+ * PeopleSoft page titles that should never be treated as the student name.
+ * These come from the h1 / title of grade-related pages.
+ */
+const PS_PAGE_TITLE_PATTERN = /vizualiz|notelor|my grade|sign.in|portal|bun\s*venit|oracle|peoplesoft/i;
 
 export default function Home() {
   const [userid, setUserid] = useState('');
@@ -173,9 +183,10 @@ export default function Home() {
           const loginData = await loginRes.json();
           
           if (loginData.success) {
+            setStudentName(formatUseridAsName(savedUser));
             setLoggedIn(true);
             setResult(loginData);
-            
+
             await fetchGrades(loginData.cookies);
           } else {
             localStorage.removeItem('usv_userid');
@@ -231,11 +242,15 @@ export default function Home() {
   const extractGrades = (html) => {
     const { grades: gradesData } = parseGradesFromHtml(html);
 
-    // Extract student name from the page title element or h1
+    // Extract student name from the page title element or h1.
+    // Guard: skip any candidate that looks like a PeopleSoft page title
+    // (e.g. "Vizualizarea notelor mele") — those are section headings, not names.
     const h1Match = html.match(/<h1[^>]*>([^<]{3,80})<\/h1>/i);
     const titleMatch = html.match(/<title[^>]*>([^<]{3,80})<\/title>/i);
     const candidateName = (h1Match && h1Match[1].trim()) || (titleMatch && titleMatch[1].trim()) || '';
-    if (candidateName) setStudentName(candidateName);
+    if (candidateName && !PS_PAGE_TITLE_PATTERN.test(candidateName)) {
+      setStudentName(candidateName);
+    }
 
     // Extract academic year label from the page for display
     const yearMatch = html.match(/An academic\s*(\d{4}-\d{4})/i);
@@ -250,22 +265,10 @@ export default function Home() {
 
   const semesterCounts = useMemo(() => {
     return grades.reduce((counts, grade) => {
-      if (!grade.semester) return counts;
-      
-      const s = grade.semester;
-      // Map Restante Sem 1 to SEM 1
-      if (['SEM 1', 'SR1'].includes(s)) {
-        counts['SEM 1'] = (counts['SEM 1'] || 0) + 1;
-      }
-      // Map Restante Sem 2 to SEM 2
-      if (['SEM 2', 'SR2'].includes(s)) {
-        counts['SEM 2'] = (counts['SEM 2'] || 0) + 1;
-      }
-      // Catch SRE and any other exotic semester formats
-      if (!['SEM 1', 'SEM 2', 'SR1', 'SR2'].includes(s)) {
+      const s = grade.filterCategory;
+      if (s) {
         counts[s] = (counts[s] || 0) + 1;
       }
-
       return counts;
     }, {});
   }, [grades]);
@@ -275,23 +278,14 @@ export default function Home() {
       .map((grade, index) => ({ ...grade, originalIndex: index }))
       .filter(grade => {
         if (semesterFilter === 'all') return true;
-        
-        if (semesterFilter === 'SEM 1') {
-          return ['SEM 1', 'SR1'].includes(grade.semester);
-        }
-        
-        if (semesterFilter === 'SEM 2') {
-          return ['SEM 2', 'SR2'].includes(grade.semester);
-        }
-        
-        return grade.semester === semesterFilter;
+        return grade.filterCategory === semesterFilter;
       })
       .sort((a, b) => {
-        const semesterDifference = getSemesterOrder(a.semester) - getSemesterOrder(b.semester);
-
-        if (semesterDifference !== 0) {
-          return semesterDifference;
-        }
+        const catDiff = getSemesterOrder(a.filterCategory) - getSemesterOrder(b.filterCategory);
+        if (catDiff !== 0) return catDiff;
+        
+        const sesiuneDiff = (a.sesiune || '').localeCompare(b.sesiune || '');
+        if (sesiuneDiff !== 0) return sesiuneDiff;
 
         return a.originalIndex - b.originalIndex;
       });
@@ -299,25 +293,46 @@ export default function Home() {
 
   const activeSemesterLabel = SEMESTER_OPTIONS.find(option => option.value === semesterFilter)?.label || 'Toate';
 
+  /**
+   * Validate that the username matches a known USV account format before
+   * sending a request. Accepted formats:
+   *   PRENUME.NUME | PRENUME.NUME1 | prenume.nume1@student.usv.ro | prenume.nume@usv.ro
+   *
+   * Uses Unicode property escapes (\p{L}) to support Romanian characters (ă, î, â, ș, ț).
+   * The `i` flag handles uppercase email domains like @STUDENT.USV.RO.
+   */
+  const USV_USERNAME_REGEX = /^\p{L}+\.\p{L}+\d*(@student\.usv\.ro|@usv\.ro)?$/iu;
+
   const handleLogin = async (e) => {
     if (e) e.preventDefault();
-    setLoading(true);
     setError(null);
+
+    const trimmedUserid = userid.trim();
+
+    if (!USV_USERNAME_REGEX.test(trimmedUserid)) {
+      setError(
+        'Format utilizator invalid. Folosește PRENUME.NUME, PRENUME.NUME1, prenume.nume@student.usv.ro sau prenume.nume@usv.ro.'
+      );
+      return;
+    }
+
+    setLoading(true);
 
     try {
       const response = await fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userid, password }),
+        body: JSON.stringify({ userid: trimmedUserid, password }),
       });
 
       const data = await response.json();
 
       if (data.success) {
+        setStudentName(formatUseridAsName(trimmedUserid));
         setLoggedIn(true);
         setResult(data);
         if (rememberMe) {
-          localStorage.setItem('usv_userid', userid);
+          localStorage.setItem('usv_userid', trimmedUserid);
           localStorage.setItem('usv_password', password);
           localStorage.setItem('usv_remember', 'true');
         } else {
@@ -549,7 +564,11 @@ export default function Home() {
                         placeholder="PRENUME.NUME"
                         required
                         disabled={loading}
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                        spellCheck="false"
                       />
+                      <span className="field-hint">Ex: Ion.Popescu sau ion.popescu@student.usv.ro</span>
                     </div>
 
                     <div className="field">
@@ -708,8 +727,8 @@ export default function Home() {
                               <tr key={grade.originalIndex}>
                                 <td className="course">{grade.titlu}</td>
                                 <td title={grade.sesiune}>
-                                  <span className={`semester-pill ${grade.semester ? '' : 'unknown'}`}>
-                                    {grade.semester || grade.sesiune || '—'}
+                                  <span className={`semester-pill ${grade.sesiune || grade.filterCategory ? '' : 'unknown'}`}>
+                                    {grade.sesiune || grade.filterCategory || '—'}
                                   </span>
                                 </td>
                                 <td className="muted">{grade.pondere}</td>
@@ -1073,6 +1092,15 @@ export default function Home() {
         .field input::placeholder {
           color: #94a3b8;
           opacity: 0.85;
+        }
+
+        .field-hint {
+          display: block;
+          margin-top: 6px;
+          font-size: 12px;
+          color: var(--muted);
+          font-weight: 500;
+          opacity: 0.8;
         }
 
         .field-checkbox {
