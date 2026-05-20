@@ -50,3 +50,6 @@ yarn-error.log*
 
 # Agent rules (hidden from GitHub)
 /.agents/
+
+# Local private notes
+/local_project_notes.txt
