@@ -520,13 +520,7 @@ export default function Home() {
                   
                   {error && <div className="alert alert-error">{error}</div>}
 
-                  <div className="security-banner">
-                    <span className="security-banner-icon">⚠️</span>
-                    <span className="security-banner-text">
-                      <strong>Atenție:</strong> Acesta este un proxy neoficial și independent. Datele tale sunt utilizate exclusiv pentru conectarea la portalul USV.
-                      <a href="/privacy" className="security-banner-link">Detalii și riscuri</a>
-                    </span>
-                  </div>
+
 
                   <form onSubmit={handleLogin}>
                     <div className="field">
@@ -576,6 +570,9 @@ export default function Home() {
 
                   <div className="login-disclaimer">
                     <p>Fără parole salvate • 100% Independent</p>
+                    <p className="security-hint">
+                      Proxy independent. Datele tranzitează exclusiv pentru conectarea securizată la USV. <a href="/privacy" className="security-hint-link">Detalii și riscuri</a>
+                    </p>
                   </div>
                 </section>
               </div>
@@ -1216,6 +1213,24 @@ export default function Home() {
           color: #64748b;
           font-weight: 500;
           font-family: 'Inter', sans-serif;
+        }
+
+        .security-hint {
+          margin-top: 6px !important;
+          font-size: 11px !important;
+          color: #94a3b8 !important;
+          line-height: 1.45;
+        }
+
+        .security-hint-link {
+          color: var(--blue) !important;
+          text-decoration: underline;
+          font-weight: 600;
+          transition: color 0.15s ease;
+        }
+
+        .security-hint-link:hover {
+          color: var(--blue-dark) !important;
         }
 
         .dashboard {
