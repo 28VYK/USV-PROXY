@@ -1,0 +1,16 @@
+# Caddy Reverse Proxy with Cloudflare SSL
+:8080 {
+    # TLS configuration using the Cloudflare Origin Certificate
+    tls /etc/caddy/certs/origin.pem /etc/caddy/certs/origin.key
+
+    # Reverse proxy to the Next.js app container
+    reverse_proxy usv-proxy:3000
+
+    # Modern logging (optional)
+    log {
+        output file /var/log/caddy/access.log {
+            roll_size 10mb
+            roll_keep 5
+        }
+    }
+}

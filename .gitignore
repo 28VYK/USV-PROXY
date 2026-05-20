@@ -53,3 +53,7 @@ yarn-error.log*
 
 # Local private notes
 /local_project_notes.txt
+
+# Cloudflare Origin Certificates
+/origin.pem
+/origin.key
