@@ -48,12 +48,8 @@ yarn-error.log*
 *.zip
 *.tar
 
-# Agent rules (hidden from GitHub)
+# Agent folder (rules, notes - all private)
 /.agents/
 
-# Local private notes
-/local_project_notes.txt
-
-# Cloudflare Origin Certificates
-/origin.pem
-/origin.key
+# Cloudflare Origin Certificates folder
+/certs/

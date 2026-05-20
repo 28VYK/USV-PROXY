@@ -14,8 +14,8 @@ O soluție completă, modernă și ultra-premium pentru accesarea platformei `sc
 
 **Utilizarea se face pe propria răspundere.**
 
-→ [Citește Politica completă de Confidențialitate](./PRIVACY.md)
-→ [Security Policy](./SECURITY.md)
+→ [Citește Politica completă de Confidențialitate](./docs/PRIVACY.md)
+→ [Security Policy](./docs/SECURITY.md)
 
 ## 🌐 Platforma este LIVE
 Poți accesa și folosi platforma chiar acum (doar pentru studenții USV) la adresa securizată:
@@ -95,7 +95,7 @@ usv-proxy/
 ## 🔐 Securitate și Confidențialitate
 - **Fără stocare pe server:** Platforma **NU** stochează sub nicio formă parolele, notele sau datele personale într-o bază de date proprie. Conexiunea se face live (în timp real) între browser-ul tău și serverul USV.
 - **Auto-Login Securizat:** Funcția "Ține-mă minte" stochează datele exclusiv **local, în browser-ul tău** (`localStorage`).
-- **Politici dedicate**: Citește [Politica de Confidențialitate](./PRIVACY.md) și [Politica de Securitate](./SECURITY.md) pentru toate detaliile despre modul în care sunt securizate conexiunile și gestionate datele.
+- **Politici dedicate**: Citește [Politica de Confidențialitate](./docs/PRIVACY.md) și [Politica de Securitate](./docs/SECURITY.md) pentru toate detaliile despre modul în care sunt securizate conexiunile și gestionate datele.
 
 ---
 

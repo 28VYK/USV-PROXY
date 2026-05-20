@@ -37,8 +37,8 @@ services:
       - "${HOST_PORT:-8080}:8080"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
-      - ./origin.pem:/etc/caddy/certs/origin.pem
-      - ./origin.key:/etc/caddy/certs/origin.key
+      - ./certs/origin.pem:/etc/caddy/certs/origin.pem
+      - ./certs/origin.key:/etc/caddy/certs/origin.key
       - caddy_data:/data
       - caddy_config:/config
       - caddy_logs:/var/log/caddy
