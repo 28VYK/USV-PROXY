@@ -37,6 +37,85 @@ function getSemesterOrder(semester) {
   return SEMESTER_ORDER[semester] || 99;
 }
 
+/**
+ * Convert a 4-digit STRM code to a human-readable academic year label.
+ * e.g. '2024' → '2024-2025'
+ */
+function strmToYearLabel(strm) {
+  const y = parseInt(strm, 10);
+  return isNaN(y) ? strm : `${y}-${y + 1}`;
+}
+
+/**
+ * Extract PeopleSoft session context from a grades page HTML string.
+ * Parses the strCurrUrl JS variable that PeopleSoft injects into every page.
+ * Returns { emplid, acadCareer, institution, currentStrm } or null.
+ */
+function extractPsContextFromHtml(html) {
+  try {
+    const m = html.match(/strCurrUrl\s*=\s*['"](https?:[^'"]+)['"]/i);
+    if (!m) return null;
+    const qs = (m[1].split('?')[1] || '').replace(/&amp;/g, '&');
+    const p = new URLSearchParams(qs);
+    const strm = p.get('STRM');
+    const emplid = p.get('EMPLID');
+    const acadCareer = p.get('ACAD_CAREER');
+    const institution = p.get('INSTITUTION') || 'USV';
+    if (!emplid || !acadCareer || !strm) return null;
+    return { emplid, acadCareer, institution, currentStrm: strm };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Parse grade rows from a PeopleSoft grades page HTML string.
+ * Pure function — no React state side effects.
+ * Returns { grades: [], studentName: '' }
+ */
+function parseGradesFromHtml(html) {
+  const gradesData = [];
+
+  const tableRegex = /<tr[^>]*>[\s\S]*?<\/tr>/gi;
+  const rows = html.match(tableRegex) || [];
+
+  rows.forEach(row => {
+    const normalizedRow = normalizeGradeText(row);
+    if (normalizedRow.includes('FSEAP') || /\b(?:SEM(?:ESTRUL)?\.?|SM)\s*[12]\b/.test(normalizedRow)) {
+      const cellRegex = /<td[^>]*>([\s\S]*?)<\/td>/gi;
+      const cells = [];
+      let match;
+      while ((match = cellRegex.exec(row)) !== null) {
+        let content = match[1]
+          .replace(/<[^>]+>/g, '')
+          .replace(/&nbsp;/g, ' ')
+          .replace(/&#037;/g, '%')
+          .replace(/&#0?37;/g, '%')
+          .replace(/&amp;/g, '&')
+          .replace(/\s+/g, ' ')
+          .trim();
+        cells.push(content);
+      }
+      const semester = detectSemester(cells);
+      if (cells.length >= 5 && (semester || cells.some(c => c.includes('%')))) {
+        gradesData.push({
+          titlu: cells[3] || '',
+          sesiune: cells[2] || '',
+          semester,
+          pondere: cells[4] || '',
+          notaCurs: cells[5] || '',
+          notaSeminar: cells[6] || '',
+          notaFinala: cells[7] || '',
+          credite: cells[8] || '',
+          puncte: cells[9] || '',
+        });
+      }
+    }
+  });
+
+  return { grades: gradesData };
+}
+
 export default function Home() {
   const [userid, setUserid] = useState('');
   const [password, setPassword] = useState('');
@@ -51,6 +130,12 @@ export default function Home() {
   const [academicYear, setAcademicYear] = useState('');
   const [semesterFilter, setSemesterFilter] = useState('all');
   const [showDonateModal, setShowDonateModal] = useState(false);
+
+  // Multi-year support
+  const [psContext, setPsContext] = useState(null);        // { emplid, acadCareer, institution, currentStrm }
+  const [yearData, setYearData] = useState({});            // { strm: grades[] }
+  const [selectedYear, setSelectedYear] = useState('');    // Currently shown STRM
+  const [loadingYears, setLoadingYears] = useState(false); // Background year discovery in progress
 
   useEffect(() => {
     window.hoverLightTR = () => {};
@@ -81,23 +166,7 @@ export default function Home() {
             setLoggedIn(true);
             setResult(loginData);
             
-            try {
-              const proxyRes = await fetch('/api/proxy', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                  url: '/psc/PT90SYS/EMPLOYEE/HRMS/c/SA_LEARNER_SERVICES.SSR_SSENRL_GRADE.GBL',
-                  cookies: loginData.cookies 
-                }),
-              });
-              const proxyData = await proxyRes.json();
-              if (proxyData.success && proxyData.html) {
-                const extractedGrades = extractGrades(proxyData.html);
-                setGrades(extractedGrades);
-              }
-            } catch (err) {
-              console.error('Failed to auto-fetch grades:', err);
-            }
+            await fetchGrades(loginData.cookies);
           } else {
             localStorage.removeItem('usv_userid');
             localStorage.removeItem('usv_password');
@@ -145,56 +214,27 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [loggedIn, userid]);
 
+  /**
+   * Wrapper around parseGradesFromHtml that also updates React state
+   * for student name and PS context (side effects kept here, out of pure fn).
+   */
   const extractGrades = (html) => {
-    const gradesData = [];
-    
-    const nameMatch = html.match(/VICHIRIUC[^<]*/);
-    if (nameMatch) setStudentName(nameMatch[0].trim());
+    const { grades: gradesData } = parseGradesFromHtml(html);
 
+    // Extract student name from the page title element or h1
+    const h1Match = html.match(/<h1[^>]*>([^<]{3,80})<\/h1>/i);
+    const titleMatch = html.match(/<title[^>]*>([^<]{3,80})<\/title>/i);
+    const candidateName = (h1Match && h1Match[1].trim()) || (titleMatch && titleMatch[1].trim()) || '';
+    if (candidateName) setStudentName(candidateName);
+
+    // Extract academic year label from the page for display
     const yearMatch = html.match(/An academic\s*(\d{4}-\d{4})/i);
     if (yearMatch) setAcademicYear(yearMatch[1]);
 
-    const tableRegex = /<tr[^>]*>[\s\S]*?<\/tr>/gi;
-    const rows = html.match(tableRegex) || [];
-    
-    rows.forEach(row => {
-      const normalizedRow = normalizeGradeText(row);
+    // Extract and store PeopleSoft session context (EMPLID, ACAD_CAREER, STRM, etc.)
+    const ctx = extractPsContextFromHtml(html);
+    if (ctx) setPsContext(ctx);
 
-      if (normalizedRow.includes('FSEAP') || /\b(?:SEM(?:ESTRUL)?\.?|SM)\s*[12]\b/.test(normalizedRow)) {
-        const cellRegex = /<td[^>]*>([\s\S]*?)<\/td>/gi;
-        const cells = [];
-        let match;
-        
-        while ((match = cellRegex.exec(row)) !== null) {
-          let content = match[1]
-            .replace(/<[^>]+>/g, '')
-            .replace(/&nbsp;/g, ' ')
-            .replace(/&#037;/g, '%')
-            .replace(/&#0?37;/g, '%')
-            .replace(/&amp;/g, '&')
-            .replace(/\s+/g, ' ')
-            .trim();
-          cells.push(content);
-        }
-        
-        const semester = detectSemester(cells);
-
-        if (cells.length >= 5 && (semester || cells.some(c => c.includes('%')))) {
-          gradesData.push({
-            titlu: cells[3] || '',
-            sesiune: cells[2] || '',
-            semester,
-            pondere: cells[4] || '',
-            notaCurs: cells[5] || '',
-            notaSeminar: cells[6] || '',
-            notaFinala: cells[7] || '',
-            credite: cells[8] || '',
-            puncte: cells[9] || ''
-          });
-        }
-      }
-    });
-    
     return gradesData;
   };
 
@@ -272,9 +312,9 @@ export default function Home() {
       const response = await fetch('/api/proxy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           url: '/psc/PT90SYS/EMPLOYEE/HRMS/c/SA_LEARNER_SERVICES.SSR_SSENRL_GRADE.GBL',
-          cookies 
+          cookies,
         }),
       });
 
@@ -282,9 +322,106 @@ export default function Home() {
       if (data.success && data.html) {
         const extractedGrades = extractGrades(data.html);
         setGrades(extractedGrades);
+
+        // Extract PS context to enable multi-year fetching
+        const ctx = extractPsContextFromHtml(data.html);
+        if (ctx) {
+          const strm = ctx.currentStrm;
+          setPsContext(ctx);
+          setSelectedYear(strm);
+          setYearData({ [strm]: extractedGrades });
+          // Kick off background discovery of other academic years (no await — fire & forget)
+          discoverAllYears(ctx, cookies, strm);
+        }
       }
     } catch (err) {
       console.error('Failed to fetch grades:', err);
+    }
+  };
+
+  /**
+   * Build the direct PeopleSoft grades URL for a given STRM (academic year code).
+   */
+  const buildGradeUrl = (ctx, strm) =>
+    `/psc/PT90SYS/EMPLOYEE/HRMS/c/SA_LEARNER_SERVICES.SSR_SSENRL_GRADE.GBL` +
+    `?ACAD_CAREER=${encodeURIComponent(ctx.acadCareer)}` +
+    `&EMPLID=${encodeURIComponent(ctx.emplid)}` +
+    `&INSTITUTION=${encodeURIComponent(ctx.institution)}` +
+    `&STRM=${encodeURIComponent(strm)}` +
+    `&PAGE=SSR_SSENRL_GRADE`;
+
+  /**
+   * Fetch and parse grades for a specific academic year (STRM).
+   * Validates that PeopleSoft actually returned the requested STRM —
+   * if it silently redirected to a different year, returns [] to avoid false positives.
+   */
+  const fetchGradesForStrm = async (strm, ctx, cookies) => {
+    const response = await fetch('/api/proxy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: buildGradeUrl(ctx, strm), cookies }),
+    });
+    const data = await response.json();
+    if (data.success && data.html) {
+      // Critical validation: check that PeopleSoft actually served this STRM.
+      // If the student was never enrolled in this year, PeopleSoft may silently
+      // redirect to the current/default STRM — we detect this via strCurrUrl.
+      const returnedCtx = extractPsContextFromHtml(data.html);
+      if (returnedCtx && returnedCtx.currentStrm !== strm) {
+        // PeopleSoft returned a different year than we asked for — skip it.
+        return [];
+      }
+      return parseGradesFromHtml(data.html).grades;
+    }
+    return [];
+  };
+
+  /**
+   * Background discovery of all academic years where this student has grades.
+   * Starts from (currentStrm - 1) and works backwards, stopping automatically
+   * after two consecutive years with no valid data to avoid unnecessary requests.
+   * Never fetches future years (above currentStrm).
+   */
+  const discoverAllYears = async (ctx, cookies, currentStrm) => {
+    const current = parseInt(currentStrm, 10);
+    if (!current || isNaN(current)) return;
+
+    setLoadingYears(true);
+
+    let consecutiveEmpty = 0;
+    const MAX_CONSECUTIVE_EMPTY = 2; // Stop after 2 years in a row with no grades
+    const MAX_YEARS_BACK = 7;        // Safety cap: no student studies more than 7 years
+
+    for (let s = current - 1; s >= current - MAX_YEARS_BACK; s--) {
+      try {
+        const yearGrades = await fetchGradesForStrm(String(s), ctx, cookies);
+        if (yearGrades.length > 0) {
+          consecutiveEmpty = 0;
+          setYearData(prev => ({ ...prev, [String(s)]: yearGrades }));
+        } else {
+          consecutiveEmpty++;
+          if (consecutiveEmpty >= MAX_CONSECUTIVE_EMPTY) {
+            // Two consecutive empty/invalid years — no point going further back
+            break;
+          }
+        }
+      } catch {
+        consecutiveEmpty++;
+        if (consecutiveEmpty >= MAX_CONSECUTIVE_EMPTY) break;
+      }
+    }
+
+    setLoadingYears(false);
+  };
+
+  /**
+   * Switch the displayed academic year. Pulls from the yearData cache.
+   */
+  const switchYear = (strm) => {
+    setSelectedYear(strm);
+    setSemesterFilter('all');
+    if (yearData[strm]) {
+      setGrades(yearData[strm]);
     }
   };
 
@@ -308,6 +445,10 @@ export default function Home() {
     setRememberMe(false);
     setUserid('');
     setPassword('');
+    setPsContext(null);
+    setYearData({});
+    setSelectedYear('');
+    setLoadingYears(false);
     localStorage.removeItem('usv_userid');
     localStorage.removeItem('usv_password');
     localStorage.removeItem('usv_remember');
@@ -418,7 +559,7 @@ export default function Home() {
                 <div className="dashboard-title">
                   <span className="eyebrow">Situație școlară</span>
                   <h1>{studentName || userid}</h1>
-                  <p className="subtitle">{academicYear ? `An universitar ${academicYear}` : 'Sesiune activă'}</p>
+                  <p className="subtitle">{selectedYear ? `An universitar ${strmToYearLabel(selectedYear)}` : academicYear ? `An universitar ${academicYear}` : 'Sesiune activă'}</p>
                 </div>
 
                 <div className="summary-grid">
@@ -451,6 +592,35 @@ export default function Home() {
                     {loading ? 'Se actualizează...' : 'Actualizează'}
                   </button>
                 </div>
+
+{/* Year selector — appears once multiple years are discovered */}
+              {(Object.keys(yearData).length > 1 || loadingYears) && (
+                <div className="year-bar">
+                  <span className="control-label">An universitar</span>
+                  <div className="year-tabs">
+                    {Object.keys(yearData)
+                      .sort((a, b) => parseInt(b, 10) - parseInt(a, 10))
+                      .map(strm => (
+                        <button
+                          key={strm}
+                          type="button"
+                          className={`year-tab${selectedYear === strm ? ' active' : ''}`}
+                          onClick={() => switchYear(strm)}
+                          aria-pressed={selectedYear === strm}
+                        >
+                          <span>{strmToYearLabel(strm)}</span>
+                          <span className="year-tab-count">{yearData[strm]?.length ?? 0}</span>
+                        </button>
+                      ))}
+                    {loadingYears && (
+                      <span className="year-discovering">
+                        <span className="year-spinner" />
+                        Se caută ani...
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
 
                 {loading ? (
                   <div className="loading-state">
@@ -536,6 +706,7 @@ export default function Home() {
               </div>
             </div>
           )}
+
 
         </main>
 
@@ -1522,6 +1693,96 @@ export default function Home() {
         .btn-modal-close:hover {
           background: var(--surface-strong);
           color: var(--ink);
+        }
+
+        /* ── Year Bar ─────────────────────────────────────────────── */
+        .year-bar {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          padding: 16px 28px;
+          border-bottom: 1px solid var(--line);
+          background: rgba(251, 252, 254, 0.5);
+          flex-wrap: wrap;
+        }
+
+        .year-tabs {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          flex-wrap: wrap;
+        }
+
+        .year-tab {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 7px 14px;
+          border-radius: 10px;
+          border: 1.5px solid var(--line);
+          background: var(--surface);
+          color: var(--muted);
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.18s ease;
+          font-family: inherit;
+        }
+
+        .year-tab:hover {
+          background: var(--surface-strong);
+          border-color: var(--blue);
+          color: var(--blue);
+          transform: translateY(-1px);
+        }
+
+        .year-tab.active {
+          background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+          border-color: transparent;
+          color: #fff;
+          box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        }
+
+        .year-tab-count {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 20px;
+          height: 18px;
+          padding: 0 5px;
+          border-radius: 99px;
+          font-size: 11px;
+          font-weight: 700;
+          background: rgba(255,255,255,0.25);
+        }
+
+        .year-tab:not(.active) .year-tab-count {
+          background: var(--line-strong);
+          color: var(--muted);
+        }
+
+        .year-discovering {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 12px;
+          color: var(--muted);
+          font-weight: 500;
+          padding: 0 4px;
+        }
+
+        .year-spinner {
+          width: 12px;
+          height: 12px;
+          border: 2px solid var(--line-strong);
+          border-top-color: var(--blue);
+          border-radius: 50%;
+          animation: spin 0.7s linear infinite;
+          display: inline-block;
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
         }
       `}</style>
 
