@@ -1,0 +1,16 @@
+.git
+.gitignore
+.dockerignore
+node_modules
+.next
+out
+build
+.vercel
+vpn/*.json
+bot_key
+bot_key.pub
+certs
+*.tar.gz
+*.zip
+*.tar
+.agents
