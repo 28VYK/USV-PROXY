@@ -82,7 +82,7 @@ Dacă vrei să contribui cu cod, să raportezi un bug sau să îmbunătățești
 
 Serverul VPS are costuri lunare. Dacă platforma îți este utilă:
 
-**[→ Donează pe Revolut](https://revolut.me/28vik)**
+**[→ Donează pe Revolut](https://revolut.me/28vik/pocket/dOomdzRh2c)**
 
 ---
 

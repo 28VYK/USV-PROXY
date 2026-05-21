@@ -769,7 +769,7 @@ export default function Home() {
               </div>
               <div className="modal-actions">
                 <a
-                  href="https://revolut.me/28vik"
+                  href="https://revolut.me/28vik/pocket/dOomdzRh2c"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn-modal-donate"
