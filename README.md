@@ -14,7 +14,7 @@ Este o soluție independentă (Proof of Concept) creată de un student, utilizat
 Platforma funcționează ca **reverse proxy** — cererile (inclusiv credențialele) trec temporar prin serverul nostru, exclusiv în memorie, fără stocare persistentă.
 Codul este complet open-source.
 
-→ [Politică de Confidențialitate](./docs/PRIVACY.md) · [Politică de Securitate](./docs/SECURITY.md)
+→ [Politică de Confidențialitate](./docs/PRIVACY.md) · [Politică de Securitate](./docs/SECURITY.md) · [Ghid de Contribuție](./docs/CONTRIBUTING.md)
 
 ---
 
@@ -67,6 +67,13 @@ Browser → Cloudflare (HTTPS) → Caddy (TLS termination :8080)
 - **Next.js 14** — framework + API routes
 - **Caddy 2** — TLS termination
 - **Docker + OpenVPN** — containerizare & VPN
+
+---
+
+## 🤝 Contribuie la proiect
+
+Proiectul este 100% open-source și dezvoltat din pasiune în timpul liber. Orice ajutor este binevenit! 
+Dacă vrei să contribui cu cod, să raportezi un bug sau să îmbunătățești documentația, te rugăm să citești mai întâi **[Ghidul de Contribuție](./docs/CONTRIBUTING.md)** pentru detalii legate de rularea locală cu Docker și stilul de cod.
 
 ---
 

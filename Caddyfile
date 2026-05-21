@@ -1,5 +1,17 @@
 # Caddy Reverse Proxy with Cloudflare SSL
+
+# Redirect all HTTP traffic (port 80) to HTTPS on the official domain
+:80 {
+    redir https://noteusv.tech{uri} permanent
+}
+
 :8080 {
+    # Redirect if the host header is not the official domain (e.g., direct IP access)
+    @notDomain {
+        not header_regexp Host ^(noteusv\.tech|www\.noteusv\.tech)$
+    }
+    redir @notDomain https://noteusv.tech{uri} permanent
+
     # TLS configuration using the Cloudflare Origin Certificate
     tls /etc/caddy/certs/origin.pem /etc/caddy/certs/origin.key
 
