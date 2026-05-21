@@ -51,14 +51,15 @@ docker compose up --build -d
 
 ```
 Browser → Cloudflare (HTTPS) → Caddy (TLS termination :8080)
-        → Next.js App (:3000) → OpenVPN → scolaritate.usv.ro
+        → usv-vpn:3000 (Next.js via shared network namespace)
+        → OpenVPN tunnel (usv-vpn sidecar) → scolaritate.usv.ro
 ```
 
 | Serviciu | Rol |
 |----------|-----|
 | `caddy:2-alpine` | Reverse proxy cu TLS (Cloudflare Origin CA) |
-| `Next.js 14` | Frontend + API Routes (proxy logic) |
-| `OpenVPN` | Tunel spre rețeaua internă USV |
+| `Next.js 14` | Frontend + API Routes (proxy logic) — rulează ca user non-root |
+| `usv-vpn` (sidecar) | Container izolat: OpenVPN + NET_ADMIN + /dev/net/tun |
 
 ---
 

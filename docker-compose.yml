@@ -1,28 +1,86 @@
-version: '3.8'
 
 services:
-  usv-proxy:
-    build: .
-    container_name: usv-proxy
-    expose:
-      - "3000"
+  # ─────────────────────────────────────────────────────────────────────────────
+  # usv-vpn: Isolated OpenVPN sidecar container.
+  # This container is the ONLY one with NET_ADMIN and /dev/net/tun access.
+  # It establishes the tunnel and owns the network namespace.
+  # Both usv-proxy and the Caddy upstream target use its network.
+  # ─────────────────────────────────────────────────────────────────────────────
+  usv-vpn:
+    image: alpine:3.19
+    container_name: usv-vpn
     restart: always
-    
-    # Required capabilities and devices for OpenVPN split-tunneling inside the container
+
+    # All privileged network capabilities are isolated here, away from Next.js
     cap_add:
       - NET_ADMIN
     devices:
       - /dev/net/tun:/dev/net/tun
-      
-    # Load all credentials from .env (gitignored - VPN and environment variables stay private)
+
+    # Only VPN credentials are needed by this container
     env_file:
       - .env
-    
-    # Mount persistent folder for OpenVPN configuration and logs
+
+    # Mount the VPN config directory (contains usv2.ovpn)
     volumes:
-      - ./vpn:/app/vpn
-      
-    # Clear memory limits applied at the Docker daemon level to ensure VPS stability (OOM prevention)
+      - ./vpn:/vpn
+
+    # The entrypoint installs openvpn (Alpine is tiny) then connects
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        apk add --no-cache openvpn iproute2 wget 2>/dev/null
+        echo "[VPN] Packages installed."
+
+        # Write credentials to a temporary file and lock it down
+        echo "$$VPN_USER" > /tmp/vpn-creds.txt
+        echo "$$VPN_PASS" >> /tmp/vpn-creds.txt
+        chmod 600 /tmp/vpn-creds.txt
+
+        # Download OVPN config if it is not already present on the mounted volume
+        if [ ! -f /vpn/usv2.ovpn ]; then
+          echo "[VPN] usv2.ovpn not found locally — downloading from USV epass portal..."
+          if wget -q -O /vpn/usv2.ovpn https://epass.usv.ro/usv2.ovpn; then
+            echo "[VPN] Successfully downloaded usv2.ovpn"
+          else
+            echo "[VPN] ERROR: Failed to download usv2.ovpn!"
+            exit 1
+          fi
+        else
+          echo "[VPN] Using existing usv2.ovpn config."
+        fi
+
+        echo "[VPN] Starting OpenVPN..."
+        # Run in foreground so Docker can monitor and restart on failure
+        exec openvpn \
+          --config /vpn/usv2.ovpn \
+          --auth-user-pass /tmp/vpn-creds.txt \
+          --data-ciphers AES-256-GCM:AES-128-GCM:CHACHA20-POLY1305:AES-128-CBC \
+          --script-security 2
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # usv-proxy: Next.js application container.
+  # Runs as a non-root user with NO network privileges whatsoever.
+  # Shares the network namespace of usv-vpn — all traffic is automatically
+  # routed through the VPN tunnel established by that container.
+  # ─────────────────────────────────────────────────────────────────────────────
+  usv-proxy:
+    build: .
+    container_name: usv-proxy
+    restart: always
+
+    # Shares the entire network stack of usv-vpn (including the tun0 interface).
+    # This is the core of the sidecar pattern — no NET_ADMIN needed here.
+    network_mode: "service:usv-vpn"
+
+    depends_on:
+      - usv-vpn
+
+    # All application environment variables (cookie key, etc.) come from .env
+    env_file:
+      - .env
+
+    # Memory limits remain the same for VPS stability
     deploy:
       resources:
         limits:
@@ -30,6 +88,11 @@ services:
         reservations:
           memory: 50M
 
+  # ─────────────────────────────────────────────────────────────────────────────
+  # usv-proxy-ssl: Caddy reverse proxy with TLS termination.
+  # Because usv-proxy shares the network namespace of usv-vpn, port 3000 is
+  # exposed on usv-vpn's network interface — Caddy proxies there directly.
+  # ─────────────────────────────────────────────────────────────────────────────
   usv-proxy-ssl:
     image: caddy:2-alpine
     container_name: usv-proxy-ssl
@@ -45,7 +108,7 @@ services:
       - caddy_logs:/var/log/caddy
     restart: always
     depends_on:
-      - usv-proxy
+      - usv-vpn
 
 volumes:
   caddy_data:

@@ -15,8 +15,10 @@
     # TLS configuration using the Cloudflare Origin Certificate
     tls /etc/caddy/certs/origin.pem /etc/caddy/certs/origin.key
 
-    # Reverse proxy to the Next.js app container
-    reverse_proxy usv-proxy:3000
+    # Reverse proxy to the Next.js app.
+    # usv-proxy shares the network namespace of usv-vpn (sidecar pattern),
+    # so port 3000 is reachable via the usv-vpn container name.
+    reverse_proxy usv-vpn:3000
 
     # Modern logging (optional)
     log {
