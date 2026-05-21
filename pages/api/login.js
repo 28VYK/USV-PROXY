@@ -7,6 +7,7 @@
 
 import https from 'https';
 import { URL } from 'url';
+import { encryptSessionCookie } from '../../utils/cookie-crypto';
 
 // PeopleSoft server details
 const PEOPLESOFT_BASE = 'https://scolaritate.usv.ro';
@@ -35,9 +36,8 @@ if (global.rateLimitCleanupInterval === undefined) {
   }
 }
 
-function encodeSessionCookie(cookieValue) {
-  return Buffer.from(cookieValue || '', 'utf8').toString('base64url');
-}
+// encodeSessionCookie is now an alias for the shared AES-256-GCM encryptor.
+const encodeSessionCookie = encryptSessionCookie;
 
 /**
  * Create a custom HTTPS agent that allows legacy SSL/TLS connections
@@ -348,10 +348,10 @@ export default async function handler(req, res) {
         return `url(${wrappedQuote}${rewritten}${wrappedQuote})`;
       });
 
-    const encodedSession = encodeSessionCookie(sessionCookies);
+    const encodedSession = encodeSessionCookie(`${trimmedUserid}|||${sessionCookies}`);
     res.setHeader(
       'Set-Cookie',
-      `PS_PROXY_SESSION=${encodedSession}; Path=/; HttpOnly; SameSite=Lax; Max-Age=7200`
+      `PS_PROXY_SESSION=${encodedSession}; Path=/; HttpOnly; SameSite=Lax; Secure; Max-Age=7200`
     );
 
     // Extract student name and validate session dynamically

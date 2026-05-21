@@ -7,12 +7,12 @@
 
 import https from 'https';
 import { URL } from 'url';
+import { encryptSessionCookie, decryptSessionCookie } from '../../../utils/cookie-crypto';
 
 const PEOPLESOFT_BASE = 'https://scolaritate.usv.ro';
 
-function encodeSessionCookie(cookieValue) {
-  return Buffer.from(cookieValue || '', 'utf8').toString('base64url');
-}
+// Alias to shared AES-256-GCM encryptor.
+const encodeSessionCookie = encryptSessionCookie;
 
 function parseCookiePairs(cookieString = '') {
   return cookieString
@@ -94,8 +94,14 @@ function getSessionCookiesFromRequest(req) {
     if (!encoded) {
       return '';
     }
-
-    return Buffer.from(encoded, 'base64url').toString('utf8');
+    const decrypted = decryptSessionCookie(encoded);
+    // New format: "userid|||<ps_cookies>" — extract and stash userid on the request object
+    if (decrypted && decrypted.includes('|||')) {
+      const separatorIndex = decrypted.indexOf('|||');
+      req.userid = decrypted.slice(0, separatorIndex);
+      return decrypted.slice(separatorIndex + 3);
+    }
+    return decrypted;
   } catch {
     return '';
   }
@@ -208,10 +214,12 @@ export default async function handler(req, res) {
 
     const mergedCookies = mergeCookieState(sessionCookies, response.headers['set-cookie'] || []);
     if (mergedCookies) {
-      const encodedSession = encodeSessionCookie(mergedCookies);
+      // Re-embed the bound userid so it survives every cookie refresh cycle
+      const cookiePayload = req.userid ? `${req.userid}|||${mergedCookies}` : mergedCookies;
+      const encodedSession = encodeSessionCookie(cookiePayload);
       res.setHeader(
         'Set-Cookie',
-        `PS_PROXY_SESSION=${encodedSession}; Path=/; HttpOnly; SameSite=Lax; Max-Age=7200`
+        `PS_PROXY_SESSION=${encodedSession}; Path=/; HttpOnly; SameSite=Lax; Secure; Max-Age=7200`
       );
     }
 

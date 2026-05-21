@@ -7,6 +7,7 @@
 
 import https from 'https';
 import { URL } from 'url';
+import { encryptSessionCookie, decryptSessionCookie } from '../../utils/cookie-crypto';
 
 const PEOPLESOFT_BASE = 'https://scolaritate.usv.ro';
 
@@ -35,16 +36,22 @@ function getSessionCookiesFromRequest(req) {
     if (!encoded) {
       return '';
     }
-
-    return Buffer.from(encoded, 'base64url').toString('utf8');
+    const decrypted = decryptSessionCookie(encoded);
+    if (decrypted && decrypted.includes('|||')) {
+      const parts = decrypted.split('|||');
+      const userid = parts[0];
+      const cookies = parts.slice(1).join('|||');
+      req.userid = userid; // Store userid on the request object for later Set-Cookie header updates
+      return cookies;
+    }
+    return decrypted;
   } catch {
     return '';
   }
 }
 
-function encodeSessionCookie(cookieValue) {
-  return Buffer.from(cookieValue || '', 'utf8').toString('base64url');
-}
+// Alias to shared AES-256-GCM encryptor.
+const encodeSessionCookie = encryptSessionCookie;
 
 function parseCookiePairs(cookieString = '') {
   return cookieString
@@ -225,6 +232,22 @@ export default async function handler(req, res) {
   }
 
   const { url, cookies: bodyCookies, method = 'GET', body, headers = {} } = req.body;
+
+  // Extract the userid from the browser cookie first to preserve session ownership mapping
+  // regardless of whether the client sent cookies in the request body.
+  try {
+    const parsed = parseCookies(req.headers.cookie || '');
+    const encoded = parsed.PS_PROXY_SESSION;
+    if (encoded) {
+      const decrypted = decryptSessionCookie(encoded);
+      if (decrypted && decrypted.includes('|||')) {
+        req.userid = decrypted.split('|||')[0];
+      }
+    }
+  } catch (err) {
+    console.error('[SECURITY] Failed to extract userid from header:', err.message);
+  }
+
   const cookies = bodyCookies || getSessionCookiesFromRequest(req);
 
   if (!url) {
@@ -325,10 +348,12 @@ export default async function handler(req, res) {
 
     const mergedCookies = mergeCookieState(activeCookies, response.cookies);
     if (mergedCookies) {
-      const encodedSession = encodeSessionCookie(mergedCookies);
+      // Re-embed the bound userid so it survives every cookie refresh cycle
+      const cookiePayload = req.userid ? `${req.userid}|||${mergedCookies}` : mergedCookies;
+      const encodedSession = encodeSessionCookie(cookiePayload);
       res.setHeader(
         'Set-Cookie',
-        `PS_PROXY_SESSION=${encodedSession}; Path=/; HttpOnly; SameSite=Lax; Max-Age=7200`
+        `PS_PROXY_SESSION=${encodedSession}; Path=/; HttpOnly; SameSite=Lax; Secure; Max-Age=7200`
       );
     }
 
