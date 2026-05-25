@@ -157,11 +157,37 @@ export default function Home() {
   const [selectedYear, setSelectedYear] = useState('');    // Currently shown STRM
   const [loadingYears, setLoadingYears] = useState(false); // Background year discovery in progress
 
+  // Theme state
+  const [theme, setTheme] = useState('light');
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    localStorage.setItem('usv_theme', nextTheme);
+    if (nextTheme === 'dark') {
+      document.documentElement.classList.add('dark-theme');
+    } else {
+      document.documentElement.classList.remove('dark-theme');
+    }
+  };
+
   useEffect(() => {
     window.hoverLightTR = () => {};
     window.hoverOffTR = () => {};
     window.setupTimeout = () => {};
     window.cancelBubble = true;
+    
+    // Initialize Theme
+    const savedTheme = localStorage.getItem('usv_theme');
+    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const initialTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
+    setTheme(initialTheme);
+    if (initialTheme === 'dark') {
+      document.documentElement.classList.add('dark-theme');
+    } else {
+      document.documentElement.classList.remove('dark-theme');
+    }
+
     // Clean up legacy saved passwords from previous versions for security
     if (localStorage.getItem('usv_password')) {
       localStorage.removeItem('usv_password');
@@ -478,7 +504,7 @@ export default function Home() {
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
       </Head>
 
-      <div className="app">
+      <div className="app" data-theme={theme}>
         <header className="header">
           <div className="header-content">
             <div className="logo">
@@ -486,6 +512,18 @@ export default function Home() {
               <span className="logo-text">Portal</span>
             </div>
             <div className="header-actions">
+              <button 
+                onClick={toggleTheme} 
+                className="btn-theme-toggle"
+                aria-label="Schimbă tema"
+                title={theme === 'dark' ? 'Mod luminos' : 'Mod întunecat'}
+              >
+                {theme === 'dark' ? (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+                )}
+              </button>
               <button onClick={() => setShowDonateModal(true)} className="btn-donate">
                 Susține (Revolut)
               </button>
@@ -801,6 +839,31 @@ export default function Home() {
           --green: #10b981;
           --red: #ef4444;
           --amber: #f59e0b;
+          
+          /* Premium theme-aware components */
+          --glass-bg: rgba(255, 255, 255, 0.6);
+          --glass-border: rgba(255, 255, 255, 0.8);
+          --card-bg: rgba(255, 255, 255, 0.82);
+          --card-border: rgba(255, 255, 255, 0.6);
+          --card-inner-shadow: rgba(255, 255, 255, 0.8);
+          --card-header-bg: rgba(255, 255, 255, 0.5);
+          --table-wrapper-bg: rgba(255, 255, 255, 0.3);
+          --grade-controls-bg: rgba(251, 252, 254, 0.5);
+          --segmented-bg: rgba(15, 23, 42, 0.06);
+          --segmented-active-bg: #ffffff;
+          --count-bg: rgba(15, 23, 42, 0.08);
+          
+          --th-bg: rgba(15, 23, 42, 0.02);
+          --th-color: #475569;
+          --tr-even-bg: rgba(15, 23, 42, 0.01);
+          --tr-hover-bg: rgba(99, 102, 241, 0.04);
+          
+          --input-bg: rgba(255, 255, 255, 0.5);
+          --input-border: rgba(15, 23, 42, 0.12);
+          --input-focus-bg: #ffffff;
+          
+          --modal-bg: rgba(255, 255, 255, 0.96);
+          
           min-height: 100vh;
           display: flex;
           flex-direction: column;
@@ -809,6 +872,94 @@ export default function Home() {
           color: var(--text);
           position: relative;
           overflow-x: hidden;
+          transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        .app[data-theme="dark"] {
+          --ink: #f8fafc;
+          --text: #cbd5e1;
+          --muted: #64748b;
+          --line: #1e293b;
+          --line-strong: #334155;
+          --paper: #0b0f19;
+          --surface: #020617;
+          --surface-strong: #1e293b;
+          --blue: #6366f1;
+          --blue-dark: #4f46e5;
+          --green: #34d399;
+          --red: #f87171;
+          --amber: #fbbf24;
+          
+          /* Dark mode premium-aware components */
+          --glass-bg: rgba(15, 23, 42, 0.6);
+          --glass-border: rgba(255, 255, 255, 0.08);
+          --card-bg: rgba(11, 15, 25, 0.8);
+          --card-border: rgba(255, 255, 255, 0.08);
+          --card-inner-shadow: rgba(255, 255, 255, 0.05);
+          --card-header-bg: rgba(15, 23, 42, 0.4);
+          --table-wrapper-bg: rgba(15, 23, 42, 0.2);
+          --grade-controls-bg: rgba(11, 15, 25, 0.4);
+          --segmented-bg: rgba(255, 255, 255, 0.06);
+          --segmented-active-bg: #1e293b;
+          --count-bg: rgba(255, 255, 255, 0.1);
+          
+          --th-bg: rgba(255, 255, 255, 0.02);
+          --th-color: #cbd5e1;
+          --tr-even-bg: rgba(255, 255, 255, 0.01);
+          --tr-hover-bg: rgba(99, 102, 241, 0.1);
+          
+          --input-bg: rgba(15, 23, 42, 0.6);
+          --input-border: rgba(255, 255, 255, 0.08);
+          --input-focus-bg: #0f172a;
+          
+          --modal-bg: rgba(11, 15, 25, 0.96);
+          
+          background: linear-gradient(180deg, #0f172a 0%, #0b0f19 50%, #020617 100%);
+        }
+
+        .header, .card, .login-card, .year-tab, .segmented-control, .segmented-control button, table, th, td, input, .btn-secondary, .btn-logout, .btn-theme-toggle {
+          transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        /* Dark mode header h1 and login h1 adjustment to be readable */
+        .app[data-theme="dark"] .login-header h1,
+        .app[data-theme="dark"] .dashboard-header h1 {
+          background: linear-gradient(135deg, #ffffff 0%, #a5b4fc 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+
+        /* ── Theme Toggle Button ── */
+        .btn-theme-toggle {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 38px;
+          height: 38px;
+          background: var(--surface-strong);
+          color: var(--text);
+          border: 1px solid var(--line);
+          border-radius: 10px;
+          cursor: pointer;
+        }
+
+        .btn-theme-toggle:hover {
+          background: var(--line);
+          color: var(--ink);
+          transform: translateY(-1px);
+        }
+
+        .btn-theme-toggle svg {
+          transition: transform 0.4s ease;
+        }
+
+        .btn-theme-toggle:hover svg {
+          transform: rotate(20deg);
+        }
+
+        /* Dark mode footer link hover styling */
+        .app[data-theme="dark"] .footer-link:hover {
+          color: #818cf8;
         }
 
         /* Ultra-Premium Floating Header */
@@ -818,8 +969,8 @@ export default function Home() {
           width: max-content;
           min-width: 280px;
           height: 56px;
-          background: rgba(255, 255, 255, 0.6);
-          border: 1px solid rgba(255, 255, 255, 0.8);
+          background: var(--glass-bg);
+          border: 1px solid var(--glass-border);
           border-radius: 99px;
           display: flex;
           align-items: center;
@@ -827,7 +978,7 @@ export default function Home() {
           backdrop-filter: blur(24px);
           -webkit-backdrop-filter: blur(24px);
           z-index: 100;
-          box-shadow: 0 12px 30px rgba(15, 23, 42, 0.04), inset 0 1px 0 rgba(255, 255, 255, 1);
+          box-shadow: 0 12px 30px rgba(15, 23, 42, 0.04), inset 0 1px 0 var(--glass-border);
         }
 
         .header-content {
@@ -849,12 +1000,12 @@ export default function Home() {
 
         .logo-highlight {
           font-weight: 700;
-          color: #0f172a;
+          color: var(--ink);
         }
 
         .logo-text {
           font-weight: 500;
-          color: #64748b;
+          color: var(--muted);
         }
 
         .header-actions {
@@ -970,15 +1121,15 @@ export default function Home() {
         }
 
         .login-card {
-          background: rgba(255, 255, 255, 0.82);
-          border: 1px solid rgba(255, 255, 255, 0.6);
+          background: var(--card-bg);
+          border: 1px solid var(--card-border);
           border-radius: 24px;
           backdrop-filter: blur(20px);
           -webkit-backdrop-filter: blur(20px);
           box-shadow: 
             0 30px 60px rgba(15, 23, 42, 0.05),
             0 12px 24px rgba(15, 23, 42, 0.03),
-            inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            inset 0 1px 0 var(--card-inner-shadow);
           padding: 28px 32px;
           min-width: 0;
           width: 100%;
@@ -993,7 +1144,7 @@ export default function Home() {
           box-shadow: 
             0 35px 70px rgba(15, 23, 42, 0.07),
             0 15px 30px rgba(15, 23, 42, 0.04),
-            inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            inset 0 1px 0 var(--card-inner-shadow);
         }
 
         .login-header {
@@ -1053,8 +1204,8 @@ export default function Home() {
           width: 100%;
           min-height: 48px;
           padding: 12px 16px;
-          background: rgba(255, 255, 255, 0.5);
-          border: 1px solid rgba(15, 23, 42, 0.12);
+          background: var(--input-bg);
+          border: 1px solid var(--input-border);
           border-radius: 12px;
           font-size: 15px;
           font-family: 'Inter', sans-serif;
@@ -1065,7 +1216,7 @@ export default function Home() {
 
         .field input:focus {
           outline: none;
-          background: #ffffff;
+          background: var(--input-focus-bg);
           border-color: #4f46e5;
           box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.14);
         }
@@ -1101,12 +1252,41 @@ export default function Home() {
         }
 
         .field-checkbox input[type="checkbox"] {
+          appearance: none;
+          -webkit-appearance: none;
           width: 19px;
           height: 19px;
-          border: 1px solid rgba(15, 23, 42, 0.15);
+          border: 2px solid var(--line-strong);
           border-radius: 6px;
-          accent-color: #4f46e5;
+          background: var(--input-bg);
           cursor: pointer;
+          position: relative;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s ease;
+        }
+
+        .field-checkbox input[type="checkbox"]:checked {
+          background: var(--blue);
+          border-color: transparent;
+        }
+
+        .field-checkbox input[type="checkbox"]:checked::after {
+          content: "";
+          width: 5px;
+          height: 9px;
+          border: solid white;
+          border-width: 0 2px 2px 0;
+          transform: rotate(45deg);
+          position: absolute;
+          top: 2px;
+          left: 5px;
+        }
+
+        .field-checkbox input[type="checkbox"]:focus {
+          outline: none;
+          box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
         }
 
         .btn-primary {
@@ -1148,7 +1328,7 @@ export default function Home() {
         .btn-secondary {
           min-height: 38px;
           padding: 8px 16px;
-          background: #ffffff;
+          background: var(--paper);
           color: var(--ink);
           border: 1px solid var(--line);
           border-radius: 10px;
@@ -1168,7 +1348,7 @@ export default function Home() {
         .btn-logout {
           min-height: 38px;
           padding: 8px 16px;
-          background: #ffffff;
+          background: var(--paper);
           color: var(--text);
           border: 1px solid var(--line);
           border-radius: 10px;
@@ -1194,6 +1374,12 @@ export default function Home() {
         }
 
         .alert-error {
+          background: rgba(239, 68, 68, 0.1);
+          color: #f87171;
+          border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+        
+        .app[data-theme="light"] .alert-error {
           background: #fef2f2;
           color: #991b1b;
           border: 1px solid #fee2e2;
@@ -1204,7 +1390,7 @@ export default function Home() {
           margin-top: 14px;
           text-align: center;
           padding-top: 12px;
-          border-top: 1px dashed rgba(15, 23, 42, 0.1);
+          border-top: 1px dashed var(--line);
         }
 
         .login-disclaimer p {
@@ -1277,13 +1463,13 @@ export default function Home() {
           display: grid;
           grid-template-columns: repeat(4, minmax(94px, 1fr));
           min-width: min(100%, 520px);
-          background: rgba(255, 255, 255, 0.85);
+          background: var(--card-bg);
           border: 1px solid var(--line);
           border-radius: 12px;
           overflow: hidden;
           box-shadow: 
             0 10px 30px rgba(0, 0, 0, 0.03),
-            inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            inset 0 1px 0 var(--card-inner-shadow);
           backdrop-filter: blur(10px);
         }
 
@@ -1322,12 +1508,12 @@ export default function Home() {
         }
 
         .card {
-          background: rgba(255, 255, 255, 0.82);
-          border: 1px solid rgba(255, 255, 255, 0.6);
+          background: var(--card-bg);
+          border: 1px solid var(--card-border);
           border-radius: 24px;
           box-shadow: 
             0 30px 60px rgba(15, 23, 42, 0.05),
-            inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            inset 0 1px 0 var(--card-inner-shadow);
           overflow: hidden;
           backdrop-filter: blur(20px);
           -webkit-backdrop-filter: blur(20px);
@@ -1340,7 +1526,7 @@ export default function Home() {
           gap: 18px;
           padding: 24px 28px;
           border-bottom: 1px solid var(--line);
-          background: rgba(255, 255, 255, 0.5);
+          background: var(--card-header-bg);
         }
 
         .card-title {
@@ -1366,7 +1552,7 @@ export default function Home() {
 
         .table-wrapper {
           overflow-x: auto;
-          background: rgba(255, 255, 255, 0.3);
+          background: var(--table-wrapper-bg);
         }
 
         .grade-controls {
@@ -1376,7 +1562,7 @@ export default function Home() {
           gap: 16px;
           padding: 16px 28px;
           border-bottom: 1px solid var(--line);
-          background: rgba(251, 252, 254, 0.5);
+          background: var(--grade-controls-bg);
         }
 
         .control-label {
@@ -1392,7 +1578,7 @@ export default function Home() {
           align-items: center;
           gap: 4px;
           padding: 4px;
-          background: rgba(15, 23, 42, 0.06);
+          background: var(--segmented-bg);
           border: 1px solid rgba(15, 23, 42, 0.04);
           border-radius: 10px;
         }
@@ -1421,7 +1607,7 @@ export default function Home() {
         }
 
         .segmented-control button.active {
-          background: #ffffff;
+          background: var(--segmented-active-bg);
           color: var(--blue);
           box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
         }
@@ -1433,7 +1619,7 @@ export default function Home() {
           min-width: 22px;
           height: 22px;
           padding: 0 6px;
-          background: rgba(15, 23, 42, 0.08);
+          background: var(--count-bg);
           color: var(--text);
           border-radius: 999px;
           font-size: 11px;
@@ -1452,13 +1638,13 @@ export default function Home() {
         }
 
         th {
-          background: rgba(15, 23, 42, 0.02);
+          background: var(--th-bg);
           padding: 16px 20px;
           text-align: left;
           font-size: 12px;
           font-weight: 700;
           font-family: 'Space Grotesk', sans-serif;
-          color: #475569;
+          color: var(--th-color);
           text-transform: uppercase;
           letter-spacing: 0.05em;
           border-bottom: 1px solid var(--line);
@@ -1469,7 +1655,7 @@ export default function Home() {
           padding: 16px 20px;
           font-size: 14px;
           color: var(--text);
-          border-bottom: 1px solid rgba(15, 23, 42, 0.04);
+          border-bottom: 1px solid var(--line);
           vertical-align: middle;
         }
 
@@ -1478,11 +1664,11 @@ export default function Home() {
         }
 
         tbody tr:nth-child(even) td {
-          background: rgba(15, 23, 42, 0.01);
+          background: var(--tr-even-bg);
         }
 
         tr:hover td {
-          background: rgba(99, 102, 241, 0.04);
+          background: var(--tr-hover-bg);
         }
 
         .course {
@@ -1499,7 +1685,7 @@ export default function Home() {
           justify-content: center;
           padding: 5px 10px;
           background: rgba(16, 185, 129, 0.1);
-          color: #059669;
+          color: var(--green);
           border: 1px solid rgba(16, 185, 129, 0.15);
           border-radius: 20px;
           font-size: 11px;
@@ -1510,12 +1696,12 @@ export default function Home() {
 
         .semester-pill.unknown {
           background: rgba(148, 163, 184, 0.1);
-          color: #475569;
+          color: var(--muted);
           border-color: rgba(148, 163, 184, 0.15);
         }
 
         .muted {
-          color: #64748b;
+          color: var(--muted);
           font-size: 13px;
         }
 
@@ -1526,11 +1712,11 @@ export default function Home() {
         }
 
         .final.pass {
-          color: #059669;
+          color: var(--green);
         }
 
         .final.fail {
-          color: #dc2626;
+          color: var(--red);
         }
 
         .points {
@@ -1658,8 +1844,8 @@ export default function Home() {
         }
 
         .modal-card {
-          background: rgba(255, 255, 255, 0.96);
-          border: 1px solid rgba(255, 255, 255, 0.8);
+          background: var(--modal-bg);
+          border: 1px solid var(--card-border);
           border-radius: 24px;
           max-width: 480px;
           width: 100%;
@@ -1773,7 +1959,7 @@ export default function Home() {
           gap: 16px;
           padding: 16px 28px;
           border-bottom: 1px solid var(--line);
-          background: rgba(251, 252, 254, 0.5);
+          background: var(--grade-controls-bg);
           flex-wrap: wrap;
         }
 
@@ -1861,13 +2047,13 @@ export default function Home() {
           display: flex;
           gap: 10px;
           padding: 8px 12px;
-          background: rgba(245, 158, 11, 0.07);
-          border: 1px solid rgba(245, 158, 11, 0.2);
+          background: rgba(245, 158, 11, 0.1);
+          border: 1px solid rgba(245, 158, 11, 0.25);
           border-radius: 12px;
           margin-bottom: 12px;
           font-size: 12px;
           line-height: 1.45;
-          color: #b45309;
+          color: var(--amber);
           text-align: left;
         }
 
@@ -1878,8 +2064,18 @@ export default function Home() {
         }
 
         .security-banner-text strong {
-          color: #78350f;
+          color: var(--amber);
           font-weight: 700;
+        }
+
+        .app[data-theme="light"] .security-banner {
+          background: rgba(245, 158, 11, 0.07);
+          border: 1px solid rgba(245, 158, 11, 0.2);
+          color: #b45309;
+        }
+
+        .app[data-theme="light"] .security-banner-text strong {
+          color: #78350f;
         }
 
         .security-banner-link {
@@ -1917,6 +2113,10 @@ export default function Home() {
           width: 100%; 
           background: #f8fafc;
           -webkit-font-smoothing: antialiased; 
+          transition: background-color 0.3s ease;
+        }
+        html.dark-theme, html.dark-theme body {
+          background: #020617;
         }
       `}</style>
     </>

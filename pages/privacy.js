@@ -1,7 +1,22 @@
+import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 
 export default function Privacy() {
+  const [theme, setTheme] = useState('light');
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('usv_theme');
+    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const initialTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
+    setTheme(initialTheme);
+    if (initialTheme === 'dark') {
+      document.documentElement.classList.add('dark-theme');
+    } else {
+      document.documentElement.classList.remove('dark-theme');
+    }
+  }, []);
+
   return (
     <>
       <Head>
@@ -10,7 +25,7 @@ export default function Privacy() {
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@600;700;800&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet" />
       </Head>
 
-      <div className="app">
+      <div className="app" data-theme={theme}>
         {/* Header */}
         <header className="header">
           <div className="logo">
@@ -95,11 +110,22 @@ export default function Privacy() {
               </ul>
             </section>
 
+            {/* Section 5 */}
+            <section className="section">
+              <h2>5. Licență Open-Source & Copyright (MIT)</h2>
+              <p>
+                Acest proiect este distribuit în mod deschis ca software liber sub <strong>Licența MIT</strong>. Întregul cod sursă, designul interfeței și arhitectura platformei sunt concepute și dezvoltate în totalitate de către <strong>Vichiriuc Adrian</strong> (@28VYK).
+              </p>
+              <p>
+                Codul fiind complet public, oricine are posibilitatea de a-i inspecta transparența, securitatea și de a rula propria instanță locală pentru control deplin. Condițiile legale complete și detaliile de atribuire pot fi consultate în fișierele de licență din repository-ul proiectului.
+              </p>
+            </section>
+
             <div className="divider" />
 
             <footer className="doc-footer">
-              <Link href="/" className="btn-back">
-                ← Înapoi la autentificare
+              <Link href="/" legacyBehavior>
+                <a className="btn-back">← Înapoi la autentificare</a>
               </Link>
             </footer>
 
@@ -115,6 +141,86 @@ export default function Privacy() {
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
           background: #fafafa;
           color: #1a1a1a;
+          transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .app[data-theme="dark"] {
+          background: #020617;
+          color: #cbd5e1;
+        }
+
+        .header, .doc-header, .logo-highlight, h1, h2, strong, p, li, .divider, code, .flow, .flow-step, .note, .callout, .btn-back {
+          transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+        }
+
+        .app[data-theme="dark"] .header {
+          background: #0b0f19;
+          border-bottom-color: #1e293b;
+        }
+
+        .app[data-theme="dark"] .logo-highlight {
+          color: #f8fafc;
+        }
+
+        .app[data-theme="dark"] h1,
+        .app[data-theme="dark"] h2,
+        .app[data-theme="dark"] strong {
+          color: #f8fafc;
+        }
+
+        .app[data-theme="dark"] p,
+        .app[data-theme="dark"] li,
+        .app[data-theme="dark"] .doc-subtitle {
+          color: #cbd5e1;
+        }
+
+        .app[data-theme="dark"] .divider {
+          background: #1e293b;
+        }
+
+        .app[data-theme="dark"] code {
+          background: #1e293b;
+          color: #cbd5e1;
+        }
+
+        .app[data-theme="dark"] .flow {
+          border-color: #1e293b;
+        }
+
+        .app[data-theme="dark"] .flow-step {
+          border-bottom-color: #1e293b;
+        }
+
+        .app[data-theme="dark"] .flow-step p {
+          color: #cbd5e1;
+        }
+
+        .app[data-theme="dark"] .note {
+          background: #0f172a;
+          border-left-color: #334155;
+          color: #94a3b8;
+        }
+
+        .app[data-theme="dark"] .callout {
+          background: #0f172a;
+          border-color: #1e293b;
+        }
+
+        .app[data-theme="dark"] .callout p,
+        .app[data-theme="dark"] .callout li {
+          color: #cbd5e1;
+        }
+
+        .app[data-theme="dark"] .btn-back {
+          background: #0b0f19;
+          border-color: #1e293b;
+          color: #cbd5e1;
+        }
+
+        .app[data-theme="dark"] .btn-back:hover {
+          background: #1e293b;
+          border-color: #334155;
+          color: #f8fafc;
         }
 
         /* ── Header ── */
@@ -359,6 +465,22 @@ export default function Privacy() {
           .main {
             padding: 32px 16px 60px;
           }
+        }
+      `}</style>
+
+      <style jsx global>{`
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { 
+          overflow-x: hidden; 
+          margin: 0; 
+          padding: 0; 
+          width: 100%; 
+          background: #fafafa;
+          -webkit-font-smoothing: antialiased; 
+          transition: background-color 0.3s ease;
+        }
+        html.dark-theme, html.dark-theme body {
+          background: #020617;
         }
       `}</style>
     </>
