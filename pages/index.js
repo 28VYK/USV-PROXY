@@ -873,6 +873,7 @@ export default function Home() {
           position: relative;
           overflow-x: hidden;
           transition: background 0.3s ease, color 0.3s ease;
+          padding-top: env(safe-area-inset-top, 0px);
         }
 
         .app[data-theme="dark"] {

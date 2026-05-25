@@ -21,8 +21,8 @@ COPY . .
 # Build the Next.js application
 RUN npm run build
 
-# For standalone output, Next.js server.js looks for static assets in .next/standalone/.next/static
-RUN mkdir -p .next/standalone/.next && cp -R .next/static .next/standalone/.next/static
+# For standalone output, Next.js server.js looks for static assets in .next/standalone/.next/static and public/ in .next/standalone/public
+RUN mkdir -p .next/standalone/.next && cp -R .next/static .next/standalone/.next/static && cp -R public .next/standalone/public
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Switch to non-root user for runtime security.
