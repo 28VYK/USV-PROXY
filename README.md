@@ -1,6 +1,10 @@
 # USV Portal 🎓
 
+[![Licență: MIT](https://img.shields.io/badge/Licen%C8%9B%C4%83-MIT-6366f1?style=flat-square)](LICENSE)
+
 > Portal neoficial pentru accesarea platformei `scolaritate.usv.ro` din orice browser modern, fără VPN local.
+
+**Dezvoltat de:** [Vichiriuc Adrian](https://github.com/28VYK) (@28VYK)  
 
 **[→ noteusv.tech](https://noteusv.tech)** — live, gratuit, doar pentru studenții USV.
 
@@ -14,7 +18,7 @@ Este o soluție independentă (Proof of Concept) creată de un student, utilizat
 Platforma funcționează ca **reverse proxy** — cererile (inclusiv credențialele) trec temporar prin serverul nostru, exclusiv în memorie, fără stocare persistentă.
 Codul este complet open-source.
 
-→ [Politică de Confidențialitate](./docs/PRIVACY.md) · [Politică de Securitate](./docs/SECURITY.md) · [Ghid de Contribuție](./docs/CONTRIBUTING.md)
+→ [Politică de Confidențialitate](./docs/PRIVACY.md) · [Politică de Securitate](./docs/SECURITY.md) · [Ghid de Contribuție](./docs/CONTRIBUTING.md) · [Credite & Autori](./docs/CREDITS.md)
 
 ---
 
@@ -86,4 +90,8 @@ Serverul VPS are costuri lunare. Dacă platforma îți este utilă:
 
 ---
 
-*MIT License · Proiect educațional open-source*
+## ⚖️ Licență & Credite
+
+Acest proiect este distribuit în mod deschis sub licența **MIT**. Întregul cod sursă și designul platformei sunt dezvoltate de **Vichiriuc Adrian (28VYK)**.
+
+Vezi fișierele [LICENSE](LICENSE) și [docs/CREDITS.md](./docs/CREDITS.md) pentru textul juridic complet și lista detaliată a creditelor de dezvoltare.

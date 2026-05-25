@@ -2,6 +2,8 @@
   "name": "usv-proxy",
   "version": "1.0.0",
   "description": "Reverse proxy for legacy PeopleSoft USV portal",
+  "author": "Vichiriuc Adrian (https://github.com/28VYK)",
+  "license": "MIT",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
