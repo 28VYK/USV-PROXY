@@ -160,6 +160,12 @@ export default function Home() {
   // Theme state
   const [theme, setTheme] = useState('light');
 
+  // Navigation tabs state
+  const [activeTab, setActiveTab] = useState('notes'); // 'notes' | 'analytics'
+
+  // Simulated grades state
+  const [simulatedGrades, setSimulatedGrades] = useState({}); // { [originalIndex]: gradeValue }
+
   const toggleTheme = () => {
     const nextTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(nextTheme);
@@ -287,6 +293,49 @@ export default function Home() {
   }, [grades, semesterFilter]);
 
   const activeSemesterLabel = SEMESTER_OPTIONS.find(option => option.value === semesterFilter)?.label || 'Toate';
+
+  /**
+   * Safe calculation of arithmetic average and statistics for active academic year.
+   * Groups statistics globally and per-semester for the selected year.
+   */
+  const arithmeticAnalysis = useMemo(() => {
+    const getStats = (gradesList) => {
+      const validGrades = [];
+      let missingCount = 0;
+      
+      gradesList.forEach(grade => {
+        const simulated = simulatedGrades[grade.originalIndex];
+        const notaFinalaStr = simulated !== undefined ? String(simulated) : grade.notaFinala;
+        const nota = parseFloat(notaFinalaStr);
+        
+        if (!isNaN(nota) && nota >= 1 && nota <= 10) {
+          validGrades.push(nota);
+        } else {
+          missingCount++;
+        }
+      });
+      
+      const sum = validGrades.reduce((acc, val) => acc + val, 0);
+      const average = validGrades.length > 0 ? parseFloat((sum / validGrades.length).toFixed(2)) : null;
+      
+      return {
+        average,
+        calculatedCount: validGrades.length,
+        totalCount: gradesList.length,
+        missingCount
+      };
+    };
+
+    const yearGradesIndexed = grades.map((g, idx) => ({ ...g, originalIndex: idx }));
+    const sem1Grades = yearGradesIndexed.filter(g => g.filterCategory === 'SEM 1');
+    const sem2Grades = yearGradesIndexed.filter(g => g.filterCategory === 'SEM 2');
+
+    return {
+      all: getStats(yearGradesIndexed),
+      sem1: getStats(sem1Grades),
+      sem2: getStats(sem2Grades)
+    };
+  }, [grades, simulatedGrades]);
 
   /**
    * Validate that the username matches a known USV account format before
@@ -461,9 +510,22 @@ export default function Home() {
   const switchYear = (strm) => {
     setSelectedYear(strm);
     setSemesterFilter('all');
+    setSimulatedGrades({});
     if (yearData[strm]) {
       setGrades(yearData[strm]);
     }
+  };
+
+  const handleSimulateGrade = (originalIndex, value) => {
+    setSimulatedGrades(prev => {
+      const updated = { ...prev };
+      if (value === '') {
+        delete updated[originalIndex];
+      } else {
+        updated[originalIndex] = parseInt(value, 10);
+      }
+      return updated;
+    });
   };
 
   const handleLogout = async () => {
@@ -490,6 +552,8 @@ export default function Home() {
     setYearData({});
     setSelectedYear('');
     setLoadingYears(false);
+    setActiveTab('notes');
+    setSimulatedGrades({});
     localStorage.removeItem('usv_userid');
     localStorage.removeItem('usv_password');
     localStorage.removeItem('usv_remember');
@@ -644,130 +708,365 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="card">
-                <div className="card-header">
-                  <div className="card-title">
-                    <h2>Note</h2>
-                    <p>{displayedGrades.length} afișate din {grades.length}</p>
-                  </div>
-                  <button onClick={() => fetchGrades(result?.cookies)} className="btn-secondary" disabled={loading}>
-                    {loading ? 'Se actualizează...' : 'Actualizează'}
-                  </button>
-                </div>
 
-{/* Year selector — appears once multiple years are discovered */}
-              {(Object.keys(yearData).length > 1 || loadingYears) && (
-                <div className="year-bar">
-                  <span className="control-label">An universitar</span>
-                  <div className="year-tabs">
-                    {Object.keys(yearData)
-                      .sort((a, b) => parseInt(b, 10) - parseInt(a, 10))
-                      .map(strm => (
-                        <button
-                          key={strm}
-                          type="button"
-                          className={`year-tab${selectedYear === strm ? ' active' : ''}`}
-                          onClick={() => switchYear(strm)}
-                          aria-pressed={selectedYear === strm}
-                        >
-                          <span>{strmToYearLabel(strm)}</span>
-                          <span className="year-tab-count">{yearData[strm]?.length ?? 0}</span>
-                        </button>
-                      ))}
-                    {loadingYears && (
-                      <span className="year-discovering">
-                        <span className="year-spinner" />
-                        Se caută ani...
-                      </span>
-                    )}
-                  </div>
-                </div>
-              )}
+              {/* Tab Navigation System */}
+              <div className="dashboard-tabs">
+                <button
+                  type="button"
+                  className={`dashboard-tab ${activeTab === 'notes' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('notes')}
+                  aria-pressed={activeTab === 'notes'}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                    <line x1="9" y1="9" x2="15" y2="9" />
+                    <line x1="9" y1="13" x2="15" y2="13" />
+                    <line x1="9" y1="17" x2="15" y2="17" />
+                  </svg>
+                  <span>Notele Mele</span>
+                </button>
+                <button
+                  type="button"
+                  className={`dashboard-tab ${activeTab === 'analytics' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('analytics')}
+                  aria-pressed={activeTab === 'analytics'}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="20" x2="18" y2="10" />
+                    <line x1="12" y1="20" x2="12" y2="4" />
+                    <line x1="6" y1="20" x2="6" y2="14" />
+                  </svg>
+                  <span>Analiză Medii</span>
+                </button>
+              </div>
 
-                {loading ? (
-                  <div className="loading-state">
-                    <div className="spinner"></div>
-                    <p>Se încarcă datele...</p>
+              {activeTab === 'notes' ? (
+                <div className="card animate-fade">
+                  <div className="card-header">
+                    <div className="card-title">
+                      <h2>Note</h2>
+                      <p>{displayedGrades.length} afișate din {grades.length}</p>
+                    </div>
+                    <button onClick={() => fetchGrades(result?.cookies)} className="btn-secondary" disabled={loading}>
+                      {loading ? 'Se actualizează...' : 'Actualizează'}
+                    </button>
                   </div>
-                ) : grades.length > 0 ? (
-                  <>
-                    <div className="grade-controls">
-                      <span className="control-label">Semestru</span>
-                      <div className="segmented-control" aria-label="Semestru">
-                        {SEMESTER_OPTIONS.map(option => {
-                          const count = option.value === 'all' ? grades.length : semesterCounts[option.value] || 0;
 
-                          return (
+                  {/* Year selector — appears once multiple years are discovered */}
+                  {(Object.keys(yearData).length > 1 || loadingYears) && (
+                    <div className="year-bar">
+                      <span className="control-label">An universitar</span>
+                      <div className="year-tabs">
+                        {Object.keys(yearData)
+                          .sort((a, b) => parseInt(b, 10) - parseInt(a, 10))
+                          .map(strm => (
                             <button
-                              key={option.value}
+                              key={strm}
                               type="button"
-                              className={semesterFilter === option.value ? 'active' : ''}
-                              onClick={() => {
-                                setSemesterFilter(option.value);
-                                localStorage.setItem('usv_semester', option.value);
-                              }}
-                              aria-pressed={semesterFilter === option.value}
+                              className={`year-tab${selectedYear === strm ? ' active' : ''}`}
+                              onClick={() => switchYear(strm)}
+                              aria-pressed={selectedYear === strm}
                             >
-                              <span>{option.label}</span>
-                              <span className="count">{count}</span>
+                              <span>{strmToYearLabel(strm)}</span>
+                              <span className="year-tab-count">{yearData[strm]?.length ?? 0}</span>
                             </button>
-                          );
-                        })}
+                          ))}
+                        {loadingYears && (
+                          <span className="year-discovering">
+                            <span className="year-spinner" />
+                            Se caută ani...
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {loading ? (
+                    <div className="loading-state">
+                      <div className="spinner"></div>
+                      <p>Se încarcă datele...</p>
+                    </div>
+                  ) : grades.length > 0 ? (
+                    <>
+                      <div className="grade-controls">
+                        <span className="control-label">Semestru</span>
+                        <div className="segmented-control" aria-label="Semestru">
+                          {SEMESTER_OPTIONS.map(option => {
+                            const count = option.value === 'all' ? grades.length : semesterCounts[option.value] || 0;
+
+                            return (
+                              <button
+                                key={option.value}
+                                type="button"
+                                className={semesterFilter === option.value ? 'active' : ''}
+                                onClick={() => {
+                                  setSemesterFilter(option.value);
+                                  localStorage.setItem('usv_semester', option.value);
+                                }}
+                                aria-pressed={semesterFilter === option.value}
+                              >
+                                <span>{option.label}</span>
+                                <span className="count">{count}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {displayedGrades.length > 0 ? (
+                        <div className="table-wrapper">
+                          <table>
+                            <thead>
+                              <tr>
+                                <th>Disciplină</th>
+                                <th>Semestru</th>
+                                <th>Pondere</th>
+                                <th>Curs</th>
+                                <th>Seminar</th>
+                                <th>Final</th>
+                                <th>Credite</th>
+                                <th>Puncte</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {displayedGrades.map((grade) => (
+                                <tr key={grade.originalIndex}>
+                                  <td className="course">{grade.titlu}</td>
+                                  <td title={grade.sesiune}>
+                                    <span className={`semester-pill ${grade.sesiune || grade.filterCategory ? '' : 'unknown'}`}>
+                                      {grade.sesiune || grade.filterCategory || '—'}
+                                    </span>
+                                  </td>
+                                  <td className="muted">{grade.pondere}</td>
+                                  <td>{grade.notaCurs || '—'}</td>
+                                  <td>{grade.notaSeminar || '—'}</td>
+                                  <td className={`final ${parseFloat(grade.notaFinala) >= 5 ? 'pass' : parseFloat(grade.notaFinala) ? 'fail' : ''}`}>
+                                    {grade.notaFinala || '—'}
+                                  </td>
+                                  <td>{grade.credite || '—'}</td>
+                                  <td className="points">{grade.puncte || '—'}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : (
+                        <div className="empty-state compact">
+                          <p>Nu există note pentru {semesterFilter}.</p>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="empty-state">
+                      <p>Nu am putut încărca notele. Încearcă din nou.</p>
+                      <button onClick={() => fetchGrades(result?.cookies)} className="btn-secondary">Reîncearcă</button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="analytics-container animate-fade">
+                  {/* KPI Statistics Grid */}
+                  <div className="analytics-kpi-grid">
+                    <div className="kpi-card accent">
+                      <div className="kpi-card-glow" />
+                      <div className="kpi-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="12" r="10" />
+                          <path d="M12 16v-4" />
+                          <path d="M12 8h.01" />
+                        </svg>
+                      </div>
+                      <div className="kpi-info">
+                        <span>Medie Aritmetică Anuală</span>
+                        <strong>{arithmeticAnalysis.all.average !== null ? arithmeticAnalysis.all.average.toFixed(2) : '—'}</strong>
+                        <p>{arithmeticAnalysis.all.calculatedCount} din {arithmeticAnalysis.all.totalCount} note luate în calcul</p>
                       </div>
                     </div>
 
-                    {displayedGrades.length > 0 ? (
-                      <div className="table-wrapper">
-                        <table>
-                          <thead>
-                            <tr>
-                              <th>Disciplină</th>
-                              <th>Semestru</th>
-                              <th>Pondere</th>
-                              <th>Curs</th>
-                              <th>Seminar</th>
-                              <th>Final</th>
-                              <th>Credite</th>
-                              <th>Puncte</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {displayedGrades.map((grade) => (
-                              <tr key={grade.originalIndex}>
-                                <td className="course">{grade.titlu}</td>
-                                <td title={grade.sesiune}>
+                    <div className="kpi-card">
+                      <div className="kpi-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+                          <line x1="4" y1="22" x2="4" y2="15" />
+                        </svg>
+                      </div>
+                      <div className="kpi-info">
+                        <span>Medie Semestrul 1</span>
+                        <strong>{arithmeticAnalysis.sem1.average !== null ? arithmeticAnalysis.sem1.average.toFixed(2) : '—'}</strong>
+                        <p>{arithmeticAnalysis.sem1.calculatedCount} note introduse</p>
+                      </div>
+                    </div>
+
+                    <div className="kpi-card">
+                      <div className="kpi-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+                          <line x1="4" y1="22" x2="4" y2="15" />
+                        </svg>
+                      </div>
+                      <div className="kpi-info">
+                        <span>Medie Semestrul 2</span>
+                        <strong>{arithmeticAnalysis.sem2.average !== null ? arithmeticAnalysis.sem2.average.toFixed(2) : '—'}</strong>
+                        <p>{arithmeticAnalysis.sem2.calculatedCount} note introduse</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Warning banner for missing grades during session */}
+                  {arithmeticAnalysis.all.missingCount > 0 && (
+                    <div className="analytics-warning-banner">
+                      <div className="warning-banner-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                          <line x1="12" y1="9" x2="12" y2="13" />
+                          <line x1="12" y1="17" x2="12.01" y2="17" />
+                        </svg>
+                      </div>
+                      <span>
+                        Sesiune în curs: Lipsesc <strong>{arithmeticAnalysis.all.missingCount} note</strong> pentru acest an universitar. Folosește estimatorul de mai jos pentru a simula notele și a previzualiza media finală!
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Interactive Grade Estimator (Simulator) */}
+                  <div className="card simulator-card">
+                    <div className="card-header">
+                      <div className="card-title">
+                        <h2>Simulator Note Estimate</h2>
+                        <p>Alege note estimate pentru disciplinele din sesiune ca să vezi evoluția mediei live.</p>
+                      </div>
+                      {Object.keys(simulatedGrades).length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setSimulatedGrades({})}
+                          className="btn-secondary"
+                        >
+                          Resetează simularea
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="table-wrapper">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Disciplină</th>
+                            <th>Semestru</th>
+                            <th>Credite</th>
+                            <th>Nota Reală</th>
+                            <th style={{ width: '200px' }}>Notă Estimată (Simulare)</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {grades.map((grade, idx) => {
+                            const isSimulated = simulatedGrades[idx] !== undefined;
+                            const activeVal = isSimulated ? simulatedGrades[idx] : '';
+
+                            return (
+                              <tr key={idx} className={isSimulated ? 'tr-simulated' : ''}>
+                                <td className="course">
+                                  <span>{grade.titlu}</span>
+                                  {isSimulated && (
+                                    <span className="badge-simulated">Simulată</span>
+                                  )}
+                                </td>
+                                <td>
                                   <span className={`semester-pill ${grade.sesiune || grade.filterCategory ? '' : 'unknown'}`}>
                                     {grade.sesiune || grade.filterCategory || '—'}
                                   </span>
                                 </td>
-                                <td className="muted">{grade.pondere}</td>
-                                <td>{grade.notaCurs || '—'}</td>
-                                <td>{grade.notaSeminar || '—'}</td>
+                                <td>{grade.credite || '—'}</td>
                                 <td className={`final ${parseFloat(grade.notaFinala) >= 5 ? 'pass' : parseFloat(grade.notaFinala) ? 'fail' : ''}`}>
                                   {grade.notaFinala || '—'}
                                 </td>
-                                <td>{grade.credite || '—'}</td>
-                                <td className="points">{grade.puncte || '—'}</td>
+                                <td>
+                                  <div className="select-wrapper">
+                                    <select
+                                      value={activeVal}
+                                      onChange={(e) => handleSimulateGrade(idx, e.target.value)}
+                                      className={`simulator-select ${isSimulated ? 'active' : ''}`}
+                                    >
+                                      <option value="">Alege estimare...</option>
+                                      {[10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map(n => (
+                                        <option key={n} value={n}>{n}</option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                </td>
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    ) : (
-                      <div className="empty-state compact">
-                        <p>Nu există note pentru {semesterFilter}.</p>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="empty-state">
-                    <p>Nu am putut încărca notele. Încearcă din nou.</p>
-                    <button onClick={() => fetchGrades(result?.cookies)} className="btn-secondary">Reîncearcă</button>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
-                )}
-              </div>
+
+                  {/* Historical Evolution Timeline (appears if multiple years are discovered) */}
+                  {Object.keys(yearData).length > 1 && (
+                    <div className="card evolution-card">
+                      <div className="card-header">
+                        <div className="card-title">
+                          <h2>Evoluție Academică Globală</h2>
+                          <p>Parcursul tău academic și media aritmetică generală pe fiecare an de studii.</p>
+                        </div>
+                      </div>
+                      <div className="evolution-timeline">
+                        <div className="timeline-global-line" />
+                        {Object.keys(yearData)
+                          .sort((a, b) => parseInt(b, 10) - parseInt(a, 10))
+                          .map(strm => {
+                            // Calculate simple arithmetic average for this strm
+                            const strmGrades = yearData[strm] || [];
+                            const allGradedValues = strmGrades
+                              .map(g => parseFloat(g.notaFinala))
+                              .filter(n => !isNaN(n) && n >= 1 && n <= 10);
+                            const passedCount = allGradedValues.filter(n => n >= 5).length;
+                            const failedCount = allGradedValues.filter(n => n < 5).length;
+
+                            const strmSum = allGradedValues.reduce((acc, val) => acc + val, 0);
+                            const strmAvg = allGradedValues.length > 0 ? (strmSum / allGradedValues.length).toFixed(2) : null;
+
+                            const isActiveYear = selectedYear === strm;
+
+                            return (
+                              <div key={strm} className={`timeline-item ${isActiveYear ? 'active' : ''}`}>
+                                <div className="timeline-dot" />
+                                <div className="timeline-content">
+                                  <div className="timeline-content-header">
+                                    <h3>An universitar {strmToYearLabel(strm)}</h3>
+                                    {isActiveYear && (
+                                      <span className="badge-timeline-active">An selectat</span>
+                                    )}
+                                  </div>
+                                  <div className="timeline-stats">
+                                    <div className="timeline-stat">
+                                      <span className="stat-label">Medie Aritmetică</span>
+                                      <strong className="stat-value">{strmAvg !== null ? strmAvg : '—'}</strong>
+                                    </div>
+                                    <div className="timeline-stat">
+                                      <span className="stat-label">Promovate</span>
+                                      <strong className="stat-value">{passedCount} / {strmGrades.length}</strong>
+                                    </div>
+                                    {failedCount > 0 && (
+                                      <div className="timeline-stat">
+                                        <span className="stat-label">Restanțe</span>
+                                        <strong className="stat-value restante">{failedCount}</strong>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                      </div>
+                    </div>
+                  )}
+
+                </div>
+              )}
             </div>
           )}
+
 
 
         </main>
@@ -1824,6 +2123,22 @@ export default function Home() {
           th, td { padding: 14px 12px; font-size: 13px; }
           .course { max-width: 190px; }
           .glow-blob { opacity: 0.3; filter: blur(90px); }
+
+          /* Mobile Analytics Layout adjustments */
+          .dashboard-tabs { overflow-x: auto; padding-bottom: 8px; gap: 4px; border-bottom: 0; width: 100%; -webkit-overflow-scrolling: touch; }
+          .dashboard-tabs::-webkit-scrollbar { display: none; }
+          .dashboard-tab { min-height: 36px; padding: 6px 14px; font-size: 13px; border-radius: 10px; flex-shrink: 0; }
+          .analytics-kpi-grid { grid-template-columns: 1fr; gap: 14px; }
+          .kpi-card { padding: 18px; }
+          .kpi-info strong { font-size: 26px; }
+          .analytics-warning-banner { font-size: 13px; padding: 14px 16px; align-items: flex-start; }
+          .select-wrapper { max-width: 120px; }
+          .simulator-select { font-size: 12px; min-height: 32px; padding: 4px 8px; padding-right: 24px; background-position: right 6px center; background-size: 10px; }
+          .evolution-timeline { padding: 16px; }
+          .timeline-item { gap: 16px; }
+          .timeline-content { padding: 14px 16px; margin-bottom: 16px; }
+          .timeline-stats { gap: 20px; }
+          .stat-value { font-size: 16px; }
         }
 
         /* Modal Overlay and Card Styles */
@@ -2103,9 +2418,435 @@ export default function Home() {
           color: var(--blue-dark);
           text-decoration: underline;
         }
+
       `}</style>
 
       <style jsx global>{`
+        /* ── Tab Navigation Bar ── */
+        .dashboard-tabs {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 24px;
+          border-bottom: 1px solid var(--line);
+          padding-bottom: 12px;
+          width: 100%;
+        }
+
+        .dashboard-tab {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          min-height: 40px;
+          padding: 8px 18px;
+          background: transparent;
+          color: var(--muted);
+          border: 1px solid transparent;
+          border-radius: 12px;
+          font-size: 14px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+          font-family: inherit;
+        }
+
+        .dashboard-tab svg {
+          opacity: 0.7;
+          transition: opacity 0.25s ease, transform 0.25s ease;
+        }
+
+        .dashboard-tab:hover {
+          color: var(--ink);
+          background: var(--surface-strong);
+        }
+
+        .dashboard-tab:hover svg {
+          opacity: 1;
+          transform: translateY(-1px);
+        }
+
+        .dashboard-tab.active {
+          background: var(--glass-bg);
+          color: var(--blue);
+          border: 1px solid var(--glass-border);
+          box-shadow: 0 8px 24px rgba(99, 102, 241, 0.08), inset 0 1px 0 var(--glass-border);
+        }
+
+        .dashboard-tab.active svg {
+          opacity: 1;
+          color: var(--blue);
+        }
+
+        /* ── KPI Grid & Cards ── */
+        .analytics-kpi-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+          gap: 20px;
+          margin-bottom: 24px;
+          width: 100%;
+        }
+
+        .kpi-card {
+          background: var(--card-bg);
+          border: 1px solid var(--card-border);
+          border-radius: 20px;
+          padding: 24px;
+          display: flex;
+          align-items: flex-start;
+          gap: 16px;
+          position: relative;
+          overflow: hidden;
+          box-shadow: 0 12px 30px rgba(0, 0, 0, 0.02), inset 0 1px 0 var(--card-inner-shadow);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .kpi-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 16px 36px rgba(0, 0, 0, 0.04), inset 0 1px 0 var(--card-inner-shadow);
+        }
+
+        .kpi-card-glow {
+          position: absolute;
+          width: 150px;
+          height: 150px;
+          background: radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, rgba(99, 102, 241, 0) 70%);
+          border-radius: 50%;
+          top: -40px;
+          right: -40px;
+          pointer-events: none;
+        }
+
+        .kpi-card.accent {
+          border-color: rgba(99, 102, 241, 0.25);
+          box-shadow: 0 12px 30px rgba(99, 102, 241, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .kpi-card.accent .kpi-icon {
+          background: rgba(99, 102, 241, 0.10);
+          color: var(--blue);
+          border-color: rgba(99, 102, 241, 0.2);
+        }
+
+        .kpi-icon {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 44px;
+          height: 44px;
+          background: var(--surface-strong);
+          color: var(--text);
+          border: 1px solid var(--line);
+          border-radius: 12px;
+          font-weight: 800;
+          font-family: 'Space Grotesk', sans-serif;
+          font-size: 16px;
+          flex-shrink: 0;
+        }
+
+        .kpi-info {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        .kpi-info span {
+          color: var(--muted);
+          font-size: 12px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+
+        .kpi-info strong {
+          color: var(--ink);
+          font-family: 'Outfit', sans-serif;
+          font-size: 32px;
+          font-weight: 900;
+          line-height: 1.1;
+          letter-spacing: -0.02em;
+        }
+
+        .kpi-info p {
+          color: var(--muted);
+          font-size: 13px;
+          font-weight: 500;
+          margin: 0;
+        }
+
+        /* ── Warning Banner ── */
+        .analytics-warning-banner {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 16px 20px;
+          background: rgba(245, 158, 11, 0.08);
+          border: 1px solid rgba(245, 158, 11, 0.2);
+          border-radius: 16px;
+          color: var(--amber);
+          font-size: 14px;
+          font-weight: 600;
+          line-height: 1.5;
+          margin-bottom: 24px;
+          box-shadow: 0 4px 12px rgba(245, 158, 11, 0.02);
+          text-align: left;
+        }
+
+        .app[data-theme="light"] .analytics-warning-banner {
+          background: rgba(245, 158, 11, 0.05);
+          color: #b45309;
+        }
+
+        .warning-banner-icon {
+          display: inline-flex;
+          flex-shrink: 0;
+          color: inherit;
+        }
+
+        .analytics-warning-banner strong {
+          color: inherit;
+          font-weight: 700;
+        }
+
+        /* ── Grade Estimator / Simulator Select ── */
+        .simulator-card {
+          margin-bottom: 24px;
+        }
+
+        .tr-simulated td {
+          background: rgba(99, 102, 241, 0.03) !important;
+        }
+
+        .app[data-theme="dark"] .tr-simulated td {
+          background: rgba(99, 102, 241, 0.06) !important;
+        }
+
+        .badge-simulated {
+          display: inline-flex;
+          align-items: center;
+          padding: 2.5px 8px;
+          background: rgba(99, 102, 241, 0.12);
+          color: var(--blue);
+          border: 1px solid rgba(99, 102, 241, 0.2);
+          border-radius: 8px;
+          font-size: 10px;
+          font-weight: 800;
+          margin-left: 8px;
+          vertical-align: middle;
+          text-transform: uppercase;
+          letter-spacing: 0.02em;
+        }
+
+        .select-wrapper {
+          position: relative;
+          width: 100%;
+          max-width: 170px;
+        }
+
+        /* PREMIUM DROPDOWN VISUAL DESIGN WITH NATIVE OVERRIDES */
+        .simulator-select {
+          width: 100%;
+          min-height: 38px;
+          padding: 8px 16px;
+          background: var(--input-bg);
+          border: 1.5px solid var(--input-border);
+          border-radius: 10px;
+          color: var(--text);
+          font-size: 13px;
+          font-weight: 600;
+          font-family: inherit;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          appearance: none;
+          -webkit-appearance: none;
+          outline: none;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+          background-repeat: no-repeat;
+          background-position: right 12px center;
+          background-size: 12px;
+          padding-right: 32px;
+        }
+
+        .simulator-select:hover {
+          border-color: var(--blue);
+          background-color: var(--surface-strong);
+        }
+
+        .simulator-select:focus {
+          outline: none;
+          border-color: var(--blue);
+          box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+        }
+
+        .simulator-select.active {
+          border-color: var(--blue);
+          color: var(--blue);
+          background-color: rgba(99, 102, 241, 0.05);
+          font-weight: 700;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236366f1' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+          background-repeat: no-repeat;
+          background-position: right 12px center;
+          background-size: 12px;
+        }
+
+        /* ── Absolute Timeline Evolution ── */
+        .evolution-timeline {
+          position: relative;
+          padding: 28px 32px;
+          padding-left: 56px;
+        }
+
+        .timeline-global-line {
+          position: absolute;
+          left: 32px;
+          top: 36px;
+          bottom: 36px;
+          width: 2px;
+          background: var(--line);
+          z-index: 1;
+        }
+
+        .timeline-item {
+          position: relative;
+          margin-bottom: 24px;
+        }
+
+        .timeline-item:last-child {
+          margin-bottom: 0;
+        }
+
+        .timeline-dot {
+          position: absolute;
+          left: -29px;
+          top: 24px;
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          background: var(--line-strong);
+          border: 2px solid var(--paper);
+          z-index: 5;
+          box-shadow: 0 0 0 1px var(--line);
+          transition: all 0.3s ease;
+        }
+
+        .timeline-item.active .timeline-dot {
+          background: var(--blue);
+          box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.18);
+        }
+
+        .timeline-content {
+          flex: 1;
+          background: var(--surface);
+          border: 1px solid var(--line);
+          border-radius: 16px;
+          padding: 18px 20px;
+          transition: all 0.3s ease;
+          text-align: left;
+        }
+
+        .timeline-item.active .timeline-content {
+          border-color: rgba(99, 102, 241, 0.2);
+          background: var(--glass-bg);
+          box-shadow: 0 8px 24px rgba(99, 102, 241, 0.03);
+        }
+
+        .timeline-content-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 12px;
+        }
+
+        .timeline-content-header h3 {
+          font-family: 'Outfit', sans-serif;
+          font-size: 16px;
+          font-weight: 800;
+          color: var(--ink);
+          margin: 0;
+        }
+
+        .badge-timeline-active {
+          display: inline-flex;
+          padding: 3px 8px;
+          background: rgba(99, 102, 241, 0.1);
+          color: var(--blue);
+          border-radius: 6px;
+          font-size: 10px;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+
+        .timeline-stats {
+          display: flex;
+          gap: 32px;
+          flex-wrap: wrap;
+        }
+
+        .timeline-stat {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        .stat-label {
+          color: var(--muted);
+          font-size: 11px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+        }
+
+        .stat-value {
+          color: var(--ink);
+          font-family: 'Outfit', sans-serif;
+          font-size: 18px;
+          font-weight: 800;
+        }
+
+        .stat-value.restante {
+          color: var(--red);
+        }
+
+        /* ── Micro-Animations ── */
+        .animate-fade {
+          animation: fadeEnter 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        @keyframes fadeEnter {
+          from {
+            opacity: 0;
+            transform: translateY(8px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        /* Mobile Analytics Layout adjustments */
+        @media (max-width: 768px) {
+          .dashboard-tabs { overflow-x: auto; padding-bottom: 8px; gap: 4px; border-bottom: 0; width: 100%; -webkit-overflow-scrolling: touch; }
+          .dashboard-tabs::-webkit-scrollbar { display: none; }
+          .dashboard-tab { min-height: 36px; padding: 6px 14px; font-size: 13px; border-radius: 10px; flex-shrink: 0; }
+          .analytics-kpi-grid { grid-template-columns: 1fr; gap: 14px; }
+          .kpi-card { padding: 18px; }
+          .kpi-info strong { font-size: 26px; }
+          .analytics-warning-banner { font-size: 13px; padding: 14px 16px; align-items: flex-start; }
+          .select-wrapper { max-width: 120px; }
+          .simulator-select { font-size: 12px; min-height: 32px; padding: 4px 8px; padding-right: 24px; background-position: right 6px center; background-size: 10px; }
+          .evolution-timeline { padding: 16px; padding-left: 44px; }
+          .timeline-global-line { left: 24px; top: 20px; bottom: 20px; }
+          .timeline-dot { left: -25px; top: 22px; }
+          .timeline-item { gap: 16px; }
+          .timeline-content { padding: 14px 16px; margin-bottom: 16px; }
+          .timeline-stats { gap: 20px; }
+          .stat-value { font-size: 16px; }
+        }
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
         html, body { 
           overflow-x: hidden; 
