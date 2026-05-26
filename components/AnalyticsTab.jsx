@@ -1,0 +1,364 @@
+import { strmToYearLabel, calculateEstimatedFinalGrade } from '../lib/formatters';
+
+/**
+ * Group duplicate course entries by course title and semester category.
+ * Retains the session with the highest grade, or fallback to the non-ABS attempt.
+ */
+function groupGrades(gradesList) {
+  // Build a map of course title -> semester category (ignoring OTHER if we have SEM 1 or SEM 2)
+  const titleToSemester = {};
+  gradesList.forEach(grade => {
+    if (grade.filterCategory && grade.filterCategory !== 'OTHER') {
+      titleToSemester[grade.titlu] = grade.filterCategory;
+    }
+  });
+
+  const grouped = {};
+  gradesList.forEach(grade => {
+    // Resolve the semester category: fallback to the mapped semester if current is OTHER
+    const resolvedSemester = grade.filterCategory === 'OTHER' && titleToSemester[grade.titlu]
+      ? titleToSemester[grade.titlu]
+      : grade.filterCategory;
+
+    const key = `${grade.titlu}|${resolvedSemester}`;
+    
+    // Resolve missing final grade using calculateEstimatedFinalGrade if possible
+    const estimatedFinal = calculateEstimatedFinalGrade(grade);
+    const resolvedGrade = {
+      ...grade,
+      filterCategory: resolvedSemester,
+      notaFinala: estimatedFinal !== null ? estimatedFinal : grade.notaFinala,
+      isEstimatedFinal: estimatedFinal !== null // track that this is an estimated grade
+    };
+    
+    if (!grouped[key]) {
+      grouped[key] = resolvedGrade;
+    } else {
+      const currentNota = parseFloat(grouped[key].notaFinala);
+      const newNota = parseFloat(resolvedGrade.notaFinala);
+      
+      const currentValid = !isNaN(currentNota) && currentNota >= 1 && currentNota <= 10;
+      const newValid = !isNaN(newNota) && newNota >= 1 && newNota <= 10;
+      
+      let chooseNew = false;
+      if (newValid && !currentValid) {
+        chooseNew = true;
+      } else if (newValid && currentValid) {
+        if (newNota > currentNota) {
+          chooseNew = true;
+        }
+      } else if (!newValid && !currentValid) {
+        if (String(resolvedGrade.notaFinala).toUpperCase() !== 'ABS' && String(grouped[key].notaFinala).toUpperCase() === 'ABS') {
+          chooseNew = true;
+        }
+      }
+      if (chooseNew) {
+        grouped[key] = resolvedGrade;
+      }
+    }
+  });
+  return Object.values(grouped);
+}
+
+/**
+ * AnalyticsTab — Tab-ul „Analiză Medii".
+ *
+ * Conține: KPI cards cu media aritmetică, warning banner sesiune activă,
+ * grade simulator interactiv și evolution timeline multi-an.
+ *
+ * @param {{
+ *   arithmeticAnalysis: { all, sem1, sem2 },
+ *   grades: Array,
+ *   yearData: Object,
+ *   selectedYear: string,
+ *   simulatedGrades: Object,
+ *   onSimulateGrade: (idx: number, value: string) => void,
+ *   onResetSimulation: () => void,
+ *   onSwitchYear: (strm: string) => void,
+ * }} props
+ */
+export default function AnalyticsTab({
+  arithmeticAnalysis,
+  grades,
+  yearData,
+  selectedYear,
+  simulatedGrades,
+  onSimulateGrade,
+  onResetSimulation,
+  onSwitchYear,
+}) {
+  const strmKeys = Object.keys(yearData).map(Number);
+  const maxStrm = strmKeys.length > 0 ? Math.max(...strmKeys) : null;
+  const isSelectedYearActive = maxStrm !== null && parseInt(selectedYear, 10) === maxStrm;
+
+  return (
+    <div className="analytics-container animate-fade">
+
+      {/* ── KPI Statistics Grid ── */}
+      <div className="analytics-kpi-grid">
+
+        {/* Medie anuală globală */}
+        <div className="kpi-card accent">
+          <div className="kpi-card-glow" />
+          <div className="kpi-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 16v-4" />
+              <path d="M12 8h.01" />
+            </svg>
+          </div>
+          <div className="kpi-info">
+            <span>Medie Aritmetică Anuală</span>
+            <strong>
+              {arithmeticAnalysis.all.average !== null
+                ? arithmeticAnalysis.all.average.toFixed(2)
+                : '—'}
+            </strong>
+            <p>
+              {arithmeticAnalysis.all.calculatedCount} din{' '}
+              {arithmeticAnalysis.all.totalCount} note luate în calcul
+            </p>
+          </div>
+        </div>
+
+        {/* Medie SEM 1 */}
+        <div className="kpi-card">
+          <div className="kpi-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+              <line x1="4" y1="22" x2="4" y2="15" />
+            </svg>
+          </div>
+          <div className="kpi-info">
+            <span>Medie Semestrul 1</span>
+            <strong>
+              {arithmeticAnalysis.sem1.average !== null
+                ? arithmeticAnalysis.sem1.average.toFixed(2)
+                : '—'}
+            </strong>
+            <p>{arithmeticAnalysis.sem1.calculatedCount} note introduse</p>
+          </div>
+        </div>
+
+        {/* Medie SEM 2 */}
+        <div className="kpi-card">
+          <div className="kpi-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+              <line x1="4" y1="22" x2="4" y2="15" />
+            </svg>
+          </div>
+          <div className="kpi-info">
+            <span>Medie Semestrul 2</span>
+            <strong>
+              {arithmeticAnalysis.sem2.average !== null
+                ? arithmeticAnalysis.sem2.average.toFixed(2)
+                : '—'}
+            </strong>
+            <p>{arithmeticAnalysis.sem2.calculatedCount} note introduse</p>
+          </div>
+        </div>
+
+      </div>
+
+      {/* ── Warning banner: note lipsă în sesiune activă ── */}
+      {isSelectedYearActive && arithmeticAnalysis.all.missingCount > 0 && (
+        <div className="analytics-warning-banner">
+          <div className="warning-banner-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+          </div>
+          <span>
+            Sesiune în curs: Lipsesc{' '}
+            <strong>{arithmeticAnalysis.all.missingCount} note</strong>{' '}
+            pentru acest an universitar. Folosește estimatorul de mai jos pentru a simula notele și a previzualiza media finală!
+          </span>
+        </div>
+      )}
+
+      {/* ── Grade Simulator ── */}
+      <div className="card simulator-card">
+        <div className="card-header">
+          <div className="card-title">
+            <h2>Simulator Note Estimate</h2>
+            <p>Alege note estimate pentru disciplinele din sesiune ca să vezi evoluția mediei live.</p>
+          </div>
+          {Object.keys(simulatedGrades).length > 0 && (
+            <button
+              type="button"
+              onClick={onResetSimulation}
+              className="btn-secondary"
+            >
+              Resetează simularea
+            </button>
+          )}
+        </div>
+
+        <div className="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Disciplină</th>
+                <th>Semestru</th>
+                <th>Credite</th>
+                <th>Nota Reală</th>
+                <th style={{ width: '200px' }}>Notă Estimată (Simulare)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {grades.map((grade, idx) => {
+                const isSimulated = simulatedGrades[idx] !== undefined;
+                const activeVal = isSimulated ? simulatedGrades[idx] : '';
+
+                return (
+                  <tr key={idx} className={isSimulated ? 'tr-simulated' : ''}>
+                    <td className="course">
+                      <span>{grade.titlu}</span>
+                      {isSimulated && (
+                        <span className="badge-simulated">Simulată</span>
+                      )}
+                    </td>
+                    <td>
+                      <span className={`semester-pill ${grade.sesiune || grade.filterCategory ? '' : 'unknown'}`}>
+                        {grade.sesiune || grade.filterCategory || '—'}
+                      </span>
+                    </td>
+                    <td>{grade.credite || '—'}</td>
+                    <td className={`final ${parseFloat(grade.notaFinala) >= 5 ? 'pass' : parseFloat(grade.notaFinala) ? 'fail' : ''}`}>
+                      {grade.isEstimatedFinal ? (
+                        <span className="estimated-grade-badge" title="Calculată automat pe baza ponderii curs/seminar (catalog neînchis)">
+                          {grade.notaFinala}<span className="est-star">*</span>
+                        </span>
+                      ) : (
+                        grade.notaFinala || '—'
+                      )}
+                    </td>
+                    <td>
+                      <div className="select-wrapper">
+                        <select
+                          value={activeVal}
+                          onChange={(e) => onSimulateGrade(idx, e.target.value)}
+                          className={`simulator-select ${isSimulated ? 'active' : ''}`}
+                        >
+                          <option value="">Alege estimare...</option>
+                          {[10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map(n => (
+                            <option key={n} value={n}>{n}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* ── Evolution Timeline (apare când există mai mulți ani) ── */}
+      {Object.keys(yearData).length > 1 && (
+        <div className="card evolution-card">
+          <div className="card-header">
+            <div className="card-title">
+              <h2>Evoluție Academică Globală</h2>
+              <p>Parcursul tău academic și media aritmetică generală pe fiecare an de studii.</p>
+            </div>
+          </div>
+          <div className="evolution-timeline">
+            <div className="timeline-global-line" />
+            {Object.keys(yearData)
+              .sort((a, b) => parseInt(b, 10) - parseInt(a, 10))
+              .map(strm => {
+                const strmGrades = yearData[strm] || [];
+                const isActiveYear = selectedYear === strm;
+                const isLatestYear = maxStrm !== null && parseInt(strm, 10) === maxStrm;
+
+                // Group duplicate sessions by course title + semester to count unique subjects
+                const groupedStrmGrades = groupGrades(strmGrades);
+
+                let passedCount = 0;
+                let failedCount = 0;
+
+                groupedStrmGrades.forEach(grade => {
+                  const nota = parseFloat(grade.notaFinala);
+                  if (!isNaN(nota) && nota >= 5 && nota <= 10) {
+                    passedCount++;
+                  } else {
+                    const isExplicitFail = !isNaN(nota) && nota < 5;
+                    const isAbsent = String(grade.notaFinala).toUpperCase() === 'ABS';
+                    
+                    if (isExplicitFail || isAbsent) {
+                      failedCount++;
+                    } else if (!isLatestYear) {
+                      // For past academic years, empty/missing grades are counted as failed (restanțe)
+                      failedCount++;
+                    }
+                  }
+                });
+
+                // Calculate the academic average purely from the grouped unique subjects
+                const allGradedValues = groupedStrmGrades
+                  .map(g => parseFloat(g.notaFinala))
+                  .filter(n => !isNaN(n) && n >= 1 && n <= 10);
+
+                const strmSum = allGradedValues.reduce((acc, val) => acc + val, 0);
+                const strmAvg = allGradedValues.length > 0
+                  ? (strmSum / allGradedValues.length).toFixed(2)
+                  : null;
+
+                return (
+                  <div key={strm} className={`timeline-item ${isActiveYear ? 'active' : ''}`}>
+                    <div className="timeline-dot" />
+                    <div
+                      className="timeline-content"
+                      onClick={() => !isActiveYear && onSwitchYear(strm)}
+                      role={isActiveYear ? undefined : "button"}
+                      tabIndex={isActiveYear ? undefined : 0}
+                      onKeyDown={(e) => {
+                        if (!isActiveYear && (e.key === 'Enter' || e.key === ' ')) {
+                          e.preventDefault();
+                          onSwitchYear(strm);
+                        }
+                      }}
+                      title={isActiveYear ? undefined : `Afișează notele pentru anul ${strmToYearLabel(strm)}`}
+                    >
+                      <div className="timeline-content-header">
+                        <h3>An universitar {strmToYearLabel(strm)}</h3>
+                        {isActiveYear && (
+                          <span className="badge-timeline-active">An selectat</span>
+                        )}
+                      </div>
+                      <div className="timeline-stats">
+                        <div className="timeline-stat">
+                          <span className="stat-label">Medie Aritmetică</span>
+                          <strong className="stat-value">
+                            {strmAvg !== null ? strmAvg : '—'}
+                          </strong>
+                        </div>
+                        <div className="timeline-stat">
+                          <span className="stat-label">Promovate</span>
+                          <strong className="stat-value">
+                            {passedCount} / {groupedStrmGrades.length}
+                          </strong>
+                        </div>
+                        {failedCount > 0 && (
+                          <div className="timeline-stat">
+                            <span className="stat-label">Restanțe</span>
+                            <strong className="stat-value restante">{failedCount}</strong>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}

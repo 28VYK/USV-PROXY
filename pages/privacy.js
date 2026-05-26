@@ -469,18 +469,25 @@ export default function Privacy() {
       `}</style>
 
       <style jsx global>{`
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        html, body { 
-          overflow-x: hidden; 
-          margin: 0; 
-          padding: 0; 
-          width: 100%; 
-          background: #fafafa;
-          -webkit-font-smoothing: antialiased; 
+        html {
+          margin: 0;
+          padding: 0;
+          width: 100%;
+          min-height: 100vh;
+          overflow-x: hidden;
+          background-color: #fafafa;
+          -webkit-font-smoothing: antialiased;
           transition: background-color 0.3s ease;
         }
-        html.dark-theme, html.dark-theme body {
-          background: #020617;
+        html.dark-theme {
+          background-color: #020617;
+        }
+        body {
+          margin: 0;
+          padding: 0;
+          width: 100%;
+          min-height: 100vh;
+          background-color: inherit;
         }
       `}</style>
     </>

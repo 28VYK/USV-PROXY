@@ -1,0 +1,345 @@
+/**
+ * USV Portal — Login Page CSS
+ *
+ * Stiluri specifice pentru pagina de autentificare:
+ * glow blobs, login card, form fields, butoane, disclaimer.
+ */
+
+/* ── 1. Login Section Wrapper ── */
+.login-section {
+  display: grid;
+  align-items: center;
+  justify-items: center;
+  width: 100%;
+  min-height: calc(100vh - 200px);
+  position: relative;
+}
+
+/* ── 2. Ambient Glow Blobs ── */
+.glow-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(130px);
+  opacity: 0.45;
+  z-index: 1;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  animation: pulse 10s ease-in-out infinite alternate;
+}
+
+.glow-blob-1 {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.6) 0%, rgba(139, 92, 246, 0) 70%);
+  top: -10%;
+  left: 10%;
+}
+
+.glow-blob-2 {
+  width: 450px;
+  height: 450px;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.5) 0%, rgba(56, 189, 248, 0) 70%);
+  bottom: 0%;
+  right: 5%;
+  animation-delay: -5s;
+}
+
+/* ── 3. Login Card ── */
+.login-shell {
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+  display: block;
+  position: relative;
+  z-index: 5;
+  animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.login-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 24px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow:
+    0 30px 60px rgba(15, 23, 42, 0.05),
+    0 12px 24px rgba(15, 23, 42, 0.03),
+    inset 0 1px 0 var(--card-inner-shadow);
+  padding: 28px 32px;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.login-card:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 35px 70px rgba(15, 23, 42, 0.07),
+    0 15px 30px rgba(15, 23, 42, 0.04),
+    inset 0 1px 0 var(--card-inner-shadow);
+}
+
+/* ── 4. Login Header ── */
+.login-header {
+  margin-bottom: 18px;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 12px;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 999px;
+  color: #4f46e5;
+  background: rgba(99, 102, 241, 0.06);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.login-header h1 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 34px;
+  font-weight: 900;
+  margin: 8px 0 4px;
+  color: var(--ink);
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, #0f172a 0%, #312e81 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.login-header p {
+  color: var(--muted);
+  font-size: 14px;
+  margin: 0;
+  line-height: 1.6;
+  font-weight: 500;
+}
+
+/* ── 5. Form Fields ── */
+.field {
+  margin-bottom: 14px;
+}
+
+.field label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
+}
+
+.field input {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 16px;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 12px;
+  font-size: 15px;
+  font-family: 'Inter', sans-serif;
+  color: var(--ink);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+.field input:focus {
+  outline: none;
+  background: var(--input-focus-bg);
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.14);
+}
+
+.field input::placeholder {
+  color: #94a3b8;
+  opacity: 0.85;
+}
+
+.field-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+/* ── 6. Checkbox Field ── */
+.field-checkbox {
+  margin-bottom: 18px;
+  margin-top: -8px;
+}
+
+.field-checkbox label {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text);
+  font-weight: 600;
+  user-select: none;
+}
+
+.field-checkbox input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 19px;
+  height: 19px;
+  border: 2px solid var(--line-strong);
+  border-radius: 6px;
+  background: var(--input-bg);
+  cursor: pointer;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.field-checkbox input[type="checkbox"]:checked {
+  background: var(--blue);
+  border-color: transparent;
+}
+
+.field-checkbox input[type="checkbox"]:checked::after {
+  content: "";
+  width: 5px;
+  height: 9px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  position: absolute;
+  top: 2px;
+  left: 5px;
+}
+
+.field-checkbox input[type="checkbox"]:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+/* ── 7. Login Submit Button ── */
+.btn-primary {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: 'Space Grotesk', sans-serif;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 10px 25px rgba(99, 102, 241, 0.25);
+  box-sizing: border-box;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 30px rgba(99, 102, 241, 0.35);
+  filter: brightness(1.05);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.25);
+}
+
+.btn-primary:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ── 8. Error Alert ── */
+.alert {
+  padding: 12px 16px;
+  border-radius: 10px;
+  margin-bottom: 22px;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 600;
+}
+
+.alert-error {
+  background: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.app[data-theme="light"] .alert-error {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fee2e2;
+}
+
+/* ── 9. Login Disclaimer ── */
+.login-disclaimer {
+  margin-top: 14px;
+  text-align: center;
+  padding-top: 12px;
+  border-top: 1px dashed var(--line);
+}
+
+.login-disclaimer p {
+  margin: 0;
+  font-size: 12.5px;
+  color: #64748b;
+  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+}
+
+.security-hint {
+  margin-top: 6px !important;
+  font-size: 11px !important;
+  color: #94a3b8 !important;
+  line-height: 1.45;
+}
+
+.security-hint-link {
+  color: var(--blue) !important;
+  text-decoration: underline;
+  font-weight: 600;
+  transition: color 0.15s ease;
+}
+
+.security-hint-link:hover {
+  color: var(--blue-dark) !important;
+}
+
+/* ── 10. Responsive Login ── */
+@media (max-width: 768px) {
+  .login-section {
+    align-items: start;
+  }
+  .login-shell {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 100%;
+    gap: 24px;
+  }
+  .login-card {
+    padding: 28px;
+    border-radius: 20px;
+  }
+  .field input {
+    font-size: 16px !important;
+  }
+  .glow-blob {
+    opacity: 0.3;
+    filter: blur(90px);
+  }
+}
