@@ -650,17 +650,50 @@ export default function Home() {
         <header className="header">
           <div className="header-content">
             <div className="logo">
+              <div className="logo-icon-wrapper">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="logo-svg">
+                  <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+                  <path d="M6 12v5c0 2 2.5 3 6 3s6-1 6-3v-5" />
+                </svg>
+              </div>
               <span className="logo-highlight">USV</span>
               <span className="logo-text">Portal</span>
             </div>
             <div className="header-actions">
               <button onClick={() => setShowDonateModal(true)} className="btn-donate">
-                Susține (Revolut)
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="btn-donate-svg">
+                  <path d="M18 8h1a4 4 0 0 1 0 8h-1" />
+                  <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" />
+                  <line x1="6" y1="1" x2="6" y2="4" />
+                  <line x1="10" y1="1" x2="10" y2="4" />
+                  <line x1="14" y1="1" x2="14" y2="4" />
+                </svg>
+                <span>Susține</span>
               </button>
               {loggedIn && (
-                <button onClick={handleLogout} className="btn-logout">
-                  Deconectare
-                </button>
+                <div className="user-profile-widget">
+                  <div className="user-avatar-circle" title={studentName}>
+                    {studentName ? (
+                      studentName.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()
+                    ) : (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
+                      </svg>
+                    )}
+                  </div>
+                  <span className="user-profile-name" title={studentName}>
+                    {studentName ? studentName.split(' ')[0] : 'Student'}
+                  </span>
+                  <div className="user-profile-divider" />
+                  <button onClick={handleLogout} className="btn-logout-icon" title="Deconectare">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                      <polyline points="16 17 21 12 16 7" />
+                      <line x1="21" y1="12" x2="9" y2="12" />
+                    </svg>
+                  </button>
+                </div>
               )}
             </div>
           </div>

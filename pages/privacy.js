@@ -22,9 +22,17 @@ export default function Privacy() {
       <div className="app" data-theme={theme}>
         {/* Header */}
         <header className="header">
-          <div className="logo">
-            <span className="logo-highlight">USV</span>
-            <span className="logo-text">Portal</span>
+          <div className="header-content">
+            <div className="logo">
+              <div className="logo-icon-wrapper">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="logo-svg">
+                  <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+                  <path d="M6 12v5c0 2 2.5 3 6 3s6-1 6-3v-5" />
+                </svg>
+              </div>
+              <span className="logo-highlight">USV</span>
+              <span className="logo-text">Portal</span>
+            </div>
           </div>
         </header>
 

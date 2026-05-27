@@ -151,39 +151,70 @@
   margin: 24px auto 0;
   width: max-content;
   min-width: 280px;
-  height: 56px;
+  height: 60px;
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
   border-radius: 99px;
   display: flex;
   align-items: center;
-  padding: 0 24px;
+  padding: 0 10px 0 24px; /* Slightly tighter right padding to make the buttons float perfectly */
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   z-index: 100;
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.04), inset 0 1px 0 var(--glass-border);
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.04), inset 0 1px 0 var(--glass-border);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.header:hover {
+  box-shadow: 0 20px 48px rgba(15, 23, 42, 0.06), inset 0 1px 0 var(--glass-border);
+  transform: translateY(-1px);
 }
 
 .header-content {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 32px;
+  gap: 24px;
 }
 
 .logo {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 20px;
+  font-size: 19px;
   letter-spacing: -0.04em;
   user-select: none;
 }
 
+.logo-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: rgba(99, 102, 241, 0.06);
+  color: var(--blue);
+  border: 1px solid rgba(99, 102, 241, 0.12);
+  border-radius: 9px;
+  transition: all 0.3s ease;
+}
+
+.logo:hover .logo-icon-wrapper {
+  transform: rotate(-10deg) scale(1.05);
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--blue-active);
+}
+
+.logo-svg {
+  display: block;
+}
+
 .logo-highlight {
-  font-weight: 700;
-  color: var(--ink);
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--indigo) 0%, var(--blue) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .logo-text {
@@ -194,32 +225,123 @@
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .btn-donate {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 38px;
+  gap: 6px;
+  min-height: 40px;
   padding: 0 16px;
   background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
   color: white;
   text-decoration: none;
-  border-radius: 10px;
+  border-radius: 99px;
   font-size: 13px;
   font-weight: 700;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.25);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.15);
   white-space: nowrap;
   cursor: pointer;
   border: 0;
 }
 
+.btn-donate-svg {
+  transition: transform 0.25s ease;
+}
+
 .btn-donate:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(168, 85, 247, 0.35);
-  filter: brightness(1.05);
+  transform: translateY(-1.5px);
+  box-shadow: 0 8px 20px rgba(168, 85, 247, 0.3);
+  filter: brightness(1.03);
+}
+
+.btn-donate:hover .btn-donate-svg {
+  transform: scale(1.1) rotate(5deg);
+}
+
+/* ── 5.1 Profile / Logout Widget ── */
+.user-profile-widget {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  padding: 4px 6px 4px 10px;
+  border-radius: 99px;
+  min-height: 40px;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.user-profile-widget:hover {
+  border-color: rgba(99, 102, 241, 0.18);
+  background: rgba(99, 102, 241, 0.02);
+}
+
+.user-avatar-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--indigo) 0%, var(--blue) 100%);
+  color: white;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.25);
+  transition: transform 0.25s ease;
+}
+
+.user-profile-widget:hover .user-avatar-circle {
+  transform: scale(1.05);
+}
+
+.user-profile-name {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-profile-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--line);
+}
+
+.btn-logout-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  border: 0;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-logout-icon:hover {
+  background: #fff5f5;
+  color: #e53e3e;
+}
+
+.btn-logout-icon svg {
+  transition: transform 0.2s ease;
+}
+
+.btn-logout-icon:hover svg {
+  transform: translateX(1px);
 }
 
 /* ── 6. Main Content Area ── */
@@ -927,10 +1049,10 @@ tr:hover td {
 /* ── 16. Responsive Layout ── */
 @media (max-width: 768px) {
   .header {
-    padding: 10px 16px;
+    padding: 10px 14px 10px 16px;
     width: max-content;
     max-width: calc(100% - 32px);
-    border-radius: 20px;
+    border-radius: 24px;
     height: auto;
     margin: 16px auto 0;
   }
@@ -939,13 +1061,54 @@ tr:hover td {
     flex-wrap: wrap;
     justify-content: center;
   }
-  .header-actions {
-    gap: 8px;
+  .logo {
+    font-size: 17px;
+    gap: 6px;
   }
-  .btn-donate, .btn-logout {
+  .logo-icon-wrapper {
+    width: 28px;
+    height: 28px;
+  }
+  .logo-icon-wrapper svg {
+    width: 18px;
+    height: 18px;
+  }
+  .header-actions {
+    gap: 6px;
+  }
+  .btn-donate {
     padding: 0 12px;
     font-size: 12px;
-    min-height: 34px;
+    min-height: 36px;
+  }
+  .btn-donate-svg {
+    width: 13px;
+    height: 13px;
+  }
+  .user-profile-widget {
+    min-height: 36px;
+    padding: 2px 4px 2px 8px;
+    gap: 8px;
+  }
+  .user-avatar-circle {
+    width: 24px;
+    height: 24px;
+    font-size: 9px;
+  }
+  .user-profile-name {
+    font-size: 12px;
+    max-width: 60px;
+  }
+  .user-profile-divider {
+    height: 14px;
+  }
+  .btn-logout-icon {
+    width: 24px;
+    height: 24px;
+  }
+  .btn-logout-icon svg {
+    width: 14px;
+    height: 14px;
   }
   .main {
     padding: 24px 16px;
