@@ -782,7 +782,6 @@ export default function Home() {
             <div className="dashboard">
               <div className="dashboard-header">
                 <div className="dashboard-title">
-                  <span className="eyebrow">Situație școlară</span>
                   <h1>{studentName || userid}</h1>
                   <p className="subtitle">{selectedYear ? `An universitar ${strmToYearLabel(selectedYear)}` : academicYear ? `An universitar ${academicYear}` : 'Sesiune activă'}</p>
                 </div>
