@@ -736,6 +736,7 @@ tr:hover td {
   text-decoration: underline;
 }
 
+
 /* ── 12. Donate Modal ── */
 .modal-overlay {
   position: fixed;
@@ -743,9 +744,9 @@ tr:hover td {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(15, 23, 42, 0.45);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -758,40 +759,58 @@ tr:hover td {
   background: var(--modal-bg);
   border: 1px solid var(--card-border);
   border-radius: 24px;
-  max-width: 480px;
+  max-width: 440px;
   width: 100%;
-  box-shadow: 0 30px 60px rgba(15, 23, 42, 0.15);
-  padding: 32px;
+  box-shadow: 0 30px 60px -15px rgba(15, 23, 42, 0.2);
+  padding: 36px 32px;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  text-align: center;
   gap: 20px;
   animation: scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.modal-header h2 {
-  font-family: 'Outfit', sans-serif;
-  font-size: 24px;
-  font-weight: 800;
-  color: var(--ink);
-  margin-top: 8px;
-  margin-bottom: 0;
-  letter-spacing: -0.02em;
+.app[data-theme="dark"] .modal-card {
+  box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
-.eyebrow-accent {
+.modal-icon-container {
   display: inline-flex;
   align-items: center;
-  min-height: 24px;
-  padding: 0 10px;
-  border: 1px solid rgba(168, 85, 247, 0.2);
-  border-radius: 999px;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(99, 102, 241, 0.08);
+  color: #6366f1;
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  margin-bottom: 4px;
+  transition: all 0.3s ease;
+}
+
+.modal-icon-container:hover {
+  transform: scale(1.05);
+  background: rgba(99, 102, 241, 0.12);
   color: #a855f7;
-  background: rgba(168, 85, 247, 0.06);
-  font-size: 10.5px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-family: 'Space Grotesk', sans-serif;
+  border-color: rgba(168, 85, 247, 0.25);
+}
+
+.modal-icon-svg {
+  transition: transform 0.3s ease;
+}
+
+.modal-icon-container:hover .modal-icon-svg {
+  transform: scale(1.1);
+}
+
+.modal-header h2 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--ink);
+  margin: 0;
+  letter-spacing: -0.02em;
 }
 
 .modal-body {
@@ -802,17 +821,19 @@ tr:hover td {
 
 .modal-body p {
   color: var(--text);
-  font-size: 14px;
+  font-size: 13.5px;
   line-height: 1.6;
   margin: 0;
   font-weight: 500;
+  opacity: 0.9;
 }
 
 .modal-actions {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-top: 8px;
+  width: 100%;
+  margin-top: 10px;
 }
 
 .btn-modal-donate {
@@ -821,39 +842,46 @@ tr:hover td {
   justify-content: center;
   min-height: 48px;
   background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-  color: white;
+  color: #ffffff;
   text-decoration: none;
   border-radius: 12px;
-  font-size: 15px;
-  font-weight: 700;
-  transition: all 0.2s ease;
-  box-shadow: 0 8px 20px rgba(168, 85, 247, 0.25);
+  font-size: 14.5px;
+  font-weight: 600;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
 }
 
 .btn-modal-donate:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 28px rgba(168, 85, 247, 0.35);
+  transform: translateY(-1.5px);
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
   filter: brightness(1.05);
 }
 
+.btn-modal-donate:active {
+  transform: translateY(0);
+}
+
 .btn-modal-close {
-  min-height: 44px;
+  min-height: 38px;
   background: transparent;
   color: var(--muted);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  font-size: 14px;
+  border: none;
+  font-size: 13.5px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: color 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-modal-close:hover {
-  background: var(--surface-strong);
   color: var(--ink);
+  background: transparent;
 }
 
-/* ── 13. Year Bar ── */
+
+
 .year-bar {
   display: flex;
   align-items: center;

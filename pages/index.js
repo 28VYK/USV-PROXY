@@ -714,7 +714,6 @@ export default function Home() {
               <div className="login-shell">
                 <section className="login-card">
                   <div className="login-header">
-                    <span className="eyebrow">Acces securizat</span>
                     <h1>Autentificare</h1>
                     <p>Folosește contul USV pentru sesiunea curentă.</p>
                   </div>
