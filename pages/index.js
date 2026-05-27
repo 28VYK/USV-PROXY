@@ -769,24 +769,7 @@ export default function Home() {
                   <p className="subtitle">{selectedYear ? `An universitar ${strmToYearLabel(selectedYear)}` : academicYear ? `An universitar ${academicYear}` : 'Sesiune activă'}</p>
                 </div>
 
-                <div className="summary-pill-bar">
-                  <div className="summary-pill-item total">
-                    <span className="summary-label">Total</span>
-                    <span className="summary-value">{grades.length}</span>
-                  </div>
-                  <div className="summary-pill-item sem1">
-                    <span className="summary-label">SEM 1</span>
-                    <span className="summary-value">{semesterCounts['SEM 1'] || 0}</span>
-                  </div>
-                  <div className="summary-pill-item sem2">
-                    <span className="summary-label">SEM 2</span>
-                    <span className="summary-value">{semesterCounts['SEM 2'] || 0}</span>
-                  </div>
-                  <div className="summary-pill-item display-mode">
-                    <span className="summary-label">Afișare</span>
-                    <span className="summary-value">{activeSemesterLabel}</span>
-                  </div>
-                </div>
+
               </div>
 
 
