@@ -277,53 +277,67 @@
   font-weight: 600;
 }
 
-/* ── 8. Summary Grid ── */
-.summary-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(94px, 1fr));
-  min-width: min(100%, 520px);
+/* ── 8. Summary Pill Bar (Premium Design) ── */
+.summary-pill-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
   background: var(--card-bg);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow:
-    0 10px 30px rgba(0, 0, 0, 0.03),
+  border: 1px solid var(--card-border);
+  border-radius: 99px;
+  padding: 6px 10px;
+  box-shadow: 
+    0 10px 30px rgba(15, 23, 42, 0.03), 
     inset 0 1px 0 var(--card-inner-shadow);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  z-index: 5;
 }
 
-.summary-item {
-  display: grid;
-  gap: 4px;
-  padding: 16px 20px;
-  border-right: 1px solid var(--line);
+.summary-pill-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px 4px 14px;
+  border-radius: 99px;
+  background: transparent;
+  transition: all 0.2s ease;
 }
 
-.summary-item:last-child {
-  border-right: 0;
-}
-
-.summary-item span {
+.summary-label {
   color: var(--muted);
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  user-select: none;
 }
 
-.summary-item strong {
+.summary-value {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 99px;
+  background: var(--surface-strong);
   color: var(--ink);
-  font-family: 'Outfit', sans-serif;
-  font-size: 22px;
+  border: 1px solid var(--line);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12px;
   font-weight: 800;
   line-height: 1;
-  letter-spacing: -0.01em;
 }
 
-.summary-item.accent strong {
+/* Subtle accent only for the active display mode */
+.summary-pill-item.display-mode .summary-value {
   color: var(--blue);
-  font-size: 16px;
-  font-weight: 800;
+  background: rgba(99, 102, 241, 0.06);
+  border-color: rgba(99, 102, 241, 0.12);
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
 }
 
 /* ── 9. Card Component ── */
@@ -497,6 +511,10 @@ tr:hover td {
   color: var(--ink);
   max-width: 340px;
   line-height: 1.45;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
 }
 
 .semester-pill {
@@ -943,17 +961,22 @@ tr:hover td {
   .dashboard-header h1 {
     font-size: 26px;
   }
-  .summary-grid {
-    grid-template-columns: repeat(2, 1fr);
-    min-width: 0;
+  .summary-pill-bar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px;
     width: 100%;
+    border-radius: 20px;
+    box-sizing: border-box;
   }
-  .summary-item:nth-child(2) {
-    border-right: 0;
-  }
-  .summary-item:nth-child(1),
-  .summary-item:nth-child(2) {
-    border-bottom: 1px solid var(--line);
+  .summary-pill-item {
+    flex: 1 1 calc(50% - 8px);
+    min-width: 120px;
+    justify-content: space-between;
+    padding: 6px 10px 6px 12px;
+    box-sizing: border-box;
   }
   .card-header {
     padding: 20px 16px;
@@ -976,5 +999,9 @@ tr:hover td {
   }
   .course {
     max-width: 190px;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
   }
 }

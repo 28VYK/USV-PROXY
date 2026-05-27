@@ -3,7 +3,7 @@ import Head from 'next/head';
 import DonateModal from '../components/DonateModal';
 import GradeTable from '../components/GradeTable';
 import AnalyticsTab from '../components/AnalyticsTab';
-import { calculateEstimatedFinalGrade } from '../lib/formatters';
+import { calculateEstimatedFinalGrade, calculateEctsStats, processMultiYearAcademicData } from '../lib/formatters';
 
 const SEMESTER_OPTIONS = [
   { value: 'all', label: 'Toate' },
@@ -77,7 +77,7 @@ function groupGrades(gradesList) {
     const resolvedGrade = {
       ...grade,
       filterCategory: resolvedSemester,
-      notaFinala: estimatedFinal !== null ? estimatedFinal : grade.notaFinala,
+      notaFinala: grade.resolvedNotaFinala !== undefined ? grade.resolvedNotaFinala : (estimatedFinal !== null ? estimatedFinal : grade.notaFinala),
       isEstimatedFinal: estimatedFinal !== null // track that this is an estimated grade
     };
     
@@ -247,16 +247,9 @@ export default function Home() {
     window.setupTimeout = () => {};
     window.cancelBubble = true;
     
-    // Initialize Theme
-    const savedTheme = localStorage.getItem('usv_theme');
-    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const initialTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
-    setTheme(initialTheme);
-    if (initialTheme === 'dark') {
-      document.documentElement.classList.add('dark-theme');
-    } else {
-      document.documentElement.classList.remove('dark-theme');
-    }
+    // Initialize Theme - temporarily locked to light mode
+    setTheme('light');
+    document.documentElement.classList.remove('dark-theme');
 
     // Clean up legacy saved passwords from previous versions for security
     if (localStorage.getItem('usv_password')) {
@@ -359,22 +352,37 @@ export default function Home() {
   const activeSemesterLabel = SEMESTER_OPTIONS.find(option => option.value === semesterFilter)?.label || 'Toate';
 
   /**
-   * Safe calculation of arithmetic average and statistics for active academic year.
+   * Safe calculation of arithmetic average, ECTS weighted average, and statistics for active academic year.
    * Groups statistics globally and per-semester for the selected year.
    */
   const arithmeticAnalysis = useMemo(() => {
-    const groupedGrades = groupGrades(grades);
+    // 1. Process multi-year data to identify back papers and back-propagate grades
+    const processedYearData = processMultiYearAcademicData(yearData, simulatedGrades, selectedYear);
+    
+    // Get the processed grades list for the currently selected year
+    const currentYearGrades = processedYearData[selectedYear] || [];
+    const groupedGrades = groupGrades(currentYearGrades);
+    
+    // Keep indexing for references
     const yearGradesIndexed = groupedGrades.map((g, idx) => ({ ...g, originalIndex: idx }));
     const sem1Grades = yearGradesIndexed.filter(g => g.filterCategory === 'SEM 1');
     const sem2Grades = yearGradesIndexed.filter(g => g.filterCategory === 'SEM 2');
+
+    // Determine if the selected year is the latest year discovered
+    const strmKeys = Object.keys(yearData).map(Number);
+    const maxStrm = strmKeys.length > 0 ? Math.max(...strmKeys) : null;
+    const isLatest = maxStrm !== null && parseInt(selectedYear, 10) === maxStrm;
 
     const getStats = (gradesList) => {
       const validGrades = [];
       let missingCount = 0;
       
       gradesList.forEach(grade => {
+        // Exclude back papers from the current year's arithmetic average
+        if (grade.isBackPaper) return;
+
         const simulated = simulatedGrades[grade.originalIndex];
-        const notaFinalaStr = simulated !== undefined ? String(simulated) : grade.notaFinala;
+        const notaFinalaStr = simulated !== undefined ? String(simulated) : (grade.resolvedNotaFinala || grade.notaFinala);
         const nota = parseFloat(notaFinalaStr);
         
         if (!isNaN(nota) && nota >= 1 && nota <= 10) {
@@ -390,7 +398,7 @@ export default function Home() {
       return {
         average,
         calculatedCount: validGrades.length,
-        totalCount: gradesList.length,
+        totalCount: gradesList.filter(g => !g.isBackPaper).length,
         missingCount
       };
     };
@@ -399,9 +407,13 @@ export default function Home() {
       all: getStats(yearGradesIndexed),
       sem1: getStats(sem1Grades),
       sem2: getStats(sem2Grades),
-      groupedGradesIndexed: yearGradesIndexed
+      ectsAll: calculateEctsStats(yearGradesIndexed, simulatedGrades, isLatest, true),
+      ectsSem1: calculateEctsStats(sem1Grades, simulatedGrades, isLatest, true),
+      ectsSem2: calculateEctsStats(sem2Grades, simulatedGrades, isLatest, true),
+      groupedGradesIndexed: yearGradesIndexed,
+      processedYearData // expose to AnalyticsTab
     };
-  }, [grades, simulatedGrades]);
+  }, [grades, simulatedGrades, yearData, selectedYear]);
 
   /**
    * Validate that the username matches a known USV account format before
@@ -642,18 +654,6 @@ export default function Home() {
               <span className="logo-text">Portal</span>
             </div>
             <div className="header-actions">
-              <button 
-                onClick={toggleTheme} 
-                className="btn-theme-toggle"
-                aria-label="Schimbă tema"
-                title={theme === 'dark' ? 'Mod luminos' : 'Mod întunecat'}
-              >
-                {theme === 'dark' ? (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
-                ) : (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
-                )}
-              </button>
               <button onClick={() => setShowDonateModal(true)} className="btn-donate">
                 Susține (Revolut)
               </button>
@@ -754,70 +754,109 @@ export default function Home() {
                   <p className="subtitle">{selectedYear ? `An universitar ${strmToYearLabel(selectedYear)}` : academicYear ? `An universitar ${academicYear}` : 'Sesiune activă'}</p>
                 </div>
 
-                <div className="summary-grid">
-                  <div className="summary-item">
-                    <span>Total</span>
-                    <strong>{grades.length}</strong>
+                <div className="summary-pill-bar">
+                  <div className="summary-pill-item total">
+                    <span className="summary-label">Total</span>
+                    <span className="summary-value">{grades.length}</span>
                   </div>
-                  <div className="summary-item">
-                    <span>SEM 1</span>
-                    <strong>{semesterCounts['SEM 1'] || 0}</strong>
+                  <div className="summary-pill-item sem1">
+                    <span className="summary-label">SEM 1</span>
+                    <span className="summary-value">{semesterCounts['SEM 1'] || 0}</span>
                   </div>
-                  <div className="summary-item">
-                    <span>SEM 2</span>
-                    <strong>{semesterCounts['SEM 2'] || 0}</strong>
+                  <div className="summary-pill-item sem2">
+                    <span className="summary-label">SEM 2</span>
+                    <span className="summary-value">{semesterCounts['SEM 2'] || 0}</span>
                   </div>
-                  <div className="summary-item accent">
-                    <span>Afișare</span>
-                    <strong>{activeSemesterLabel}</strong>
+                  <div className="summary-pill-item display-mode">
+                    <span className="summary-label">Afișare</span>
+                    <span className="summary-value">{activeSemesterLabel}</span>
                   </div>
                 </div>
               </div>
 
 
-              {/* Tab Navigation System */}
-              <div className="dashboard-tabs">
-                <button
-                  type="button"
-                  className={`dashboard-tab ${activeTab === 'notes' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('notes')}
-                  aria-pressed={activeTab === 'notes'}
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                    <line x1="9" y1="9" x2="15" y2="9" />
-                    <line x1="9" y1="13" x2="15" y2="13" />
-                    <line x1="9" y1="17" x2="15" y2="17" />
-                  </svg>
-                  <span>Notele Mele</span>
-                </button>
-                <button
-                  type="button"
-                  className={`dashboard-tab ${activeTab === 'analytics' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('analytics')}
-                  aria-pressed={activeTab === 'analytics'}
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="18" y1="20" x2="18" y2="10" />
-                    <line x1="12" y1="20" x2="12" y2="4" />
-                    <line x1="6" y1="20" x2="6" y2="14" />
-                  </svg>
-                  <span>Analiză Medii</span>
-                </button>
+              {/* Unified Dashboard Control Bar / Toolbar */}
+              <div className="dashboard-controls-bar">
+                <div className="dashboard-controls-left">
+                  <div className="dashboard-tabs">
+                    <button
+                      type="button"
+                      className={`dashboard-tab ${activeTab === 'notes' ? 'active' : ''}`}
+                      onClick={() => setActiveTab('notes')}
+                      aria-pressed={activeTab === 'notes'}
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                        <line x1="9" y1="9" x2="15" y2="9" />
+                        <line x1="9" y1="13" x2="15" y2="13" />
+                        <line x1="9" y1="17" x2="15" y2="17" />
+                      </svg>
+                      <span>Notele Mele</span>
+                    </button>
+                    <button
+                      type="button"
+                      className={`dashboard-tab ${activeTab === 'analytics' ? 'active' : ''}`}
+                      onClick={() => setActiveTab('analytics')}
+                      aria-pressed={activeTab === 'analytics'}
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="18" y1="20" x2="18" y2="10" />
+                        <line x1="12" y1="20" x2="12" y2="4" />
+                        <line x1="6" y1="20" x2="6" y2="14" />
+                      </svg>
+                      <span>Analiză Medii</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="dashboard-controls-right">
+                  {/* Year Switcher */}
+                  {(Object.keys(yearData).length > 1 || loadingYears) && (
+                    <div className="dashboard-year-selector">
+                      <span className="control-label">An universitar</span>
+                      <div className="year-tabs">
+                        {Object.keys(yearData)
+                          .sort((a, b) => parseInt(b, 10) - parseInt(a, 10))
+                          .map(strm => (
+                            <button
+                              key={strm}
+                              type="button"
+                              className={`year-tab${selectedYear === strm ? ' active' : ''}`}
+                              onClick={() => switchYear(strm)}
+                              aria-pressed={selectedYear === strm}
+                            >
+                              <span>{strmToYearLabel(strm)}</span>
+                              <span className="year-tab-count">{yearData[strm]?.length ?? 0}</span>
+                            </button>
+                          ))}
+                        {loadingYears && (
+                          <span className="year-discovering">
+                            <span className="year-spinner" />
+                            Se caută ani...
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Refresh Button */}
+                  <button
+                    onClick={() => fetchGrades(result?.cookies)}
+                    className="btn-secondary"
+                    disabled={loading}
+                  >
+                    {loading ? 'Se actualizează...' : 'Actualizează'}
+                  </button>
+                </div>
               </div>
 
               {activeTab === 'notes' ? (
                 <GradeTable
                   grades={grades}
                   displayedGrades={displayedGrades}
-                  yearData={yearData}
-                  selectedYear={selectedYear}
-                  loadingYears={loadingYears}
                   loading={loading}
                   semesterFilter={semesterFilter}
                   semesterCounts={semesterCounts}
-                  onRefresh={() => fetchGrades(result?.cookies)}
-                  onSwitchYear={switchYear}
                   onSemesterChange={(value) => {
                     setSemesterFilter(value);
                     localStorage.setItem('usv_semester', value);
@@ -828,6 +867,7 @@ export default function Home() {
                   arithmeticAnalysis={arithmeticAnalysis}
                   grades={arithmeticAnalysis.groupedGradesIndexed}
                   yearData={yearData}
+                  processedYearData={arithmeticAnalysis.processedYearData}
                   selectedYear={selectedYear}
                   simulatedGrades={simulatedGrades}
                   onSimulateGrade={handleSimulateGrade}

@@ -1,4 +1,4 @@
-import { strmToYearLabel, calculateEstimatedFinalGrade } from '../lib/formatters';
+import { strmToYearLabel, calculateEstimatedFinalGrade, calculateEctsStats } from '../lib/formatters';
 
 /**
  * Group duplicate course entries by course title and semester category.
@@ -27,7 +27,7 @@ function groupGrades(gradesList) {
     const resolvedGrade = {
       ...grade,
       filterCategory: resolvedSemester,
-      notaFinala: estimatedFinal !== null ? estimatedFinal : grade.notaFinala,
+      notaFinala: grade.resolvedNotaFinala !== undefined ? grade.resolvedNotaFinala : (estimatedFinal !== null ? estimatedFinal : grade.notaFinala),
       isEstimatedFinal: estimatedFinal !== null // track that this is an estimated grade
     };
     
@@ -81,13 +81,15 @@ export default function AnalyticsTab({
   arithmeticAnalysis,
   grades,
   yearData,
+  processedYearData,
   selectedYear,
   simulatedGrades,
   onSimulateGrade,
   onResetSimulation,
   onSwitchYear,
 }) {
-  const strmKeys = Object.keys(yearData).map(Number);
+  const resolvedYearData = processedYearData || yearData;
+  const strmKeys = Object.keys(resolvedYearData).map(Number);
   const maxStrm = strmKeys.length > 0 ? Math.max(...strmKeys) : null;
   const isSelectedYearActive = maxStrm !== null && parseInt(selectedYear, 10) === maxStrm;
 
@@ -97,9 +99,47 @@ export default function AnalyticsTab({
       {/* ── KPI Statistics Grid ── */}
       <div className="analytics-kpi-grid">
 
-        {/* Medie anuală globală */}
-        <div className="kpi-card accent">
-          <div className="kpi-card-glow" />
+        {/* Media Ponderată ECTS Anuală */}
+        <div className="kpi-card">
+          <div className="kpi-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+              <path d="M6 12v5c0 2 2.5 3 6 3s6-1 6-3v-5" />
+            </svg>
+          </div>
+          <div className="kpi-info">
+            <span>Medie Ponderată ECTS</span>
+            <strong>
+              {arithmeticAnalysis.ectsAll.average !== null
+                ? arithmeticAnalysis.ectsAll.average.toFixed(2)
+                : '—'}
+            </strong>
+            <p>
+              {arithmeticAnalysis.ectsAll.totalCredits} credite luate în calcul
+            </p>
+          </div>
+        </div>
+
+        {/* Puncte Credit Anual */}
+        <div className="kpi-card">
+          <div className="kpi-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+          </div>
+          <div className="kpi-info">
+            <span>Puncte Credit</span>
+            <strong>
+              {arithmeticAnalysis.ectsAll.totalPoints || 0}
+            </strong>
+            <p>
+              Puncte obținute din note &ge; 5
+            </p>
+          </div>
+        </div>
+
+        {/* Medie anuală aritmetică */}
+        <div className="kpi-card">
           <div className="kpi-icon">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10" />
@@ -116,7 +156,7 @@ export default function AnalyticsTab({
             </strong>
             <p>
               {arithmeticAnalysis.all.calculatedCount} din{' '}
-              {arithmeticAnalysis.all.totalCount} note luate în calcul
+              {arithmeticAnalysis.all.totalCount} note introduse
             </p>
           </div>
         </div>
@@ -129,14 +169,30 @@ export default function AnalyticsTab({
               <line x1="4" y1="22" x2="4" y2="15" />
             </svg>
           </div>
-          <div className="kpi-info">
-            <span>Medie Semestrul 1</span>
-            <strong>
-              {arithmeticAnalysis.sem1.average !== null
-                ? arithmeticAnalysis.sem1.average.toFixed(2)
-                : '—'}
-            </strong>
-            <p>{arithmeticAnalysis.sem1.calculatedCount} note introduse</p>
+          <div className="kpi-info" style={{ width: '100%' }}>
+            <span>Semestrul 1</span>
+            <div className="kpi-dual-values">
+              <div>
+                <strong>
+                  {arithmeticAnalysis.sem1.average !== null
+                    ? arithmeticAnalysis.sem1.average.toFixed(2)
+                    : '—'}
+                </strong>
+                <p className="kpi-label-sub">Aritmetică</p>
+              </div>
+              <div className="kpi-separator" />
+              <div>
+                <strong>
+                  {arithmeticAnalysis.ectsSem1.average !== null
+                    ? arithmeticAnalysis.ectsSem1.average.toFixed(2)
+                    : '—'}
+                </strong>
+                <p className="kpi-label-sub">Pond. ECTS</p>
+              </div>
+            </div>
+            <p className="kpi-footer-text">
+              {arithmeticAnalysis.ectsSem1.totalPoints} puncte • {arithmeticAnalysis.ectsSem1.totalCredits} credite
+            </p>
           </div>
         </div>
 
@@ -148,14 +204,30 @@ export default function AnalyticsTab({
               <line x1="4" y1="22" x2="4" y2="15" />
             </svg>
           </div>
-          <div className="kpi-info">
-            <span>Medie Semestrul 2</span>
-            <strong>
-              {arithmeticAnalysis.sem2.average !== null
-                ? arithmeticAnalysis.sem2.average.toFixed(2)
-                : '—'}
-            </strong>
-            <p>{arithmeticAnalysis.sem2.calculatedCount} note introduse</p>
+          <div className="kpi-info" style={{ width: '100%' }}>
+            <span>Semestrul 2</span>
+            <div className="kpi-dual-values">
+              <div>
+                <strong>
+                  {arithmeticAnalysis.sem2.average !== null
+                    ? arithmeticAnalysis.sem2.average.toFixed(2)
+                    : '—'}
+                </strong>
+                <p className="kpi-label-sub">Aritmetică</p>
+              </div>
+              <div className="kpi-separator" />
+              <div>
+                <strong>
+                  {arithmeticAnalysis.ectsSem2.average !== null
+                    ? arithmeticAnalysis.ectsSem2.average.toFixed(2)
+                    : '—'}
+                </strong>
+                <p className="kpi-label-sub">Pond. ECTS</p>
+              </div>
+            </div>
+            <p className="kpi-footer-text">
+              {arithmeticAnalysis.ectsSem2.totalPoints} puncte • {arithmeticAnalysis.ectsSem2.totalCredits} credite
+            </p>
           </div>
         </div>
 
@@ -220,6 +292,11 @@ export default function AnalyticsTab({
                       {isSimulated && (
                         <span className="badge-simulated">Simulată</span>
                       )}
+                      {grade.isBackPaper && (
+                        <span className="badge-backpaper" title="Disciplină recontractată din anii anteriori. Notele se vor propaga în anul de origine.">
+                          Restanță {grade.originalYear ? strmToYearLabel(grade.originalYear) : ''}
+                        </span>
+                      )}
                     </td>
                     <td>
                       <span className={`semester-pill ${grade.sesiune || grade.filterCategory ? '' : 'unknown'}`}>
@@ -259,7 +336,7 @@ export default function AnalyticsTab({
       </div>
 
       {/* ── Evolution Timeline (apare când există mai mulți ani) ── */}
-      {Object.keys(yearData).length > 1 && (
+      {Object.keys(resolvedYearData).length > 1 && (
         <div className="card evolution-card">
           <div className="card-header">
             <div className="card-title">
@@ -269,10 +346,10 @@ export default function AnalyticsTab({
           </div>
           <div className="evolution-timeline">
             <div className="timeline-global-line" />
-            {Object.keys(yearData)
+            {Object.keys(resolvedYearData)
               .sort((a, b) => parseInt(b, 10) - parseInt(a, 10))
               .map(strm => {
-                const strmGrades = yearData[strm] || [];
+                const strmGrades = resolvedYearData[strm] || [];
                 const isActiveYear = selectedYear === strm;
                 const isLatestYear = maxStrm !== null && parseInt(strm, 10) === maxStrm;
 
@@ -283,6 +360,9 @@ export default function AnalyticsTab({
                 let failedCount = 0;
 
                 groupedStrmGrades.forEach(grade => {
+                  // Exclude back papers from this year's timeline counts
+                  if (grade.isBackPaper) return;
+
                   const nota = parseFloat(grade.notaFinala);
                   if (!isNaN(nota) && nota >= 5 && nota <= 10) {
                     passedCount++;
@@ -301,6 +381,7 @@ export default function AnalyticsTab({
 
                 // Calculate the academic average purely from the grouped unique subjects
                 const allGradedValues = groupedStrmGrades
+                  .filter(g => !g.isBackPaper)
                   .map(g => parseFloat(g.notaFinala))
                   .filter(n => !isNaN(n) && n >= 1 && n <= 10);
 
@@ -308,6 +389,11 @@ export default function AnalyticsTab({
                 const strmAvg = allGradedValues.length > 0
                   ? (strmSum / allGradedValues.length).toFixed(2)
                   : null;
+
+                // Calculate ECTS average and points for this timeline year
+                const groupedStrmGradesIndexed = groupedStrmGrades.map((g, idx) => ({ ...g, originalIndex: idx }));
+                const isTimelineSelectedActive = selectedYear === strm;
+                const ectsStats = calculateEctsStats(groupedStrmGradesIndexed, simulatedGrades, isLatestYear, isTimelineSelectedActive);
 
                 return (
                   <div key={strm} className={`timeline-item ${isActiveYear ? 'active' : ''}`}>
@@ -339,9 +425,21 @@ export default function AnalyticsTab({
                           </strong>
                         </div>
                         <div className="timeline-stat">
+                          <span className="stat-label">Medie ECTS</span>
+                          <strong className="stat-value" style={{ color: 'var(--blue)' }}>
+                            {ectsStats.average !== null ? ectsStats.average.toFixed(2) : '—'}
+                          </strong>
+                        </div>
+                        <div className="timeline-stat">
+                          <span className="stat-label">Puncte Credit</span>
+                          <strong className="stat-value" style={{ color: 'var(--blue)' }}>
+                            {ectsStats.totalPoints}
+                          </strong>
+                        </div>
+                        <div className="timeline-stat">
                           <span className="stat-label">Promovate</span>
                           <strong className="stat-value">
-                            {passedCount} / {groupedStrmGrades.length}
+                            {passedCount} / {groupedStrmGrades.filter(g => !g.isBackPaper).length}
                           </strong>
                         </div>
                         {failedCount > 0 && (

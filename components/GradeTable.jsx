@@ -20,14 +20,9 @@ import { SEMESTER_OPTIONS, strmToYearLabel } from '../lib/formatters';
 export default function GradeTable({
   grades,
   displayedGrades,
-  yearData,
-  selectedYear,
-  loadingYears,
   loading,
   semesterFilter,
   semesterCounts,
-  onRefresh,
-  onSwitchYear,
   onSemesterChange,
 }) {
   return (
@@ -38,43 +33,7 @@ export default function GradeTable({
           <h2>Note</h2>
           <p>{displayedGrades.length} afișate din {grades.length}</p>
         </div>
-        <button
-          onClick={onRefresh}
-          className="btn-secondary"
-          disabled={loading}
-        >
-          {loading ? 'Se actualizează...' : 'Actualizează'}
-        </button>
       </div>
-
-      {/* ── Year Bar — apare când există mai mulți ani ── */}
-      {(Object.keys(yearData).length > 1 || loadingYears) && (
-        <div className="year-bar">
-          <span className="control-label">An universitar</span>
-          <div className="year-tabs">
-            {Object.keys(yearData)
-              .sort((a, b) => parseInt(b, 10) - parseInt(a, 10))
-              .map(strm => (
-                <button
-                  key={strm}
-                  type="button"
-                  className={`year-tab${selectedYear === strm ? ' active' : ''}`}
-                  onClick={() => onSwitchYear(strm)}
-                  aria-pressed={selectedYear === strm}
-                >
-                  <span>{strmToYearLabel(strm)}</span>
-                  <span className="year-tab-count">{yearData[strm]?.length ?? 0}</span>
-                </button>
-              ))}
-            {loadingYears && (
-              <span className="year-discovering">
-                <span className="year-spinner" />
-                Se caută ani...
-              </span>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* ── Conținut principal ── */}
       {loading ? (

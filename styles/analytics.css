@@ -6,54 +6,85 @@
  * grade simulator (select dropdown), evolution timeline.
  */
 
-/* ── 1. Tab Navigation Bar ── */
-.dashboard-tabs {
+/* ── 1. Tab Navigation Bar (Premium Segmented Control Style) & Dashboard Controls Toolbar ── */
+.dashboard-controls-bar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 24px;
-  border-bottom: 1px solid var(--line);
-  padding-bottom: 12px;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 28px;
   width: 100%;
+  flex-wrap: wrap;
+}
+
+.dashboard-controls-left {
+  display: flex;
+  align-items: center;
+}
+
+.dashboard-controls-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.dashboard-year-selector {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dashboard-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(15, 23, 42, 0.05); /* very subtle dark grey background */
+  border: 1px solid rgba(15, 23, 42, 0.03);
+  padding: 4px;
+  border-radius: 14px;
+  position: relative;
+  z-index: 10;
+  width: auto;
 }
 
 .dashboard-tab {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  min-height: 40px;
+  min-height: 38px;
   padding: 8px 18px;
   background: transparent;
   color: var(--muted);
   border: 1px solid transparent;
-  border-radius: 12px;
+  border-radius: 10px;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   font-family: inherit;
 }
 
 .dashboard-tab svg {
   opacity: 0.7;
-  transition: opacity 0.25s ease, transform 0.25s ease;
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 .dashboard-tab:hover {
   color: var(--ink);
-  background: var(--surface-strong);
 }
 
 .dashboard-tab:hover svg {
   opacity: 1;
-  transform: translateY(-1px);
+  transform: translateY(-0.5px);
 }
 
 .dashboard-tab.active {
-  background: var(--glass-bg);
+  background: var(--paper); /* solid white background */
   color: var(--blue);
-  border: 1px solid var(--glass-border);
-  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.08), inset 0 1px 0 var(--glass-border);
+  border: 1px solid rgba(99, 102, 241, 0.08);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 .dashboard-tab.active svg {
@@ -64,7 +95,7 @@
 /* ── 2. KPI Grid & Cards ── */
 .analytics-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 20px;
   margin-bottom: 24px;
   width: 100%;
@@ -74,10 +105,10 @@
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   border-radius: 20px;
-  padding: 24px;
+  padding: 20px;
   display: flex;
   align-items: flex-start;
-  gap: 16px;
+  gap: 14px;
   position: relative;
   overflow: hidden;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.02), inset 0 1px 0 var(--card-inner-shadow);
@@ -91,26 +122,47 @@
   box-shadow: 0 16px 36px rgba(0, 0, 0, 0.04), inset 0 1px 0 var(--card-inner-shadow);
 }
 
-.kpi-card-glow {
-  position: absolute;
-  width: 150px;
-  height: 150px;
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, rgba(99, 102, 241, 0) 70%);
-  border-radius: 50%;
-  top: -40px;
-  right: -40px;
-  pointer-events: none;
+/* KPI card details are now fully unified and clean */
+
+/* Dual Values Layout for Semester Cards */
+.kpi-dual-values {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 4px;
+  width: 100%;
 }
 
-.kpi-card.accent {
-  border-color: rgba(99, 102, 241, 0.25);
-  box-shadow: 0 12px 30px rgba(99, 102, 241, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+.kpi-dual-values > div:not(.kpi-separator) {
+  flex: 1;
+  min-width: 0;
 }
 
-.kpi-card.accent .kpi-icon {
-  background: rgba(99, 102, 241, 0.10);
-  color: var(--blue);
-  border-color: rgba(99, 102, 241, 0.2);
+.kpi-separator {
+  width: 1px;
+  height: 24px;
+  background: var(--line);
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.kpi-label-sub {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin: 2px 0 0 0 !important;
+  letter-spacing: 0.01em;
+}
+
+.kpi-footer-text {
+  color: var(--muted);
+  font-size: 11px !important;
+  font-weight: 600;
+  margin: 12px 0 0 0 !important;
+  border-top: 1px dashed var(--line);
+  padding-top: 8px;
+  width: 100%;
 }
 
 .kpi-icon {
@@ -120,12 +172,9 @@
   width: 44px;
   height: 44px;
   background: var(--surface-strong);
-  color: var(--text);
+  color: var(--muted);
   border: 1px solid var(--line);
   border-radius: 12px;
-  font-weight: 800;
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 16px;
   flex-shrink: 0;
 }
 
@@ -216,10 +265,26 @@
   border-radius: 8px;
   font-size: 10px;
   font-weight: 800;
-  margin-left: 8px;
   vertical-align: middle;
   text-transform: uppercase;
   letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.badge-backpaper {
+  display: inline-flex;
+  align-items: center;
+  padding: 2.5px 8px;
+  background: rgba(168, 85, 247, 0.12);
+  color: #a855f7;
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 800;
+  vertical-align: middle;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
 .select-wrapper {
@@ -443,25 +508,63 @@
   opacity: 0.8;
 }
 
-/* ── 7. Responsive Analytics ── */
 @media (max-width: 768px) {
-  .dashboard-tabs {
-    overflow-x: auto;
-    padding-bottom: 8px;
-    gap: 4px;
-    border-bottom: 0;
-    width: 100%;
-    -webkit-overflow-scrolling: touch;
+  .dashboard-controls-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    margin-bottom: 20px;
   }
-  .dashboard-tabs::-webkit-scrollbar {
-    display: none;
+  .dashboard-controls-left {
+    justify-content: center;
+    width: 100%;
+  }
+  .dashboard-controls-right {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    margin-left: 0;
+    gap: 12px;
+  }
+  .dashboard-year-selector {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    width: 100%;
+  }
+  .dashboard-year-selector .control-label {
+    font-size: 11px;
+  }
+  .dashboard-year-selector .year-tabs {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 4px;
+  }
+  .dashboard-controls-right .btn-secondary {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+    display: inline-flex;
+  }
+  .dashboard-tabs {
+    display: inline-flex;
+    margin-bottom: 0;
+    padding: 4px;
+    padding-left: 4px;
+    width: auto;
+    overflow: visible;
   }
   .dashboard-tab {
     min-height: 36px;
     padding: 6px 14px;
     font-size: 13px;
-    border-radius: 10px;
-    flex-shrink: 0;
+    border-radius: 8px;
+    border-bottom: none !important;
+  }
+  .dashboard-tab.active {
+    border: 1px solid rgba(99, 102, 241, 0.08) !important;
+    background: var(--paper) !important;
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.05) !important;
   }
   .analytics-kpi-grid {
     grid-template-columns: 1fr;
