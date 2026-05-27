@@ -671,29 +671,13 @@ export default function Home() {
                 <span>Susține</span>
               </button>
               {loggedIn && (
-                <div className="user-profile-widget">
-                  <div className="user-avatar-circle" title={studentName}>
-                    {studentName ? (
-                      studentName.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()
-                    ) : (
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                        <circle cx="12" cy="7" r="4" />
-                      </svg>
-                    )}
-                  </div>
-                  <span className="user-profile-name" title={studentName}>
-                    {studentName ? studentName.split(' ')[0] : 'Student'}
-                  </span>
-                  <div className="user-profile-divider" />
-                  <button onClick={handleLogout} className="btn-logout-icon" title="Deconectare">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                      <polyline points="16 17 21 12 16 7" />
-                      <line x1="21" y1="12" x2="9" y2="12" />
-                    </svg>
-                  </button>
-                </div>
+                <button onClick={handleLogout} className="btn-logout-icon" title="Deconectare" style={{ marginLeft: '8px' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                    <polyline points="16 17 21 12 16 7" />
+                    <line x1="21" y1="12" x2="9" y2="12" />
+                  </svg>
+                </button>
               )}
             </div>
           </div>
@@ -806,106 +790,109 @@ export default function Home() {
               </div>
 
 
-              {/* Unified Dashboard Control Bar / Toolbar */}
-              <div className="dashboard-controls-bar">
-                <div className="dashboard-controls-left">
-                  <div className="dashboard-tabs">
+              {/* Unified Dashboard Master Card */}
+              <div className="card animate-fade dashboard-main-card">
+                {/* Unified Dashboard Control Bar / Toolbar in Card Header */}
+                <div className="card-header dashboard-card-header dashboard-controls-bar" style={{ marginBottom: 0 }}>
+                  <div className="dashboard-controls-left">
+                    <div className="dashboard-tabs">
+                      <button
+                        type="button"
+                        className={`dashboard-tab ${activeTab === 'notes' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('notes')}
+                        aria-pressed={activeTab === 'notes'}
+                      >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                          <line x1="9" y1="9" x2="15" y2="9" />
+                          <line x1="9" y1="13" x2="15" y2="13" />
+                          <line x1="9" y1="17" x2="15" y2="17" />
+                        </svg>
+                        <span>Notele Mele</span>
+                      </button>
+                      <button
+                        type="button"
+                        className={`dashboard-tab ${activeTab === 'analytics' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('analytics')}
+                        aria-pressed={activeTab === 'analytics'}
+                      >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <line x1="18" y1="20" x2="18" y2="10" />
+                          <line x1="12" y1="20" x2="12" y2="4" />
+                          <line x1="6" y1="20" x2="6" y2="14" />
+                        </svg>
+                        <span>Analiză Medii</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="dashboard-controls-right">
+                    {/* Year Switcher */}
+                    {(Object.keys(yearData).length > 1 || loadingYears) && (
+                      <div className="dashboard-year-selector">
+                        <span className="control-label" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                          An universitar
+                          {loadingYears && <span className="year-spinner" title="Se caută ani..." />}
+                        </span>
+                        <div className="year-tabs">
+                          {Object.keys(yearData)
+                            .sort((a, b) => parseInt(b, 10) - parseInt(a, 10))
+                            .map(strm => (
+                              <button
+                                key={strm}
+                                type="button"
+                                className={`year-tab${selectedYear === strm ? ' active' : ''}`}
+                                onClick={() => switchYear(strm)}
+                                aria-pressed={selectedYear === strm}
+                              >
+                                <span>{strmToYearLabel(strm)}</span>
+                                <span className="year-tab-count">{yearData[strm]?.length ?? 0}</span>
+                              </button>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Refresh Button */}
                     <button
-                      type="button"
-                      className={`dashboard-tab ${activeTab === 'notes' ? 'active' : ''}`}
-                      onClick={() => setActiveTab('notes')}
-                      aria-pressed={activeTab === 'notes'}
+                      onClick={() => fetchGrades(result?.cookies)}
+                      className="btn-secondary"
+                      disabled={loading}
                     >
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                        <line x1="9" y1="9" x2="15" y2="9" />
-                        <line x1="9" y1="13" x2="15" y2="13" />
-                        <line x1="9" y1="17" x2="15" y2="17" />
-                      </svg>
-                      <span>Notele Mele</span>
-                    </button>
-                    <button
-                      type="button"
-                      className={`dashboard-tab ${activeTab === 'analytics' ? 'active' : ''}`}
-                      onClick={() => setActiveTab('analytics')}
-                      aria-pressed={activeTab === 'analytics'}
-                    >
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="18" y1="20" x2="18" y2="10" />
-                        <line x1="12" y1="20" x2="12" y2="4" />
-                        <line x1="6" y1="20" x2="6" y2="14" />
-                      </svg>
-                      <span>Analiză Medii</span>
+                      {loading ? 'Se actualizează...' : 'Actualizează'}
                     </button>
                   </div>
                 </div>
 
-                <div className="dashboard-controls-right">
-                  {/* Year Switcher */}
-                  {(Object.keys(yearData).length > 1 || loadingYears) && (
-                    <div className="dashboard-year-selector">
-                      <span className="control-label">An universitar</span>
-                      <div className="year-tabs">
-                        {Object.keys(yearData)
-                          .sort((a, b) => parseInt(b, 10) - parseInt(a, 10))
-                          .map(strm => (
-                            <button
-                              key={strm}
-                              type="button"
-                              className={`year-tab${selectedYear === strm ? ' active' : ''}`}
-                              onClick={() => switchYear(strm)}
-                              aria-pressed={selectedYear === strm}
-                            >
-                              <span>{strmToYearLabel(strm)}</span>
-                              <span className="year-tab-count">{yearData[strm]?.length ?? 0}</span>
-                            </button>
-                          ))}
-                        {loadingYears && (
-                          <span className="year-discovering">
-                            <span className="year-spinner" />
-                            Se caută ani...
-                          </span>
-                        )}
-                      </div>
-                    </div>
+                {/* Dashboard Card Body */}
+                <div className={`dashboard-card-body ${activeTab === 'analytics' ? 'analytics-active' : ''}`}>
+                  {activeTab === 'notes' ? (
+                    <GradeTable
+                      grades={grades}
+                      displayedGrades={displayedGrades}
+                      loading={loading}
+                      semesterFilter={semesterFilter}
+                      semesterCounts={semesterCounts}
+                      onSemesterChange={(value) => {
+                        setSemesterFilter(value);
+                        localStorage.setItem('usv_semester', value);
+                      }}
+                    />
+                  ) : (
+                    <AnalyticsTab
+                      arithmeticAnalysis={arithmeticAnalysis}
+                      grades={arithmeticAnalysis.groupedGradesIndexed}
+                      yearData={yearData}
+                      processedYearData={arithmeticAnalysis.processedYearData}
+                      selectedYear={selectedYear}
+                      simulatedGrades={simulatedGrades}
+                      onSimulateGrade={handleSimulateGrade}
+                      onResetSimulation={() => setSimulatedGrades({})}
+                      onSwitchYear={switchYear}
+                    />
                   )}
-
-                  {/* Refresh Button */}
-                  <button
-                    onClick={() => fetchGrades(result?.cookies)}
-                    className="btn-secondary"
-                    disabled={loading}
-                  >
-                    {loading ? 'Se actualizează...' : 'Actualizează'}
-                  </button>
                 </div>
               </div>
-
-              {activeTab === 'notes' ? (
-                <GradeTable
-                  grades={grades}
-                  displayedGrades={displayedGrades}
-                  loading={loading}
-                  semesterFilter={semesterFilter}
-                  semesterCounts={semesterCounts}
-                  onSemesterChange={(value) => {
-                    setSemesterFilter(value);
-                    localStorage.setItem('usv_semester', value);
-                  }}
-                />
-              ) : (
-                <AnalyticsTab
-                  arithmeticAnalysis={arithmeticAnalysis}
-                  grades={arithmeticAnalysis.groupedGradesIndexed}
-                  yearData={yearData}
-                  processedYearData={arithmeticAnalysis.processedYearData}
-                  selectedYear={selectedYear}
-                  simulatedGrades={simulatedGrades}
-                  onSimulateGrade={handleSimulateGrade}
-                  onResetSimulation={() => setSimulatedGrades({})}
-                  onSwitchYear={switchYear}
-                />
-              )}
             </div>
           )}
 

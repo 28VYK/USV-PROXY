@@ -26,15 +26,7 @@ export default function GradeTable({
   onSemesterChange,
 }) {
   return (
-    <div className="card animate-fade">
-      {/* ── Card Header ── */}
-      <div className="card-header">
-        <div className="card-title">
-          <h2>Note</h2>
-          <p>{displayedGrades.length} afișate din {grades.length}</p>
-        </div>
-      </div>
-
+    <div className="grade-table-content">
       {/* ── Conținut principal ── */}
       {loading ? (
         <div className="loading-state">
@@ -128,9 +120,6 @@ export default function GradeTable({
       ) : (
         <div className="empty-state">
           <p>Nu am putut încărca notele. Încearcă din nou.</p>
-          <button onClick={onRefresh} className="btn-secondary">
-            Reîncearcă
-          </button>
         </div>
       )}
     </div>
