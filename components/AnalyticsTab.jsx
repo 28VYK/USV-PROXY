@@ -288,15 +288,17 @@ export default function AnalyticsTab({
                 return (
                   <tr key={idx} className={isSimulated ? 'tr-simulated' : ''}>
                     <td className="course">
-                      <span>{grade.titlu}</span>
-                      {isSimulated && (
-                        <span className="badge-simulated">Simulată</span>
-                      )}
-                      {grade.isBackPaper && (
-                        <span className="badge-backpaper" title="Disciplină recontractată din anii anteriori. Notele se vor propaga în anul de origine.">
-                          Restanță {grade.originalYear ? strmToYearLabel(grade.originalYear) : ''}
-                        </span>
-                      )}
+                      <div className="course-cell-wrapper">
+                        <span>{grade.titlu}</span>
+                        {isSimulated && (
+                          <span className="badge-simulated">Simulată</span>
+                        )}
+                        {grade.isBackPaper && (
+                          <span className="badge-backpaper" title="Disciplină recontractată din anii anteriori. Notele se vor propaga în anul de origine.">
+                            Restanță {grade.originalYear ? strmToYearLabel(grade.originalYear) : ''}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td>
                       <span className={`semester-pill ${grade.sesiune || grade.filterCategory ? '' : 'unknown'}`}>
