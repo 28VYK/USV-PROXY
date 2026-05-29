@@ -1,0 +1,46 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Prometheus Configuration — USV Proxy Monitoring
+# ─────────────────────────────────────────────────────────────────────────────
+
+global:
+  # How often to collect metrics
+  scrape_interval: 15s
+  # How often to evaluate alerting rules
+  evaluation_interval: 15s
+  # Labels attached to all metrics for identification
+  external_labels:
+    instance: 'usv-proxy-vps'
+    environment: 'production'
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Scrape Targets
+# ─────────────────────────────────────────────────────────────────────────────
+scrape_configs:
+
+  # ── 1. Prometheus self-monitoring ──────────────────────────────────────────
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          service: 'prometheus'
+
+  # ── 2. Node Exporter — Host system metrics (CPU, RAM, Disk, Network) ───────
+  # node-exporter runs with network_mode: host, so it is reachable
+  # via host-gateway (added to extra_hosts in the Prometheus container)
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['host.docker.internal:9100']
+        labels:
+          service: 'node-exporter'
+          host: 'vps-main'
+
+  # ── 3. Caddy — Live HTTP metrics (requests, 404s, 500s, latency) ──────────
+  # Caddy exposes native Prometheus metrics on its admin port :2019/metrics
+  # usv-proxy-ssl is on monitoring_net, so it is reachable directly by container name
+  - job_name: 'caddy'
+    static_configs:
+      - targets: ['usv-proxy-ssl:2019']
+        labels:
+          service: 'caddy'
+    metrics_path: /metrics
+    scrape_interval: 10s

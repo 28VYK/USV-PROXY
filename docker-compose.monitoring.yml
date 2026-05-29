@@ -1,0 +1,119 @@
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Monitoring Stack: Prometheus + Grafana + Node Exporter
+#
+# Run SEPARATELY from the main docker-compose.yml:
+#   docker compose -f docker-compose.monitoring.yml up -d
+#
+# Prerequisite (one-time on the VPS):
+#   docker network create monitoring_net
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # node-exporter: Exposes HOST system metrics (CPU, RAM, Disk, Network).
+  # Runs on the host network to read /proc and /sys from the physical machine.
+  # Prometheus reaches it via host-gateway rather than monitoring_net directly.
+  # ───────────────────────────────────────────────────────────────────────────
+  node-exporter:
+    image: prom/node-exporter:v1.8.0
+    container_name: usv-node-exporter
+    restart: always
+
+    # Share the host's kernel namespaces for complete system metrics
+    pid: host
+    network_mode: host
+
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      # Exclude virtual filesystems from disk metrics
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # prometheus: Time-series database. Scrapes Caddy + Node Exporter.
+  # Not exposed publicly on the host — accessed internally by Grafana.
+  # ───────────────────────────────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    container_name: usv-prometheus
+    restart: always
+
+    # host-gateway allows reaching node-exporter running on the host network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+
+    networks:
+      - monitoring_net
+
+    depends_on:
+      - node-exporter
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # grafana: Visual dashboards. Connected to Prometheus as a datasource.
+  # Not exposed on the host — Caddy reverse-proxies it at stats.noteusv.tech.
+  # Admin credentials come EXCLUSIVELY from .env — no hardcoded passwords.
+  # ───────────────────────────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana-oss:11.1.0
+    container_name: usv-grafana
+    restart: always
+
+    environment:
+      # Admin credentials injected from .env
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+      # Disable public self-registration
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_USERS_DEFAULT_THEME=dark
+      # Public URL of this instance (used for correct links in alerts, etc.)
+      - GF_SERVER_ROOT_URL=https://stats.noteusv.tech
+      - GF_SERVER_SERVE_FROM_SUB_PATH=false
+      # Hide Grafana version from HTTP headers (minor security hardening)
+      - GF_SECURITY_HIDE_VERSION=true
+      # Disable Grafana telemetry
+      - GF_ANALYTICS_REPORTING_ENABLED=false
+      - GF_ANALYTICS_CHECK_FOR_UPDATES=false
+
+    volumes:
+      - grafana_data:/var/lib/grafana
+      # Auto-provisioning: Prometheus datasource + dashboard files
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      # Dashboard JSON files (downloaded by monitoring/setup.sh)
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+
+    networks:
+      - monitoring_net
+
+    depends_on:
+      - prometheus
+
+volumes:
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+networks:
+  monitoring_net:
+    external: true

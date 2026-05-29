@@ -1,18 +1,37 @@
 # Caddy Reverse Proxy with Cloudflare SSL
 
-# Redirect all HTTP traffic (port 80) to HTTPS on the official domain
-:80 {
-    redir https://noteusv.tech{uri} permanent
+# ─────────────────────────────────────────────────────────────────────────────
+# Global Caddy Block
+# admin 0.0.0.0:2019 allows Prometheus to reach the /metrics endpoint
+# of Caddy from within the Docker network (monitoring_net), without
+# exposing it on the host.
+# ─────────────────────────────────────────────────────────────────────────────
+{
+    admin 0.0.0.0:2019
+    # Enable HTTP server metrics collection (requests, latency, status codes).
+    # Without this, the admin /metrics endpoint only exposes Go runtime stats.
+    metrics
 }
 
-:8080 {
+# ─────────────────────────────────────────────────────────────────────────────
+# Redirect HTTP → HTTPS (for all subdomains)
+# ─────────────────────────────────────────────────────────────────────────────
+:80 {
+    redir https://{host}{uri} permanent
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Main site: noteusv.tech
+# ─────────────────────────────────────────────────────────────────────────────
+noteusv.tech:8080, www.noteusv.tech:8080 {
+
     # Redirect if the host header is not the official domain (e.g., direct IP access)
     @notDomain {
-        not header_regexp Host ^(noteusv\.tech|www\.noteusv\.tech|localhost|127\.0\.0\.1)(:\d+)?$
+        not header_regexp Host ^(noteusv\.tech|www\.noteusv\.tech)(:\d+)?$
     }
     redir @notDomain https://noteusv.tech{uri} permanent
 
-    # TLS configuration using the Cloudflare Origin Certificate
+    # TLS using the Cloudflare Origin CA Certificate (15 years, gitignored)
     tls /etc/caddy/certs/origin.pem /etc/caddy/certs/origin.key
 
     # Reverse proxy to the Next.js app.
@@ -20,11 +39,46 @@
     # so port 3000 is reachable via the usv-vpn container name.
     reverse_proxy usv-vpn:3000
 
-    # Modern logging (optional)
+    # Structured logging with automatic rotation
     log {
         output file /var/log/caddy/access.log {
             roll_size 10mb
             roll_keep 5
+        }
+    }
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Monitoring subdomain: stats.noteusv.tech
+# Protected with HTTP Basic Auth — credentials come EXCLUSIVELY from .env.
+# No hardcoded passwords: {$VAR} is Caddy's syntax for environment variables.
+#
+# How to generate GRAFANA_BASIC_AUTH_HASH on the VPS:
+#   docker run --rm caddy:2-alpine caddy hash-password --plaintext "YourPassword"
+# ─────────────────────────────────────────────────────────────────────────────
+stats.noteusv.tech:8080 {
+
+    tls /etc/caddy/certs/origin.pem /etc/caddy/certs/origin.key
+
+    # Exclude Grafana live WebSockets (/api/live/ws*) from Basic Auth because
+    # mobile browsers do not pass Basic Auth credentials for WebSocket connections,
+    # causing endless login prompts. WebSockets are secured by Grafana session cookies.
+    @notLive {
+        not path /api/live/ws*
+    }
+
+    basicauth @notLive {
+        {$GRAFANA_BASIC_AUTH_USER} {$GRAFANA_BASIC_AUTH_HASH}
+    }
+
+    # Internal reverse proxy to Grafana (container on monitoring_net).
+    # Port 3000 is Grafana's default internal port — not exposed on the host.
+    reverse_proxy usv-grafana:3000
+
+    log {
+        output file /var/log/caddy/stats-access.log {
+            roll_size 5mb
+            roll_keep 3
         }
     }
 }

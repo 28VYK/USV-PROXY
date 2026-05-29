@@ -106,11 +106,25 @@ services:
       - caddy_data:/data
       - caddy_config:/config
       - caddy_logs:/var/log/caddy
+    # Environment variables for Caddy (basic_auth hash, etc.)
+    env_file:
+      - .env
     restart: always
     depends_on:
       - usv-vpn
+    # Joined to the monitoring network so Prometheus can reach the admin API on port :2019
+    networks:
+      - default
+      - monitoring_net
 
 volumes:
   caddy_data:
   caddy_config:
   caddy_logs:
+
+networks:
+  default: {}
+  # External network shared with the monitoring stack
+  # Create it once on the VPS with: docker network create monitoring_net
+  monitoring_net:
+    external: true
