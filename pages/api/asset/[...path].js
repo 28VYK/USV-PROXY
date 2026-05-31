@@ -212,11 +212,11 @@ async function streamAsset(url, sessionCookies, res, req, redirectsLeft = 5, lat
             res.off('close', onCssClientClose);
             let cssContent = Buffer.concat(chunks).toString('utf-8');
             cssContent = cssContent.replace(
-              /url\(['"]?\/([^'")\]+)['"]\)/g,
+              /url\(['"]?\/([^'")]+)['"]\)/g,
               "url('/api/asset/$1')"
             );
             cssContent = cssContent.replace(
-              /url\(['"]?(?!data:)(?!http)([^'")]+)['"]\)/g,
+              /url\(['"]?(?!data:)(?!http)([^'"]+)['"]\)/g,
               (match, p1) => {
                 if (!p1.startsWith('/')) return match;
                 return `url('/api/asset${p1}')`;
