@@ -20,15 +20,15 @@ policies:
   - orgId: 1
     receiver: "infra-alerts"
     group_by: ["alertname", "grafana_folder"]
-    group_wait: "30s"
-    group_interval: "5m"
+    group_wait: "5s"
+    group_interval: "10s"
     repeat_interval: "4h"
 
 groups:
   - orgId: 1
     name: "USV Infrastructure Alerts"
     folder: "Production Alerts"
-    interval: "1m"
+    interval: "10s"
     rules:
       # Alert 1: VPS Host Down (Node Exporter Offline)
       - uid: "vps_host_down"
@@ -44,16 +44,16 @@ groups:
               expr: 'up{job="node-exporter"} == 0'
               refId: "A"
               type: "query"
-        for: "1m"
+        for: "10s"
         annotations:
           summary: "VPS Host is unreachable or offline."
           description: "Prometheus has lost contact with the physical VPS server node-exporter probe."
         labels:
           severity: "critical"
 
-      # Alert 2: Proxy Backend 5xx Spikes (Next.js crashing)
+      # Alert 2: Proxy Backend Offline (Next.js crashing / offline)
       - uid: "nextjs_proxy_down"
-        title: "⚠️ Warning: Next.js Backend 5xx Spikes"
+        title: "⚠️ Warning: Next.js Backend Offline"
         condition: "A"
         data:
           - refId: "A"
@@ -62,12 +62,12 @@ groups:
               from: 300
               to: 0
             model:
-              expr: 'sum(rate(caddy_http_requests_total{status=~"5.."}[5m])) > 0.05'
+              expr: 'caddy_reverse_proxy_upstreams_healthy{upstream="usv-vpn:3000"} == 0'
               refId: "A"
               type: "query"
-        for: "2m"
+        for: "10s"
         annotations:
-          summary: "Caddy reverse proxy is returning excessive 5xx Gateway errors."
-          description: "High error rates detected in Caddy upstream proxying to Next.js."
+          summary: "Next.js backend container is unreachable or offline."
+          description: "Caddy reverse proxy reports the Next.js upstream container is unhealthy."
         labels:
           severity: "critical"
