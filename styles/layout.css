@@ -15,8 +15,10 @@
   --paper: #ffffff;
   --surface: #f8fafc;
   --surface-strong: #f1f5f9;
-  --blue: #4f46e5;
-  --blue-dark: #3730a3;
+  --blue: #254AA5;
+  --blue-rgb: 37, 74, 165;
+  --blue-dark: #1b3678;
+  --blue-dark-rgb: 27, 54, 120;
   --green: #10b981;
   --red: #ef4444;
   --amber: #f59e0b;
@@ -37,7 +39,7 @@
   --th-bg: rgba(15, 23, 42, 0.02);
   --th-color: #475569;
   --tr-even-bg: rgba(15, 23, 42, 0.01);
-  --tr-hover-bg: rgba(99, 102, 241, 0.04);
+  --tr-hover-bg: rgba(var(--blue-rgb), 0.04);
 
   --input-bg: rgba(255, 255, 255, 0.5);
   --input-border: rgba(15, 23, 42, 0.12);
@@ -67,8 +69,10 @@
   --paper: #0b0f19;
   --surface: #020617;
   --surface-strong: #1e293b;
-  --blue: #6366f1;
-  --blue-dark: #4f46e5;
+  --blue: #4f78e2;
+  --blue-rgb: 79, 120, 226;
+  --blue-dark: #254AA5;
+  --blue-dark-rgb: 37, 74, 165;
   --green: #34d399;
   --red: #f87171;
   --amber: #fbbf24;
@@ -89,7 +93,7 @@
   --th-bg: rgba(255, 255, 255, 0.02);
   --th-color: #cbd5e1;
   --tr-even-bg: rgba(255, 255, 255, 0.01);
-  --tr-hover-bg: rgba(99, 102, 241, 0.1);
+  --tr-hover-bg: rgba(var(--blue-rgb), 0.1);
 
   --input-bg: rgba(15, 23, 42, 0.6);
   --input-border: rgba(255, 255, 255, 0.08);
@@ -108,7 +112,7 @@
 /* Dark mode header h1 and login h1 */
 .app[data-theme="dark"] .login-header h1,
 .app[data-theme="dark"] .dashboard-header h1 {
-  background: linear-gradient(135deg, #ffffff 0%, #a5b4fc 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #87C2EA 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -142,7 +146,7 @@
 }
 
 .app[data-theme="dark"] .footer-link:hover {
-  color: #818cf8;
+  color: var(--blue);
 }
 
 /* ── 5. Floating Header ── */
@@ -234,14 +238,14 @@
   gap: 6px;
   min-height: 40px;
   padding: 0 16px;
-  background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+  background: linear-gradient(135deg, var(--blue) 0%, #87C2EA 100%);
   color: white;
   text-decoration: none;
   border-radius: 99px;
   font-size: 13px;
   font-weight: 700;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.15);
+  box-shadow: 0 4px 12px rgba(var(--blue-rgb), 0.15);
   white-space: nowrap;
   cursor: pointer;
   border: 0;
@@ -282,12 +286,12 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #4f46e5 0%, #818cf8 100%);
+  background: linear-gradient(135deg, var(--blue) 0%, #87C2EA 100%);
   color: #ffffff;
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.05em;
-  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
+  box-shadow: 0 2px 8px rgba(var(--blue-rgb), 0.25);
   transition: transform 0.25s ease;
 }
 
@@ -841,19 +845,19 @@ tr:hover td {
   align-items: center;
   justify-content: center;
   min-height: 48px;
-  background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+  background: linear-gradient(135deg, var(--blue) 0%, #87C2EA 100%);
   color: #ffffff;
   text-decoration: none;
   border-radius: 12px;
   font-size: 14.5px;
   font-weight: 600;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+  box-shadow: 0 4px 12px rgba(var(--blue-rgb), 0.2);
 }
 
 .btn-modal-donate:hover {
   transform: translateY(-1.5px);
-  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 8px 20px rgba(var(--blue-rgb), 0.3);
   filter: brightness(1.05);
 }
 
@@ -923,10 +927,10 @@ tr:hover td {
 }
 
 .year-tab.active {
-  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+  background: linear-gradient(135deg, var(--blue-dark) 0%, var(--blue) 100%);
   border-color: transparent;
   color: #fff;
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+  box-shadow: 0 4px 12px rgba(var(--blue-rgb), 0.3);
 }
 
 .year-tab-count {

@@ -82,3 +82,10 @@ stats.noteusv.tech:8080 {
         }
     }
 }
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Local development block (Automatic HTTPS via Caddy's internal CA)
+# ─────────────────────────────────────────────────────────────────────────────
+localhost:8080, 127.0.0.1:8080 {
+    reverse_proxy usv-vpn:3000
+}
