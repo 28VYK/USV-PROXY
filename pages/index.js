@@ -460,7 +460,7 @@ export default function Home() {
           localStorage.removeItem('usv_userid');
           localStorage.removeItem('usv_remember');
         }
-        await fetchGrades(data.cookies);
+        await fetchGrades();
       } else {
         setError(data.error || 'Autentificare eșuată');
         if (rememberMe) {
@@ -475,14 +475,13 @@ export default function Home() {
     }
   };
 
-  const fetchGrades = async (cookies) => {
+  const fetchGrades = async () => {
     try {
       const response = await fetch('/api/proxy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           url: '/psc/PT90SYS/EMPLOYEE/HRMS/c/SA_LEARNER_SERVICES.SSR_SSENRL_GRADE.GBL',
-          cookies,
         }),
       });
 
@@ -499,7 +498,7 @@ export default function Home() {
           setSelectedYear(strm);
           setYearData({ [strm]: extractedGrades });
           // Kick off background discovery of other academic years (no await — fire & forget)
-          discoverAllYears(ctx, cookies, strm);
+          discoverAllYears(ctx, strm);
         }
       }
     } catch (err) {
@@ -523,11 +522,11 @@ export default function Home() {
    * Validates that PeopleSoft actually returned the requested STRM —
    * if it silently redirected to a different year, returns [] to avoid false positives.
    */
-  const fetchGradesForStrm = async (strm, ctx, cookies) => {
+  const fetchGradesForStrm = async (strm, ctx) => {
     const response = await fetch('/api/proxy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url: buildGradeUrl(ctx, strm), cookies }),
+      body: JSON.stringify({ url: buildGradeUrl(ctx, strm) }),
     });
     const data = await response.json();
     if (data.success && data.html) {
@@ -550,7 +549,7 @@ export default function Home() {
    * after two consecutive years with no valid data to avoid unnecessary requests.
    * Never fetches future years (above currentStrm).
    */
-  const discoverAllYears = async (ctx, cookies, currentStrm) => {
+  const discoverAllYears = async (ctx, currentStrm) => {
     const current = parseInt(currentStrm, 10);
     if (!current || isNaN(current)) return;
 
@@ -562,7 +561,7 @@ export default function Home() {
 
     for (let s = current - 1; s >= current - MAX_YEARS_BACK; s--) {
       try {
-        const yearGrades = await fetchGradesForStrm(String(s), ctx, cookies);
+        const yearGrades = await fetchGradesForStrm(String(s), ctx);
         if (yearGrades.length > 0) {
           consecutiveEmpty = 0;
           setYearData(prev => ({ ...prev, [String(s)]: yearGrades }));
@@ -838,7 +837,7 @@ export default function Home() {
 
                     {/* Refresh Button */}
                     <button
-                      onClick={() => fetchGrades(result?.cookies)}
+                      onClick={() => fetchGrades()}
                       className="btn-secondary"
                       disabled={loading}
                     >

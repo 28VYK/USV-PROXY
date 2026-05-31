@@ -43,7 +43,7 @@ if (global.rateLimitCleanupInterval === undefined) {
  */
 function createLegacyAgent() {
   return new https.Agent({
-    rejectUnauthorized: false, // Skip certificate validation
+    rejectUnauthorized: true, // Validate SSL certificate
     // Use only minVersion/maxVersion, NOT secureProtocol (they conflict)
     minVersion: 'TLSv1',
     maxVersion: 'TLSv1.2',
@@ -379,7 +379,6 @@ export default async function handler(req, res) {
     return res.status(200).json({
       success: true,
       message: 'Login successful',
-      cookies: sessionCookies,
       redirectUrl: finalUrl,
       portalHtml: portalHtml,
     });

@@ -11,6 +11,10 @@ services:
     container_name: usv-vpn
     restart: always
 
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     # All privileged network capabilities are isolated here, away from Next.js
     cap_add:
       - NET_ADMIN
@@ -21,9 +25,9 @@ services:
     env_file:
       - .env
 
-    # Mount the VPN config directory (contains usv2.ovpn)
+    # Mount the VPN config directory (contains usv2.ovpn) as read-only
     volumes:
-      - ./vpn:/vpn
+      - ./vpn:/vpn:ro
 
     # The entrypoint installs openvpn (Alpine is tiny) then connects
     entrypoint: ["/bin/sh", "-c"]

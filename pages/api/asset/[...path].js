@@ -72,7 +72,7 @@ function mergeCookieState(existingCookieString, ...setCookieLists) {
 
 function createLegacyAgent() {
   return new https.Agent({
-    rejectUnauthorized: false,
+    rejectUnauthorized: true,
     minVersion: 'TLSv1',
     maxVersion: 'TLSv1.2',
     ciphers: 'ALL:@SECLEVEL=0',

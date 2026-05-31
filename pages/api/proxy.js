@@ -73,7 +73,7 @@ function mergeCookieState(existingCookieString, ...setCookieLists) {
  */
 function createLegacyAgent() {
   return new https.Agent({
-    rejectUnauthorized: false,
+    rejectUnauthorized: true,
     minVersion: 'TLSv1',
     maxVersion: 'TLSv1.2',
     ciphers: 'ALL:@SECLEVEL=0',
@@ -191,11 +191,14 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { url, cookies: bodyCookies, method = 'GET', body, headers = {} } = req.body;
+  const { url, method = 'GET', body, headers = {} } = req.body;
 
   // Decrypt and validate the session cookie (which also sets req.userid)
-  const sessionCookies = deserializeSessionCookie(req);
-  const cookies = bodyCookies || sessionCookies;
+  const cookies = deserializeSessionCookie(req);
+
+  if (!cookies) {
+    return res.status(401).json({ success: false, error: 'Sesiune expirată sau invalidă. Te rugăm să te autentifici din nou.' });
+  }
 
   if (!url) {
     return res.status(400).json({ error: 'Missing URL' });

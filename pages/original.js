@@ -153,7 +153,7 @@ export default function OriginalPage() {
   const [mounted, setMounted] = useState(false);
   const [userid, setUserid] = useState('');
   const [password, setPassword] = useState('');
-  const [cookies, setCookies] = useState('');
+  const [loggedIn, setLoggedIn] = useState(false);
   const [currentPath, setCurrentPath] = useState(DEFAULT_PAGE);
   const [html, setHtml] = useState('');
   const [loading, setLoading] = useState(false);
@@ -205,10 +205,8 @@ export default function OriginalPage() {
     setMounted(true);
   }, []);
 
-  const fetchOriginal = async ({ path, method = 'GET', body, cookiesOverride } = {}) => {
-    const activeCookies = cookiesOverride ?? cookies;
-
-    if (!activeCookies) {
+  const fetchOriginal = async ({ path, method = 'GET', body, isLoginCall = false } = {}) => {
+    if (!loggedIn && !isLoginCall) {
       setError('Nu există sesiune activă. Fă login din nou.');
       return;
     }
@@ -229,7 +227,6 @@ export default function OriginalPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           url: targetPath,
-          cookies: activeCookies,
           method,
           body,
           headers: method === 'POST' ? { 'Content-Type': 'application/x-www-form-urlencoded' } : {},
@@ -272,8 +269,7 @@ export default function OriginalPage() {
         throw new Error(loginData.error || 'Login eșuat.');
       }
 
-      const sessionCookies = loginData.cookies || '';
-      setCookies(sessionCookies);
+      setLoggedIn(true);
 
       const initialPath = loginData.redirectUrl
         ? loginData.redirectUrl.replace('https://scolaritate.usv.ro', '')
@@ -281,7 +277,17 @@ export default function OriginalPage() {
 
       setCurrentPath(initialPath);
 
-      await fetchOriginal({ path: initialPath, cookiesOverride: sessionCookies });
+      // Force state update to log in first so fetchOriginal doesn't block on !loggedIn
+      setLoggedIn(true);
+      
+      // Delay call slightly to ensure state is updated or pass an override if needed
+      // Actually, we can fetch directly by bypassing the loggedIn check in fetchOriginal for this first call,
+      // or we can allow fetchOriginal to run since we set loggedIn:
+      // Wait, let's just make fetchOriginal accept a bypass or check loggedIn inside. Or better:
+      // We can just let fetchOriginal check loggedIn, but since state updates are batch-processed,
+      // let's pass a boolean parameter `isLoginCall` to bypass the state check, or set loggedIn directly.
+      // Yes, passing `isLoginCall: true` is cleanest!
+      await fetchOriginal({ path: initialPath, isLoginCall: true });
     } catch (loginError) {
       setError(loginError.message || 'Eroare la autentificare.');
       setLoading(false);
@@ -324,7 +330,7 @@ export default function OriginalPage() {
     return () => {
       window.removeEventListener('message', onMessage);
     };
-  }, [cookies, currentPath]);
+  }, [loggedIn, currentPath]);
 
   return (
     <>
@@ -339,7 +345,7 @@ export default function OriginalPage() {
           Randare aproape raw a paginii originale prin proxy-ul local.
         </p>
 
-        {!cookies && (
+        {!loggedIn && (
           <form onSubmit={loginAndLoad} style={{ display: 'grid', gap: 8, maxWidth: 360, marginBottom: 16 }}>
             <input
               value={userid}
@@ -360,7 +366,7 @@ export default function OriginalPage() {
           </form>
         )}
 
-        {cookies && (
+        {loggedIn && (
           <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
             <input
               style={{ flex: 1 }}
