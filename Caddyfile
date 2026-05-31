@@ -49,12 +49,12 @@ noteusv.tech, www.noteusv.tech, noteusv.tech:8080, www.noteusv.tech:8080 {
     # so port 3000 is reachable via the usv-vpn container name.
     reverse_proxy usv-vpn:3000 {
         # Set X-Real-IP to the verified peer IP of the incoming connection
-        header_up X-Real-IP {remote_host}
+        header_up X-Real-IP {client_ip}
 
         # ── IP Header Sanitization (SEC-09 / P2) ──────────────────────────────────
         # Strip any IP-related headers the client may have injected before they reach Next.js.
         # This prevents header spoofing / smuggling. We do not strip X-Real-IP because we
-        # explicitly set it to the trusted remote_host above.
+        # explicitly set it to the trusted client_ip above.
         header_up -CF-Connecting-IP
         header_up -X-Forwarded-For
         header_up -X-Client-IP
@@ -111,7 +111,7 @@ stats.noteusv.tech, stats.noteusv.tech:8080 {
 # ─────────────────────────────────────────────────────────────────────────────
 localhost:8080, 127.0.0.1:8080 {
     reverse_proxy usv-vpn:3000 {
-        header_up X-Real-IP {remote_host}
+        header_up X-Real-IP {client_ip}
         header_up -CF-Connecting-IP
         header_up -X-Forwarded-For
         header_up -X-Client-IP
