@@ -13,6 +13,26 @@
 import { promises as dnsPromises } from 'dns';
 import { URL } from 'url';
 
+// ── DNS result cache (PERF-03 / SEC-13) ──────────────────────────────────────
+// Caches DNS lookup results per hostname with a 30-second TTL.
+// - Eliminates per-request DNS latency (~1-5ms per lookup).
+// - Reduces the TOCTOU window for DNS rebinding attacks (SEC-13).
+// - On DNS error with a warm cache entry, we fail-closed (do NOT serve stale).
+const DNS_CACHE_TTL_MS = 30_000;
+const dnsCache = new Map(); // host → { addresses: [{address, family}], expiry: number }
+
+async function resolveWithCache(host) {
+  const now = Date.now();
+  const cached = dnsCache.get(host);
+  if (cached && cached.expiry > now) {
+    return cached.addresses;
+  }
+  // Fetch fresh — throws on error (handled by caller → fail-closed)
+  const addresses = await dnsPromises.lookup(host, { all: true });
+  dnsCache.set(host, { addresses, expiry: now + DNS_CACHE_TTL_MS });
+  return addresses;
+}
+
 // ── Allowlist ────────────────────────────────────────────────────────────────
 
 const ALLOWED_EXACT = new Set(['scolaritate.usv.ro', 'usv.ro']);
@@ -108,13 +128,19 @@ export async function checkSsrfGuard(url) {
     return { allowed: false, reason: `Hostname not in USV allowlist: ${host}` };
   }
 
-  // 4. DNS resolution + IP range check
+  // 4. DNS resolution + IP range check (cached, SEC-11, PERF-03)
   let addresses;
   try {
-    addresses = await dnsPromises.lookup(host, { all: true });
+    addresses = await resolveWithCache(host);
   } catch (err) {
     console.warn(`[SSRF-GUARD] DNS resolution failed for "${host}": ${err.message}`);
     return { allowed: false, reason: `DNS resolution failed: ${err.message}` };
+  }
+
+  // SEC-11: fail-closed if DNS returns no addresses (edge-case, no-throw empty list)
+  if (!Array.isArray(addresses) || addresses.length === 0) {
+    console.warn(`[SSRF-GUARD] DNS returned no addresses for "${host}" — fail-closed`);
+    return { allowed: false, reason: 'DNS resolution returned no addresses' };
   }
 
   for (const { address, family } of addresses) {

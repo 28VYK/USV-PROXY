@@ -1,18 +1,4 @@
-import { decryptSessionCookie } from '../../utils/cookie-crypto';
-
-/**
- * Helper: parse raw Cookie header into a key-value map.
- */
-function parseCookies(cookieHeader = '') {
-  return cookieHeader.split(';').reduce((acc, part) => {
-    const separatorIndex = part.indexOf('=');
-    if (separatorIndex <= 0) return acc;
-    const key = part.slice(0, separatorIndex).trim();
-    const value = part.slice(separatorIndex + 1).trim();
-    acc[key] = value;
-    return acc;
-  }, {});
-}
+import { deserializeSessionCookie } from '../../utils/cookie-crypto';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -24,26 +10,19 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing userid' });
   }
 
-  // --- Session Ownership Validation ---
+  // --- Session Ownership Validation (SEC-18 / SEC-20) ---
   // Verify that the browser requesting logout actually owns the session
   // for the given userid. This prevents an attacker from mass-logging-out
   // other students' sessions by simply knowing their username.
-  const parsed = parseCookies(req.headers.cookie || '');
-  const encoded = parsed.PS_PROXY_SESSION;
+  const psCookies = deserializeSessionCookie(req);
 
-  if (encoded) {
-    const decrypted = decryptSessionCookie(encoded);
-    if (decrypted && decrypted.includes('|||')) {
-      // New secure cookie format: "userid|||<ps_cookies>"
-      const cookieUserid = decrypted.slice(0, decrypted.indexOf('|||'));
-      if (cookieUserid.toLowerCase() !== userid.toLowerCase()) {
-        console.warn(`[SECURITY] Logout session mismatch — body userid: "${userid}", cookie userid: "${cookieUserid}"`);
-        return res.status(403).json({ error: 'Session ownership mismatch' });
-      }
-    }
-    // Graceful fallback: old cookie format (no "|||") — allow through so active users
-    // are not disrupted at deploy time. Once Max-Age=7200 expires, all clients will
-    // carry the new format and the fallback path becomes unreachable.
+  if (!psCookies || !req.userid) {
+    return res.status(401).json({ error: 'Sesiune expirată sau invalidă.' });
+  }
+
+  if (req.userid.toLowerCase() !== userid.toLowerCase()) {
+    console.warn(`[SECURITY] Logout session mismatch — body userid: "${userid}", cookie userid: "${req.userid}"`);
+    return res.status(403).json({ error: 'Session ownership mismatch' });
   }
 
   try {
@@ -62,3 +41,12 @@ export default async function handler(req, res) {
 
   return res.status(200).json({ success: true });
 }
+
+// SEC-18: Limit body size to 1kb
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '1kb',
+    },
+  },
+};

@@ -198,6 +198,11 @@ export default async function handler(req, res) {
   // are constructed exclusively server-side to prevent cookie injection (F1/P3).
   const { url, method = 'GET', body } = req.body;
 
+  // SEC-15: Ensure body is a string when provided, preventing [object Object] forwarding or length calculation errors
+  if (body !== undefined && typeof body !== 'string') {
+    return res.status(400).json({ error: 'Invalid request body format' });
+  }
+
   // Decrypt and validate the session cookie (which also sets req.userid)
   const cookies = deserializeSessionCookie(req);
 

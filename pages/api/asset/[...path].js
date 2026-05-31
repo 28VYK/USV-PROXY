@@ -104,6 +104,14 @@ async function streamAsset(url, sessionCookies, res, req, redirectsLeft = 5, lat
   return new Promise((resolve, reject) => {
     const parsedUrl = new URL(url);
 
+    // PERF-01: Hard 45s deadline regardless of upstream data rate.
+    // upstreamReq.setTimeout(30000) only catches inactivity; a drip-feed
+    // upstream (1 byte/s) would keep the socket open indefinitely otherwise.
+    const hardDeadline = setTimeout(() => {
+      upstreamReq.destroy(new Error('Asset hard deadline exceeded (45s)'));
+    }, 45_000);
+    const clearDeadline = () => clearTimeout(hardDeadline);
+
     const upstreamReq = https.request(
       {
         hostname: parsedUrl.hostname,
@@ -132,6 +140,7 @@ async function streamAsset(url, sessionCookies, res, req, redirectsLeft = 5, lat
           if (!redirectGuard.allowed) {
             console.warn(`[SECURITY] Blocked redirect SSRF in asset proxy: ${redirectUrl} — ${redirectGuard.reason}`);
             upstreamRes.resume();
+            clearDeadline();
             reject(new Error('Access denied: Redirect target blocked by SSRF guard.'));
             return;
           }
@@ -145,8 +154,10 @@ async function streamAsset(url, sessionCookies, res, req, redirectsLeft = 5, lat
 
           try {
             await streamAsset(redirectUrl, sessionCookies, res, req, redirectsLeft - 1, mergedAfterRedirect);
+            clearDeadline();
             resolve();
           } catch (err) {
+            clearDeadline();
             reject(err);
           }
           return;
@@ -156,6 +167,7 @@ async function streamAsset(url, sessionCookies, res, req, redirectsLeft = 5, lat
         if (statusCode === 404) {
           upstreamRes.resume();
           res.status(404).send('Asset not found');
+          clearDeadline();
           resolve();
           return;
         }
@@ -212,11 +224,19 @@ async function streamAsset(url, sessionCookies, res, req, redirectsLeft = 5, lat
                 return `url('/api/asset${p1}')`;
               }
             );
-            res.send(cssContent);
-            resolve();
+            // PERF-02: wrap res.send in try/catch so sync errors propagate
+            try {
+              res.send(cssContent);
+              clearDeadline();
+              resolve();
+            } catch (sendErr) {
+              clearDeadline();
+              reject(sendErr);
+            }
           });
           upstreamRes.on('error', (err) => {
             res.off('close', onCssClientClose);
+            clearDeadline();
             reject(err);
           });
           return;
@@ -234,6 +254,7 @@ async function streamAsset(url, sessionCookies, res, req, redirectsLeft = 5, lat
         } catch (pipeErr) {
           // EPIPE / ERR_STREAM_DESTROYED = client disconnected — not a server error
           if (pipeErr.code !== 'EPIPE' && pipeErr.code !== 'ERR_STREAM_DESTROYED') {
+            clearDeadline();
             reject(pipeErr);
             return;
           }
@@ -241,13 +262,15 @@ async function streamAsset(url, sessionCookies, res, req, redirectsLeft = 5, lat
           res.off('close', onClientClose);
         }
 
+        clearDeadline();
         resolve();
       }
     );
 
-    upstreamReq.on('error', reject);
+    upstreamReq.on('error', (err) => { clearDeadline(); reject(err); });
     upstreamReq.setTimeout(30000, () => {
       upstreamReq.destroy();
+      clearDeadline();
       reject(new Error('Asset request timeout'));
     });
 
