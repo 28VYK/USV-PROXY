@@ -64,10 +64,13 @@ noteusv.tech, www.noteusv.tech, noteusv.tech:8080, www.noteusv.tech:8080 {
 
     # ── Custom Error Page (Glassmorphic) ──────────────────────────────────────
     # Serve our custom error page when Next.js or VPN is offline/restarting (502/503).
+    # We override the status code to 200 OK using the status directive so that
+    # Cloudflare does not intercept the page and replace it with its default 502 page.
     handle_errors {
         rewrite * /error.html
         file_server {
             root /var/www/html
+            status 200
         }
     }
 
