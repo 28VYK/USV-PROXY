@@ -23,7 +23,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # Main site: noteusv.tech
 # ─────────────────────────────────────────────────────────────────────────────
-noteusv.tech:8080, www.noteusv.tech:8080 {
+noteusv.tech, www.noteusv.tech {
 
     # Redirect if the host header is not the official domain (e.g., direct IP access)
     @notDomain {
@@ -69,7 +69,7 @@ noteusv.tech:8080, www.noteusv.tech:8080 {
 # How to generate GRAFANA_BASIC_AUTH_HASH on the VPS:
 #   docker run --rm caddy:2-alpine caddy hash-password --plaintext "YourPassword"
 # ─────────────────────────────────────────────────────────────────────────────
-stats.noteusv.tech:8080 {
+stats.noteusv.tech {
 
     tls /etc/caddy/certs/origin.pem /etc/caddy/certs/origin.key
 
