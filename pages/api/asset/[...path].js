@@ -13,6 +13,7 @@ import { pipeline } from 'stream';
 import { promisify } from 'util';
 import { serializeSessionCookie, deserializeSessionCookie } from '../../../utils/cookie-crypto';
 import { legacyAgent } from '../../../utils/http-agent';
+import { checkSsrfGuard } from '../../../utils/ssrf-guard';
 
 const pipelineAsync = promisify(pipeline);
 
@@ -80,20 +81,8 @@ function mergeCookieState(existingCookieString, ...setCookieLists) {
     .join('; ');
 }
 
-/**
- * Validates that a URL targets an allowed USV domain (https only) to prevent SSRF.
- * Note: validates hostname only — DNS/IP validation is a separate hardening step (P4).
- */
-function isAllowedUsvUrl(url) {
-  try {
-    const parsed = new URL(url);
-    if (parsed.protocol !== 'https:') return false;
-    const h = parsed.hostname.toLowerCase();
-    return h === 'scolaritate.usv.ro' || h === 'usv.ro' || h.endsWith('.usv.ro');
-  } catch {
-    return false;
-  }
-}
+// isAllowedUsvUrl removed — replaced by checkSsrfGuard from utils/ssrf-guard.js (SEC-04)
+// which adds DNS resolution + private IP range validation on top of hostname allowlist.
 
 /**
  * Streams an asset from PeopleSoft directly to the client response,
@@ -138,11 +127,12 @@ async function streamAsset(url, sessionCookies, res, req, redirectsLeft = 5, lat
             ? upstreamHeaders.location
             : PEOPLESOFT_BASE + upstreamHeaders.location;
 
-          if (!isAllowedUsvUrl(redirectUrl)) {
-            console.warn(`[SECURITY] Blocked redirect SSRF in asset proxy: ${redirectUrl}`);
-            // Drain before rejecting to free the socket back to the pool
+          // SSRF guard on redirect destination — DNS-aware (SEC-04)
+          const redirectGuard = await checkSsrfGuard(redirectUrl);
+          if (!redirectGuard.allowed) {
+            console.warn(`[SECURITY] Blocked redirect SSRF in asset proxy: ${redirectUrl} — ${redirectGuard.reason}`);
             upstreamRes.resume();
-            reject(new Error('Access denied: Redirect target must be a USV domain.'));
+            reject(new Error('Access denied: Redirect target blocked by SSRF guard.'));
             return;
           }
 
@@ -293,8 +283,10 @@ export default async function handler(req, res) {
     
     const fullUrl = PEOPLESOFT_BASE + fullPath + queryString;
 
-    if (!isAllowedUsvUrl(fullUrl)) {
-      console.warn(`[SECURITY] Blocked SSRF attempt in asset proxy: ${fullUrl}`);
+    // SSRF guard: validate hostname allowlist + DNS-resolved IPs (SEC-04)
+    const guard = await checkSsrfGuard(fullUrl);
+    if (!guard.allowed) {
+      console.warn(`[SECURITY] SSRF guard blocked asset request: ${fullUrl} — ${guard.reason}`);
       return res.status(403).json({ error: 'Acces refuzat: Proxy-ul poate fi utilizat exclusiv pentru domenii oficiale USV.' });
     }
 

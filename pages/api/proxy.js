@@ -8,7 +8,8 @@
 import https from 'https';
 import { URL } from 'url';
 import { deserializeSessionCookie, serializeSessionCookie } from '../../utils/cookie-crypto';
-import { legacyAgent } from '../../utils/http-agent';
+import { legacyAgent, withRetry } from '../../utils/http-agent';
+import { checkSsrfGuard } from '../../utils/ssrf-guard';
 
 const PEOPLESOFT_BASE = 'https://scolaritate.usv.ro';
 
@@ -91,6 +92,19 @@ function legacyRequest(url, options = {}) {
     };
 
     const req = https.request(requestOptions, (res) => {
+      // For redirect responses, drain body without buffering — only headers/status are needed.
+      // Buffering HTML from 3xx hops wastes memory (SEC-05).
+      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        res.resume();
+        resolve({
+          status: res.statusCode,
+          headers: res.headers,
+          body: '',
+          cookies: res.headers['set-cookie'] || [],
+        });
+        return;
+      }
+
       let data = '';
       res.on('data', (chunk) => { data += chunk; });
       res.on('end', () => {
@@ -199,18 +213,15 @@ export default async function handler(req, res) {
     // Build full URL
     const fullUrl = url.startsWith('http') ? url : PEOPLESOFT_BASE + url;
 
-    // Security validation: ensure the target is strictly inside the USV domain tree to prevent SSRF (Open Proxy abuse)
-    try {
-      const parsedDestination = new URL(fullUrl);
-      const hostname = parsedDestination.hostname.toLowerCase();
-      const isValidUsv = hostname === 'scolaritate.usv.ro' || hostname === 'usv.ro' || hostname.endsWith('.usv.ro');
-      
-      if (!isValidUsv) {
-        console.warn(`[SECURITY] Blocked SSRF attempt to non-USV domain: ${fullUrl}`);
-        return res.status(403).json({ success: false, error: 'Acces refuzat: Proxy-ul poate fi utilizat exclusiv pentru domenii oficiale USV.' });
-      }
-    } catch (e) {
-      return res.status(400).json({ success: false, error: 'Format URL invalid.' });
+    // SSRF guard: validate hostname allowlist + DNS-resolved IPs (SEC-04)
+    const initialGuard = await checkSsrfGuard(fullUrl);
+    if (!initialGuard.allowed) {
+      const isInvalidUrl = initialGuard.reason.startsWith('Invalid URL');
+      console.warn(`[SECURITY] SSRF guard blocked: ${fullUrl} — ${initialGuard.reason}`);
+      return res.status(isInvalidUrl ? 400 : 403).json({
+        success: false,
+        error: isInvalidUrl ? 'Format URL invalid.' : 'Acces refuzat: Proxy-ul poate fi utilizat exclusiv pentru domenii oficiale USV.',
+      });
     }
     
     console.log(`[PROXY] Fetching: ${fullUrl}`);
@@ -229,11 +240,21 @@ export default async function handler(req, res) {
       requestHeaders['Content-Length'] = Buffer.byteLength(body);
     }
 
-    let response = await legacyRequest(fullUrl, {
-      method: normalizedMethod,
-      headers: requestHeaders,
-      body,
-    });
+    // GET requests: wrap with withRetry to handle stale keep-alive ECONNRESET (SEC-08).
+    // POST requests are never retried to avoid double form submission on PeopleSoft.
+    let response;
+    if (normalizedMethod === 'GET') {
+      response = await withRetry(() => legacyRequest(fullUrl, {
+        method: normalizedMethod,
+        headers: requestHeaders,
+      }));
+    } else {
+      response = await legacyRequest(fullUrl, {
+        method: normalizedMethod,
+        headers: requestHeaders,
+        body,
+      });
+    }
 
     console.log(`[PROXY] Response status: ${response.status}`);
 
@@ -249,18 +270,15 @@ export default async function handler(req, res) {
         ? response.headers.location
         : PEOPLESOFT_BASE + response.headers.location;
 
-      // Security validation: ensure the redirect destination is also inside the USV domain tree
-      try {
-        const parsedRedirect = new URL(redirectUrl);
-        const redirectHostname = parsedRedirect.hostname.toLowerCase();
-        const isRedirectValidUsv = redirectHostname === 'scolaritate.usv.ro' || redirectHostname === 'usv.ro' || redirectHostname.endsWith('.usv.ro');
-        
-        if (!isRedirectValidUsv) {
-          console.warn(`[SECURITY] Blocked redirect SSRF attempt to non-USV domain: ${redirectUrl}`);
-          return res.status(403).json({ success: false, error: 'Acces refuzat: Redirect către domeniu non-USV blocat.' });
-        }
-      } catch (e) {
-        return res.status(400).json({ success: false, error: 'Format redirect URL invalid.' });
+      // SSRF guard on redirect destination — also DNS-aware (SEC-04)
+      const redirectGuard = await checkSsrfGuard(redirectUrl);
+      if (!redirectGuard.allowed) {
+        const isInvalidUrl = redirectGuard.reason.startsWith('Invalid URL');
+        console.warn(`[SECURITY] SSRF guard blocked redirect: ${redirectUrl} — ${redirectGuard.reason}`);
+        return res.status(isInvalidUrl ? 400 : 403).json({
+          success: false,
+          error: isInvalidUrl ? 'Format redirect URL invalid.' : 'Acces refuzat: Redirect către domeniu non-USV blocat.',
+        });
       }
 
       activeCookies = mergeCookieState(activeCookies, response.cookies);
@@ -275,10 +293,11 @@ export default async function handler(req, res) {
         Cookie: activeCookies,
       };
 
-      response = await legacyRequest(redirectUrl, {
+      // Redirect follows are always GET (or preserved method for 307/308) — safe to retry
+      response = await withRetry(() => legacyRequest(redirectUrl, {
         method: nextMethod,
         headers: nextHeaders,
-      });
+      }));
 
       activeMethod = nextMethod;
     }
