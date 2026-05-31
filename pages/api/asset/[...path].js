@@ -2,7 +2,9 @@
  * Asset Proxy API Route
  * 
  * Proxies CSS, images, JavaScript and other static assets from PeopleSoft
- * This is needed because the browser can't directly access the legacy server.
+ * using true streaming (stream.pipeline) to avoid buffering large files in
+ * memory on the 180MB RAM VPS. CSS is the only exception — buffered for
+ * url() path rewriting (CSS files are small by definition).
  */
 
 import https from 'https';
@@ -79,7 +81,8 @@ function mergeCookieState(existingCookieString, ...setCookieLists) {
 }
 
 /**
- * Validates that a URL targets an allowed USV domain to prevent SSRF.
+ * Validates that a URL targets an allowed USV domain (https only) to prevent SSRF.
+ * Note: validates hostname only — DNS/IP validation is a separate hardening step (P4).
  */
 function isAllowedUsvUrl(url) {
   try {
@@ -99,12 +102,12 @@ function isAllowedUsvUrl(url) {
  * For CSS files only, the body is buffered in memory (CSS files are small
  * by definition) so that url() references can be rewritten through the proxy.
  *
- * @param {string}           url            - Upstream URL to fetch
- * @param {string}           sessionCookies - PeopleSoft cookie string
- * @param {object}           res            - Next.js response object
- * @param {object}           req            - Next.js request object (for session refresh + abort)
- * @param {number}           redirectsLeft  - Remaining redirect budget
- * @param {string|null}      latestCookies  - Accumulated cookie state across redirects
+ * @param {string}      url            - Upstream URL to fetch
+ * @param {string}      sessionCookies - PeopleSoft cookie string
+ * @param {object}      res            - Next.js response object
+ * @param {object}      req            - Next.js request object (for session refresh + abort)
+ * @param {number}      redirectsLeft  - Remaining redirect budget
+ * @param {string|null} latestCookies  - Accumulated cookie state across redirects
  */
 async function streamAsset(url, sessionCookies, res, req, redirectsLeft = 5, latestCookies = null) {
   const activeCookies = latestCookies || sessionCookies;
@@ -137,7 +140,7 @@ async function streamAsset(url, sessionCookies, res, req, redirectsLeft = 5, lat
 
           if (!isAllowedUsvUrl(redirectUrl)) {
             console.warn(`[SECURITY] Blocked redirect SSRF in asset proxy: ${redirectUrl}`);
-            // Drain the response body before rejecting to free the socket back to the pool
+            // Drain before rejecting to free the socket back to the pool
             upstreamRes.resume();
             reject(new Error('Access denied: Redirect target must be a USV domain.'));
             return;
@@ -199,15 +202,21 @@ async function streamAsset(url, sessionCookies, res, req, redirectsLeft = 5, lat
         // so we can rewrite relative url() paths through the proxy.
         if (contentType.includes('text/css')) {
           const chunks = [];
+
+          // Abort upstream if client disconnects during CSS buffering
+          const onCssClientClose = () => { upstreamReq.destroy(); };
+          res.on('close', onCssClientClose);
+
           upstreamRes.on('data', (chunk) => chunks.push(chunk));
           upstreamRes.on('end', () => {
+            res.off('close', onCssClientClose);
             let cssContent = Buffer.concat(chunks).toString('utf-8');
             cssContent = cssContent.replace(
-              /url\(['"]?\/([^'"\)]+)['"]?\)/g,
+              /url\(['"]?\/([^'")\]+)['"]\)/g,
               "url('/api/asset/$1')"
             );
             cssContent = cssContent.replace(
-              /url\(['"]?(?!data:)(?!http)([^'"\)]+)['"]?\)/g,
+              /url\(['"]?(?!data:)(?!http)([^'")]+)['"]\)/g,
               (match, p1) => {
                 if (!p1.startsWith('/')) return match;
                 return `url('/api/asset${p1}')`;
@@ -216,7 +225,10 @@ async function streamAsset(url, sessionCookies, res, req, redirectsLeft = 5, lat
             res.send(cssContent);
             resolve();
           });
-          upstreamRes.on('error', reject);
+          upstreamRes.on('error', (err) => {
+            res.off('close', onCssClientClose);
+            reject(err);
+          });
           return;
         }
 
@@ -280,69 +292,22 @@ export default async function handler(req, res) {
       : '';
     
     const fullUrl = PEOPLESOFT_BASE + fullPath + queryString;
-    
-    console.log(`[ASSET] Fetching: ${fullUrl}`);
 
-    const sessionCookies = deserializeSessionCookie(req);
-    if (!sessionCookies) {
-      console.warn(`[SECURITY] Blocked unauthenticated asset proxy request to: ${fullUrl}`);
-      return res.status(401).json({ error: 'Sesiune expirată sau invalidă. Vă rugăm să vă autentificați din nou.' });
+    if (!isAllowedUsvUrl(fullUrl)) {
+      console.warn(`[SECURITY] Blocked SSRF attempt in asset proxy: ${fullUrl}`);
+      return res.status(403).json({ error: 'Acces refuzat: Proxy-ul poate fi utilizat exclusiv pentru domenii oficiale USV.' });
     }
 
-    const response = await legacyRequest(fullUrl, {
-      headers: { Cookie: sessionCookies },
-    });
+    console.log(`[ASSET] Streaming: ${fullUrl}`);
 
-    const mergedCookies = mergeCookieState(sessionCookies, response.headers['set-cookie'] || []);
-    if (mergedCookies && req.userid) {
-      const encodedSession = serializeSessionCookie(req, req.userid, mergedCookies);
-      res.setHeader(
-        'Set-Cookie',
-        `PS_PROXY_SESSION=${encodedSession}; Path=/; HttpOnly; SameSite=Lax; Secure; Max-Age=7200`
-      );
-    }
-
-    // Handle 404 and other errors
-    if (response.status === 404) {
-      return res.status(404).send('Asset not found');
-    }
-
-    // Set appropriate content type
-    const contentType = response.headers['content-type'] || 'application/octet-stream';
-
-    res.setHeader('Content-Type', contentType);
-
-    if (contentType.includes('text/html')) {
-      res.setHeader('Cache-Control', 'no-store');
-    } else {
-      res.setHeader('Cache-Control', 'public, max-age=86400');
-    }
-    
-    // Handle different content types
-    if (contentType.includes('text/css')) {
-      let cssContent = response.body.toString('utf-8');
-      // Rewrite url() references in CSS to go through our proxy
-      cssContent = cssContent.replace(/url\(['"]?\/([^'")]+)['"]?\)/g, "url('/api/asset/$1')");
-      cssContent = cssContent.replace(/url\(['"]?(?!data:)(?!http)([^'")]+)['"]?\)/g, (match, p1) => {
-        // Handle relative URLs in CSS
-        if (!p1.startsWith('/')) {
-          return match; // Keep relative paths as-is for now
-        }
-        return `url('/api/asset${p1}')`;
-      });
-      res.send(cssContent);
-    } else if (contentType.includes('text/html')) {
-      res.send(response.body.toString('utf-8'));
-    } else if (contentType.includes('javascript') || contentType.includes('text/plain')) {
-      res.send(response.body.toString('utf-8'));
-    } else {
-      // For binary files (images, etc), send as-is
-      res.send(response.body);
-    }
+    // Delegate entirely to streamAsset — zero buffering for binary content,
+    // CSS buffered only for url() rewriting. No Buffer.concat used here.
+    await streamAsset(fullUrl, sessionCookies, res, req);
 
   } catch (error) {
     console.error('[ASSET] Error:', error.message);
-    res.status(500).json({ error: 'Failed to fetch asset: ' + error.message });
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Failed to fetch asset: ' + error.message });
+    }
   }
 }
-

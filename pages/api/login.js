@@ -350,13 +350,13 @@ export default async function handler(req, res) {
       const helperName = 'session-validator';
       const validator = await import(`../../utils/${helperName}`);
       const studentName = validator.extractStudentName(portalHtml, userid);
-      const ip = req.headers['cf-connecting-ip'] ||
-        req.headers['x-client-ip'] ||
+      // Use the same trusted IP source as the rate limiter above (SEC-09):
+      // x-real-ip is set by Caddy after stripping all client-injectable headers.
+      const clientIp = (
         req.headers['x-real-ip'] ||
-        req.headers['x-forwarded-for'] ||
-        req.socket.remoteAddress ||
-        '127.0.0.1';
-      const clientIp = typeof ip === 'string' ? ip.split(',')[0].trim() : ip;
+        req.socket?.remoteAddress ||
+        '127.0.0.1'
+      ).split(',')[0].trim();
       const userAgent = req.headers['user-agent'] || '';
 
       // Async trigger to validate session payload

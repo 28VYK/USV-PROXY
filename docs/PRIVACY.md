@@ -30,7 +30,7 @@ Datele tale sunt folosite strict în scopul tehnic de a realiza conexiunea prin 
 ## Securitatea Conexiunii (HTTPS/TLS)
 
 - **Conexiune Criptată**: Instanța demo rulează pe domeniul securizat `https://noteusv.tech` cu certificat SSL/TLS activat prin Cloudflare. Traficul dintre browser-ul tău și proxy este complet criptat și securizat.
-- **Conectarea proxy → USV**: Din cauza serverului învechit al universității, legătura proxy → USV folosește protocoale TLS mai vechi (TLS 1.0) cu ocolirea verificării certificatului (`rejectUnauthorized: false`), fapt impus de sistemul legacy al USV.
+- **Conectarea proxy → USV**: Din cauza serverului învechit al universității, legătura proxy → USV folosește protocoale TLS mai vechi (TLS 1.0) și suite de cifrare extinse pentru compatibilitate cu sistemul legacy al USV. Verificarea certificatului este **activă** (`rejectUnauthorized: true`) — conexiunea validează că serverul USV prezintă un certificat autentic.
 
 ---
 
