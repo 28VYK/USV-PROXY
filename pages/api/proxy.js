@@ -179,7 +179,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { url, method = 'GET', body, headers = {} } = req.body;
+  // NOTE: `headers` is intentionally NOT destructured from req.body.
+  // Client-supplied headers are never forwarded upstream — all request headers
+  // are constructed exclusively server-side to prevent cookie injection (F1/P3).
+  const { url, method = 'GET', body } = req.body;
 
   // Decrypt and validate the session cookie (which also sets req.userid)
   const cookies = deserializeSessionCookie(req);
@@ -214,12 +217,14 @@ export default async function handler(req, res) {
 
     const normalizedMethod = String(method || 'GET').toUpperCase();
 
+    // Build upstream headers entirely server-side.
+    // No client-supplied headers are forwarded — this prevents cookie injection
+    // and hop-by-hop header smuggling (audit findings F1 and P3).
     const requestHeaders = {
-      ...(cookies ? { Cookie: cookies } : {}),
-      ...headers,
+      Cookie: cookies,
     };
 
-    if (normalizedMethod === 'POST' && body && !requestHeaders['Content-Type'] && !requestHeaders['content-type']) {
+    if (normalizedMethod === 'POST' && body) {
       requestHeaders['Content-Type'] = 'application/x-www-form-urlencoded';
       requestHeaders['Content-Length'] = Buffer.byteLength(body);
     }
@@ -265,13 +270,10 @@ export default async function handler(req, res) {
       console.log(`[PROXY] Redirect ${redirectsFollowed} -> ${redirectUrl}`);
 
       const nextMethod = (response.status === 307 || response.status === 308) ? activeMethod : 'GET';
+      // Redirect headers are also built server-side only — no client header forwarding
       const nextHeaders = {
-        ...headers,
-        ...(activeCookies ? { Cookie: activeCookies } : {}),
+        Cookie: activeCookies,
       };
-
-      delete nextHeaders['Content-Length'];
-      delete nextHeaders['content-length'];
 
       response = await legacyRequest(redirectUrl, {
         method: nextMethod,
@@ -311,3 +313,12 @@ export default async function handler(req, res) {
     });
   }
 }
+
+// Limit request body size — PeopleSoft form payloads are always small
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '64kb',
+    },
+  },
+};

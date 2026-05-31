@@ -34,10 +34,26 @@ noteusv.tech:8080, www.noteusv.tech:8080 {
     # TLS using the Cloudflare Origin CA Certificate (15 years, gitignored)
     tls /etc/caddy/certs/origin.pem /etc/caddy/certs/origin.key
 
+    # ── IP Header Sanitization ────────────────────────────────────────────────
+    # Strip any IP-related headers the client may have injected before they reach
+    # Next.js. Then set X-Real-IP to the actual TCP peer address (Caddy sees the
+    # real connection, so this value cannot be spoofed by the client).
+    # Without this, an attacker hitting :8080 directly could set CF-Connecting-IP
+    # to an arbitrary value and bypass the in-memory rate limiter in login.js.
+    header_up -CF-Connecting-IP
+    header_up -X-Forwarded-For
+    header_up -X-Real-IP
+    header_up -X-Client-IP
+    header_up -X-Forwarded-Host
+    header_up -Forwarded
+
     # Reverse proxy to the Next.js app.
     # usv-proxy shares the network namespace of usv-vpn (sidecar pattern),
     # so port 3000 is reachable via the usv-vpn container name.
-    reverse_proxy usv-vpn:3000
+    reverse_proxy usv-vpn:3000 {
+        # Set X-Real-IP to the verified peer IP of the incoming connection
+        header_up X-Real-IP {remote_host}
+    }
 
     # Structured logging with automatic rotation
     log {
@@ -87,7 +103,13 @@ stats.noteusv.tech:8080 {
 # Local development block (Automatic HTTPS via Caddy's internal CA)
 # ─────────────────────────────────────────────────────────────────────────────
 localhost:8080, 127.0.0.1:8080 {
-    reverse_proxy usv-vpn:3000
+    header_up -CF-Connecting-IP
+    header_up -X-Forwarded-For
+    header_up -X-Real-IP
+    header_up -X-Client-IP
+    reverse_proxy usv-vpn:3000 {
+        header_up X-Real-IP {remote_host}
+    }
 }
 
 # ─────────────────────────────────────────────────────────────────────────────

@@ -7,12 +7,21 @@
 
 import https from 'https';
 import { URL } from 'url';
+import { pipeline } from 'stream';
+import { promisify } from 'util';
 import { serializeSessionCookie, deserializeSessionCookie } from '../../../utils/cookie-crypto';
 import { legacyAgent } from '../../../utils/http-agent';
 
+const pipelineAsync = promisify(pipeline);
+
 const PEOPLESOFT_BASE = 'https://scolaritate.usv.ro';
 
-// Removed encodeSessionCookie alias in favor of serializeSessionCookie
+// Disable Next.js body parsing — this route only serves GET asset requests
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
 
 function parseCookiePairs(cookieString = '') {
   return cookieString
@@ -69,72 +78,178 @@ function mergeCookieState(existingCookieString, ...setCookieLists) {
     .join('; ');
 }
 
-// Removed parseCookies and getSessionCookiesFromRequest in favor of shared cookie-crypto utilities
+/**
+ * Validates that a URL targets an allowed USV domain to prevent SSRF.
+ */
+function isAllowedUsvUrl(url) {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'https:') return false;
+    const h = parsed.hostname.toLowerCase();
+    return h === 'scolaritate.usv.ro' || h === 'usv.ro' || h.endsWith('.usv.ro');
+  } catch {
+    return false;
+  }
+}
 
-function legacyRequest(url, options = {}, maxRedirects = 5) {
+/**
+ * Streams an asset from PeopleSoft directly to the client response,
+ * following redirects without buffering the body.
+ *
+ * For CSS files only, the body is buffered in memory (CSS files are small
+ * by definition) so that url() references can be rewritten through the proxy.
+ *
+ * @param {string}           url            - Upstream URL to fetch
+ * @param {string}           sessionCookies - PeopleSoft cookie string
+ * @param {object}           res            - Next.js response object
+ * @param {object}           req            - Next.js request object (for session refresh + abort)
+ * @param {number}           redirectsLeft  - Remaining redirect budget
+ * @param {string|null}      latestCookies  - Accumulated cookie state across redirects
+ */
+async function streamAsset(url, sessionCookies, res, req, redirectsLeft = 5, latestCookies = null) {
+  const activeCookies = latestCookies || sessionCookies;
+
   return new Promise((resolve, reject) => {
     const parsedUrl = new URL(url);
-    
-    const requestOptions = {
-      hostname: parsedUrl.hostname,
-      port: parsedUrl.port || 443,
-      path: parsedUrl.pathname + parsedUrl.search,
-      method: options.method || 'GET',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0',
-        'Accept': '*/*',
-        'Accept-Encoding': 'identity', // Don't request compressed responses
-        ...options.headers,
+
+    const upstreamReq = https.request(
+      {
+        hostname: parsedUrl.hostname,
+        port: parsedUrl.port || 443,
+        path: parsedUrl.pathname + parsedUrl.search,
+        method: 'GET',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0',
+          'Accept': '*/*',
+          'Accept-Encoding': 'identity', // Avoid compressed responses so Content-Length stays accurate
+          'Cookie': activeCookies,
+        },
+        agent: legacyAgent,
       },
-      agent: legacyAgent,
-    };
+      async (upstreamRes) => {
+        const { statusCode, headers: upstreamHeaders } = upstreamRes;
 
-    const req = https.request(requestOptions, (res) => {
-      // Handle redirects
-      if ((res.statusCode === 301 || res.statusCode === 302) && res.headers.location && maxRedirects > 0) {
-        const redirectUrl = res.headers.location.startsWith('http') 
-          ? res.headers.location 
-          : PEOPLESOFT_BASE + res.headers.location;
+        // ── Redirect handling ───────────────────────────────────────────────
+        if ((statusCode === 301 || statusCode === 302) && upstreamHeaders.location && redirectsLeft > 0) {
+          const redirectUrl = upstreamHeaders.location.startsWith('http')
+            ? upstreamHeaders.location
+            : PEOPLESOFT_BASE + upstreamHeaders.location;
 
-        // Security check: only redirect to USV domains to prevent SSRF/Open Redirect
-        try {
-          const parsedRedirect = new URL(redirectUrl);
-          const redirectHostname = parsedRedirect.hostname.toLowerCase();
-          const isRedirectValidUsv = redirectHostname === 'scolaritate.usv.ro' || redirectHostname === 'usv.ro' || redirectHostname.endsWith('.usv.ro');
-          
-          if (!isRedirectValidUsv) {
-            console.warn(`[SECURITY] Blocked redirect SSRF attempt in asset proxy: ${redirectUrl}`);
+          if (!isAllowedUsvUrl(redirectUrl)) {
+            console.warn(`[SECURITY] Blocked redirect SSRF in asset proxy: ${redirectUrl}`);
+            // Drain the response body before rejecting to free the socket back to the pool
+            upstreamRes.resume();
             reject(new Error('Access denied: Redirect target must be a USV domain.'));
             return;
           }
-        } catch (e) {
-          reject(new Error('Invalid redirect URL format in asset proxy.'));
+
+          console.log(`[ASSET] Redirect (${redirectsLeft} left) → ${redirectUrl}`);
+
+          // Drain the current response before making the next request
+          upstreamRes.resume();
+
+          const mergedAfterRedirect = mergeCookieState(activeCookies, upstreamHeaders['set-cookie'] || []);
+
+          try {
+            await streamAsset(redirectUrl, sessionCookies, res, req, redirectsLeft - 1, mergedAfterRedirect);
+            resolve();
+          } catch (err) {
+            reject(err);
+          }
           return;
         }
 
-        console.log(`[ASSET] Following redirect to: ${redirectUrl}`);
-        resolve(legacyRequest(redirectUrl, options, maxRedirects - 1));
-        return;
+        // ── 404 pass-through ────────────────────────────────────────────────
+        if (statusCode === 404) {
+          upstreamRes.resume();
+          res.status(404).send('Asset not found');
+          resolve();
+          return;
+        }
+
+        // ── Session cookie refresh ──────────────────────────────────────────
+        const setCookieList = upstreamHeaders['set-cookie'] || [];
+        if (setCookieList.length > 0 && req.userid) {
+          const mergedCookies = mergeCookieState(activeCookies, setCookieList);
+          const encodedSession = serializeSessionCookie(req, req.userid, mergedCookies);
+          res.setHeader(
+            'Set-Cookie',
+            `PS_PROXY_SESSION=${encodedSession}; Path=/; HttpOnly; SameSite=Lax; Secure; Max-Age=7200`
+          );
+        }
+
+        // ── Response headers ────────────────────────────────────────────────
+        const contentType = upstreamHeaders['content-type'] || 'application/octet-stream';
+        res.setHeader('Content-Type', contentType);
+
+        if (upstreamHeaders['content-length']) {
+          res.setHeader('Content-Length', upstreamHeaders['content-length']);
+        }
+
+        if (contentType.includes('text/html')) {
+          res.setHeader('Cache-Control', 'no-store');
+        } else {
+          res.setHeader('Cache-Control', 'public, max-age=86400');
+        }
+
+        res.status(statusCode || 200);
+
+        // ── CSS: buffer + rewrite url() references ──────────────────────────
+        // CSS files are small by nature; buffering them is safe and necessary
+        // so we can rewrite relative url() paths through the proxy.
+        if (contentType.includes('text/css')) {
+          const chunks = [];
+          upstreamRes.on('data', (chunk) => chunks.push(chunk));
+          upstreamRes.on('end', () => {
+            let cssContent = Buffer.concat(chunks).toString('utf-8');
+            cssContent = cssContent.replace(
+              /url\(['"]?\/([^'"\)]+)['"]?\)/g,
+              "url('/api/asset/$1')"
+            );
+            cssContent = cssContent.replace(
+              /url\(['"]?(?!data:)(?!http)([^'"\)]+)['"]?\)/g,
+              (match, p1) => {
+                if (!p1.startsWith('/')) return match;
+                return `url('/api/asset${p1}')`;
+              }
+            );
+            res.send(cssContent);
+            resolve();
+          });
+          upstreamRes.on('error', reject);
+          return;
+        }
+
+        // ── All other content types: stream directly (zero buffer) ──────────
+        // Abort the upstream request if the client disconnects early
+        const onClientClose = () => {
+          upstreamReq.destroy();
+        };
+        res.on('close', onClientClose);
+
+        try {
+          await pipelineAsync(upstreamRes, res);
+        } catch (pipeErr) {
+          // EPIPE / ERR_STREAM_DESTROYED = client disconnected — not a server error
+          if (pipeErr.code !== 'EPIPE' && pipeErr.code !== 'ERR_STREAM_DESTROYED') {
+            reject(pipeErr);
+            return;
+          }
+        } finally {
+          res.off('close', onClientClose);
+        }
+
+        resolve();
       }
+    );
 
-      const chunks = [];
-      res.on('data', (chunk) => { chunks.push(chunk); });
-      res.on('end', () => {
-        resolve({
-          status: res.statusCode,
-          headers: res.headers,
-          body: Buffer.concat(chunks),
-        });
-      });
+    upstreamReq.on('error', reject);
+    upstreamReq.setTimeout(30000, () => {
+      upstreamReq.destroy();
+      reject(new Error('Asset request timeout'));
     });
 
-    req.on('error', reject);
-    req.setTimeout(30000, () => {
-      req.destroy();
-      reject(new Error('Request timeout'));
-    });
-
-    req.end();
+    upstreamReq.end();
   });
 }
 
@@ -144,6 +259,13 @@ export default async function handler(req, res) {
   
   if (!path) {
     return res.status(400).json({ error: 'Missing path parameter' });
+  }
+
+  // ── Authentication guard ──────────────────────────────────────────────────
+  const sessionCookies = deserializeSessionCookie(req);
+  if (!sessionCookies) {
+    console.warn(`[SECURITY] Blocked unauthenticated asset proxy request`);
+    return res.status(401).json({ error: 'Sesiune expirată sau invalidă. Vă rugăm să vă autentificați din nou.' });
   }
 
   try {

@@ -94,14 +94,21 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Get client IP (prioritize Cloudflare connecting IP to avoid shared rate limit buckets)
-  const ip = req.headers['cf-connecting-ip'] ||
-    req.headers['x-client-ip'] ||
+  // Extract client IP from the trusted header set by Caddy.
+  //
+  // Caddy strips CF-Connecting-IP, X-Forwarded-For, X-Real-IP and X-Client-IP
+  // from all incoming requests before setting X-Real-IP to the actual TCP peer
+  // address. This means the value below cannot be spoofed by a client — even
+  // if the attacker sends directly to :8080, Caddy's header_up directives
+  // overwrite any injected header with the real connection IP.
+  //
+  // req.socket.remoteAddress is used as a fallback for local dev where traffic
+  // does not pass through Caddy (in that case it will be 127.0.0.1 or ::1).
+  const clientIp = (
     req.headers['x-real-ip'] ||
-    req.headers['x-forwarded-for'] ||
-    req.socket.remoteAddress ||
-    '127.0.0.1';
-  const clientIp = typeof ip === 'string' ? ip.split(',')[0].trim() : ip;
+    req.socket?.remoteAddress ||
+    '127.0.0.1'
+  ).split(',')[0].trim();
 
   // Rate limiting check: max 10 attempts per 15 minutes
   const now = Date.now();
@@ -379,3 +386,11 @@ export default async function handler(req, res) {
   }
 }
 
+// Limit request body size — login payloads (userid + password) are always tiny
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '4kb',
+    },
+  },
+};
