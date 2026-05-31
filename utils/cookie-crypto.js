@@ -151,8 +151,36 @@ export function getClientContext(req) {
 
   const ua = req.headers['user-agent'] || '';
 
-  const ipHash = crypto.createHash('sha256').update(clientIp).digest('hex');
-  const uaHash = crypto.createHash('sha256').update(ua).digest('hex');
+  // 1. Soft User-Agent Signature (stabilize against minor updates by grouping OS & Browser family)
+  let softUa = ua;
+  const osMatch = ua.match(/\(([^)]+)\)/);
+  const browserMatch = ua.match(/(Firefox|Chrome|Safari|Opera|Edge|MSIE|Trident)\/?\s*(\d+)/i);
+  if (osMatch && browserMatch) {
+    softUa = `${osMatch[1]}-${browserMatch[1]}/${browserMatch[2]}`;
+  } else if (osMatch) {
+    softUa = osMatch[1];
+  } else if (browserMatch) {
+    softUa = `${browserMatch[1]}/${browserMatch[2]}`;
+  }
+
+  // 2. Soft IP Binding (stabilize against CGNAT / mobile switching by binding to subnet prefix)
+  let ipSubnet = clientIp;
+  if (clientIp.includes('.')) {
+    // IPv4: Keep /24 subnet (first 3 octets)
+    const segments = clientIp.split('.');
+    if (segments.length === 4) {
+      ipSubnet = `${segments[0]}.${segments[1]}.${segments[2]}.0`;
+    }
+  } else if (clientIp.includes(':')) {
+    // IPv6: Keep /64 subnet (first 4 colon blocks)
+    const segments = clientIp.split(':');
+    if (segments.length >= 4) {
+      ipSubnet = `${segments[0]}:${segments[1]}:${segments[2]}:${segments[3]}::`;
+    }
+  }
+
+  const ipHash = crypto.createHash('sha256').update(ipSubnet).digest('hex');
+  const uaHash = crypto.createHash('sha256').update(softUa).digest('hex');
 
   return { ipHash, uaHash };
 }

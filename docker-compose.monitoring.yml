@@ -23,7 +23,10 @@ services:
 
     # Share the host's kernel namespaces for complete system metrics
     pid: host
-    network_mode: host
+    
+    # Joined to the internal monitoring network to avoid exposing port 9100 on host interfaces
+    networks:
+      - monitoring_net
 
     volumes:
       - /proc:/host/proc:ro
@@ -61,7 +64,6 @@ services:
       - '--web.console.libraries=/etc/prometheus/console_libraries'
       - '--web.console.templates=/etc/prometheus/consoles'
       - '--web.enable-lifecycle'
-      - '--web.enable-admin-api'
 
     networks:
       - monitoring_net

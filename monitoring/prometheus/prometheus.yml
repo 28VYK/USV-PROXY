@@ -29,7 +29,7 @@ scrape_configs:
   # via host-gateway (added to extra_hosts in the Prometheus container)
   - job_name: 'node-exporter'
     static_configs:
-      - targets: ['host.docker.internal:9100']
+      - targets: ['usv-node-exporter:9100']
         labels:
           service: 'node-exporter'
           host: 'vps-main'

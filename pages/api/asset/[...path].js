@@ -8,6 +8,7 @@
 import https from 'https';
 import { URL } from 'url';
 import { serializeSessionCookie, deserializeSessionCookie } from '../../../utils/cookie-crypto';
+import { legacyAgent } from '../../../utils/http-agent';
 
 const PEOPLESOFT_BASE = 'https://scolaritate.usv.ro';
 
@@ -70,16 +71,6 @@ function mergeCookieState(existingCookieString, ...setCookieLists) {
 
 // Removed parseCookies and getSessionCookiesFromRequest in favor of shared cookie-crypto utilities
 
-function createLegacyAgent() {
-  return new https.Agent({
-    rejectUnauthorized: true,
-    minVersion: 'TLSv1',
-    maxVersion: 'TLSv1.2',
-    ciphers: 'ALL:@SECLEVEL=0',
-    honorCipherOrder: false,
-  });
-}
-
 function legacyRequest(url, options = {}, maxRedirects = 5) {
   return new Promise((resolve, reject) => {
     const parsedUrl = new URL(url);
@@ -95,7 +86,7 @@ function legacyRequest(url, options = {}, maxRedirects = 5) {
         'Accept-Encoding': 'identity', // Don't request compressed responses
         ...options.headers,
       },
-      agent: createLegacyAgent(),
+      agent: legacyAgent,
     };
 
     const req = https.request(requestOptions, (res) => {
@@ -171,8 +162,13 @@ export default async function handler(req, res) {
     console.log(`[ASSET] Fetching: ${fullUrl}`);
 
     const sessionCookies = deserializeSessionCookie(req);
+    if (!sessionCookies) {
+      console.warn(`[SECURITY] Blocked unauthenticated asset proxy request to: ${fullUrl}`);
+      return res.status(401).json({ error: 'Sesiune expirată sau invalidă. Vă rugăm să vă autentificați din nou.' });
+    }
+
     const response = await legacyRequest(fullUrl, {
-      headers: sessionCookies ? { Cookie: sessionCookies } : {},
+      headers: { Cookie: sessionCookies },
     });
 
     const mergedCookies = mergeCookieState(sessionCookies, response.headers['set-cookie'] || []);

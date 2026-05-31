@@ -7,7 +7,8 @@
 
 import https from 'https';
 import { URL } from 'url';
-import { serializeSessionCookie, deserializeSessionCookie } from '../../utils/cookie-crypto';
+import { deserializeSessionCookie, serializeSessionCookie } from '../../utils/cookie-crypto';
+import { legacyAgent } from '../../utils/http-agent';
 
 const PEOPLESOFT_BASE = 'https://scolaritate.usv.ro';
 
@@ -71,19 +72,6 @@ function mergeCookieState(existingCookieString, ...setCookieLists) {
 /**
  * Create a custom HTTPS agent that allows legacy SSL/TLS connections
  */
-function createLegacyAgent() {
-  return new https.Agent({
-    rejectUnauthorized: true,
-    minVersion: 'TLSv1',
-    maxVersion: 'TLSv1.2',
-    ciphers: 'ALL:@SECLEVEL=0',
-    honorCipherOrder: false,
-  });
-}
-
-/**
- * Make an HTTPS request with legacy SSL support
- */
 function legacyRequest(url, options = {}) {
   return new Promise((resolve, reject) => {
     const parsedUrl = new URL(url);
@@ -99,7 +87,7 @@ function legacyRequest(url, options = {}) {
         'Accept-Language': 'ro-RO,ro;q=0.9,en;q=0.8',
         ...options.headers,
       },
-      agent: createLegacyAgent(),
+      agent: legacyAgent,
     };
 
     const req = https.request(requestOptions, (res) => {

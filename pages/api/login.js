@@ -8,6 +8,7 @@
 import https from 'https';
 import { URL } from 'url';
 import { serializeSessionCookie } from '../../utils/cookie-crypto';
+import { legacyAgent } from '../../utils/http-agent';
 
 // PeopleSoft server details
 const PEOPLESOFT_BASE = 'https://scolaritate.usv.ro';
@@ -39,22 +40,6 @@ if (global.rateLimitCleanupInterval === undefined) {
 // encodeSessionCookie alias removed in favor of serializeSessionCookie
 
 /**
- * Create a custom HTTPS agent that allows legacy SSL/TLS connections
- */
-function createLegacyAgent() {
-  return new https.Agent({
-    rejectUnauthorized: true, // Validate SSL certificate
-    // Use only minVersion/maxVersion, NOT secureProtocol (they conflict)
-    minVersion: 'TLSv1',
-    maxVersion: 'TLSv1.2',
-    // Allow all ciphers including weak ones
-    ciphers: 'ALL:@SECLEVEL=0',
-    // Honor cipher order
-    honorCipherOrder: false,
-  });
-}
-
-/**
  * Make an HTTPS request with legacy SSL support
  */
 function legacyRequest(url, options = {}) {
@@ -73,7 +58,7 @@ function legacyRequest(url, options = {}) {
         'Content-Type': 'application/x-www-form-urlencoded',
         ...options.headers,
       },
-      agent: createLegacyAgent(),
+      agent: legacyAgent,
     };
 
     const req = https.request(requestOptions, (res) => {
