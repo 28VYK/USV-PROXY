@@ -95,7 +95,7 @@
                 0 30px 60px rgba(15, 23, 42, 0.05),
                 0 12px 24px rgba(15, 23, 42, 0.03),
                 inset 0 1px 0 var(--card-inner-shadow);
-            padding: 40px 32px;
+            padding: 44px 36px;
             text-align: center;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
             animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
@@ -120,45 +120,11 @@
             }
         }
 
-        /* Header / Eyebrow Style */
-        .eyebrow {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 26px;
-            padding: 0 12px;
-            border: 1px solid rgba(var(--blue-rgb), 0.2);
-            border-radius: 999px;
-            color: var(--blue);
-            background: rgba(var(--blue-rgb), 0.06);
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            font-family: 'Space Grotesk', sans-serif;
-            margin-bottom: 20px;
-            gap: 6px;
-        }
-
-        .pulse-dot {
-            width: 7px;
-            height: 7px;
-            background-color: var(--blue);
-            border-radius: 50%;
-            animation: pulse-dot 1.5s infinite;
-        }
-
-        @keyframes pulse-dot {
-            0% { box-shadow: 0 0 0 0 rgba(37, 74, 165, 0.7); }
-            70% { box-shadow: 0 0 0 5px rgba(37, 74, 165, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(37, 74, 165, 0); }
-        }
-
         h1 {
             font-family: 'Outfit', sans-serif;
-            font-size: 30px;
+            font-size: 32px;
             font-weight: 900;
-            margin: 0 0 12px;
+            margin: 0 0 14px;
             color: var(--ink);
             letter-spacing: -0.03em;
             background: linear-gradient(135deg, #0f172a 0%, #312e81 100%);
@@ -169,16 +135,16 @@
         p {
             color: var(--muted);
             font-size: 14.5px;
-            line-height: 1.6;
-            margin-bottom: 28px;
+            line-height: 1.65;
+            margin-bottom: 32px;
             font-weight: 500;
         }
 
         /* Circular Timer UI */
         .timer-shell {
-            width: 110px;
-            height: 110px;
-            margin: 0 auto 28px;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 32px;
             border-radius: 50%;
             border: 2px solid rgba(var(--blue-rgb), 0.12);
             display: flex;
@@ -205,7 +171,7 @@
 
         .countdown {
             font-family: 'Outfit', sans-serif;
-            font-size: 38px;
+            font-size: 42px;
             font-weight: 800;
             color: var(--blue);
             line-height: 1;
@@ -220,24 +186,9 @@
             margin-top: 2px;
         }
 
-        /* Spinner Loader Animation */
-        .spinner {
-            width: 24px;
-            height: 24px;
-            border: 2.5px solid rgba(var(--blue-rgb), 0.15);
-            border-top: 2.5px solid var(--blue);
-            border-radius: 50%;
-            margin: 0 auto;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
         /* Footer Disclaimer */
         .disclaimer {
-            margin-top: 28px;
+            margin-top: 24px;
             padding-top: 16px;
             border-top: 1px dashed var(--line);
         }
@@ -257,11 +208,6 @@
 
     <div class="container">
         <div class="card">
-            <div class="eyebrow">
-                <span class="pulse-dot"></span>
-                Auto-Configurare Activă
-            </div>
-
             <h1>Portal Indisponibil</h1>
             <p>Portalul USV se auto-configurează și va reveni în câteva secunde. Procesul este automat și repară eventualele deconectări ale tunelului VPN.</p>
 
@@ -270,10 +216,8 @@
                 <div class="countdown-label">sec</div>
             </div>
 
-            <div class="spinner"></div>
-
             <div class="disclaimer">
-                <p>Proces de verificare automatizat. Conexiunea se va reîncărca automat de îndată ce serverul este pregătit.</p>
+                <p>Verificare inteligentă în fundal. Conexiunea se va restabili automat de îndată ce serverul este pregătit.</p>
             </div>
         </div>
     </div>
@@ -282,15 +226,40 @@
         let timeLeft = 30;
         const timerElement = document.getElementById('timer');
 
-        const countdownInterval = setInterval(() => {
-            timeLeft--;
+        function startCountdown() {
+            timeLeft = 30;
             timerElement.textContent = timeLeft;
 
-            if (timeLeft <= 0) {
-                clearInterval(countdownInterval);
-                window.location.reload();
-            }
-        }, 1000);
+            const countdownInterval = setInterval(async () => {
+                timeLeft--;
+                timerElement.textContent = timeLeft;
+
+                if (timeLeft <= 0) {
+                    clearInterval(countdownInterval);
+                    timerElement.textContent = "...";
+
+                    // Smart background health check
+                    try {
+                        const res = await fetch('/?t=' + Date.now());
+                        const text = await res.text();
+
+                        // If response is successful and does not contain our unique error page indicator
+                        if (res.ok && !text.includes('Portal USV — Temporar Indisponibil')) {
+                            // Server is back! Reload browser to load the actual restored site
+                            window.location.reload();
+                        } else {
+                            // Server is still down (Caddy served our error page), restart countdown seamlessly
+                            startCountdown();
+                        }
+                    } catch (e) {
+                        // Network error or fetch failed, restart countdown seamlessly
+                        startCountdown();
+                    }
+                }
+            }, 1000);
+        }
+
+        startCountdown();
     </script>
 </body>
 </html>
