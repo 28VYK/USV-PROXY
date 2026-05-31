@@ -35,11 +35,11 @@ scrape_configs:
           host: 'vps-main'
 
   # ── 3. Caddy — Live HTTP metrics (requests, 404s, 500s, latency) ──────────
-  # Caddy exposes native Prometheus metrics on its admin port :2019/metrics
+  # Caddy exposes native Prometheus metrics on our custom metrics port :2018/metrics
   # usv-proxy-ssl is on monitoring_net, so it is reachable directly by container name
   - job_name: 'caddy'
     static_configs:
-      - targets: ['usv-proxy-ssl:2019']
+      - targets: ['usv-proxy-ssl:2018']
         labels:
           service: 'caddy'
     metrics_path: /metrics

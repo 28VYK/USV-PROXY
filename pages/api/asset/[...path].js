@@ -7,12 +7,11 @@
 
 import https from 'https';
 import { URL } from 'url';
-import { encryptSessionCookie, decryptSessionCookie } from '../../../utils/cookie-crypto';
+import { serializeSessionCookie, deserializeSessionCookie } from '../../../utils/cookie-crypto';
 
 const PEOPLESOFT_BASE = 'https://scolaritate.usv.ro';
 
-// Alias to shared AES-256-GCM encryptor.
-const encodeSessionCookie = encryptSessionCookie;
+// Removed encodeSessionCookie alias in favor of serializeSessionCookie
 
 function parseCookiePairs(cookieString = '') {
   return cookieString
@@ -69,43 +68,7 @@ function mergeCookieState(existingCookieString, ...setCookieLists) {
     .join('; ');
 }
 
-function parseCookies(header = '') {
-  return header
-    .split(';')
-    .map((part) => part.trim())
-    .filter(Boolean)
-    .reduce((accumulator, cookiePart) => {
-      const separatorIndex = cookiePart.indexOf('=');
-      if (separatorIndex <= 0) {
-        return accumulator;
-      }
-
-      const key = cookiePart.slice(0, separatorIndex);
-      const value = cookiePart.slice(separatorIndex + 1);
-      accumulator[key] = value;
-      return accumulator;
-    }, {});
-}
-
-function getSessionCookiesFromRequest(req) {
-  try {
-    const parsed = parseCookies(req.headers.cookie || '');
-    const encoded = parsed.PS_PROXY_SESSION;
-    if (!encoded) {
-      return '';
-    }
-    const decrypted = decryptSessionCookie(encoded);
-    // New format: "userid|||<ps_cookies>" — extract and stash userid on the request object
-    if (decrypted && decrypted.includes('|||')) {
-      const separatorIndex = decrypted.indexOf('|||');
-      req.userid = decrypted.slice(0, separatorIndex);
-      return decrypted.slice(separatorIndex + 3);
-    }
-    return decrypted;
-  } catch {
-    return '';
-  }
-}
+// Removed parseCookies and getSessionCookiesFromRequest in favor of shared cookie-crypto utilities
 
 function createLegacyAgent() {
   return new https.Agent({
@@ -207,16 +170,14 @@ export default async function handler(req, res) {
     
     console.log(`[ASSET] Fetching: ${fullUrl}`);
 
-    const sessionCookies = getSessionCookiesFromRequest(req);
+    const sessionCookies = deserializeSessionCookie(req);
     const response = await legacyRequest(fullUrl, {
       headers: sessionCookies ? { Cookie: sessionCookies } : {},
     });
 
     const mergedCookies = mergeCookieState(sessionCookies, response.headers['set-cookie'] || []);
-    if (mergedCookies) {
-      // Re-embed the bound userid so it survives every cookie refresh cycle
-      const cookiePayload = req.userid ? `${req.userid}|||${mergedCookies}` : mergedCookies;
-      const encodedSession = encodeSessionCookie(cookiePayload);
+    if (mergedCookies && req.userid) {
+      const encodedSession = serializeSessionCookie(req, req.userid, mergedCookies);
       res.setHeader(
         'Set-Cookie',
         `PS_PROXY_SESSION=${encodedSession}; Path=/; HttpOnly; SameSite=Lax; Secure; Max-Age=7200`

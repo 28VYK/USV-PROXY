@@ -114,3 +114,112 @@ export function decryptSessionCookie(encoded) {
     return '';
   }
 }
+
+/**
+ * Parses raw Cookie header string into a key-value object map.
+ */
+function parseCookies(header = '') {
+  return header
+    .split(';')
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .reduce((accumulator, cookiePart) => {
+      const separatorIndex = cookiePart.indexOf('=');
+      if (separatorIndex <= 0) {
+        return accumulator;
+      }
+
+      const key = cookiePart.slice(0, separatorIndex);
+      const value = cookiePart.slice(separatorIndex + 1);
+      accumulator[key] = value;
+      return accumulator;
+    }, {});
+}
+
+/**
+ * Helper to extract client IP and User-Agent and generate their SHA-256 hashes.
+ */
+export function getClientContext(req) {
+  if (!req) return { ipHash: '', uaHash: '' };
+
+  const ip = req.headers['cf-connecting-ip'] ||
+    req.headers['x-client-ip'] ||
+    req.headers['x-real-ip'] ||
+    req.headers['x-forwarded-for'] ||
+    req.socket.remoteAddress ||
+    '127.0.0.1';
+  const clientIp = typeof ip === 'string' ? ip.split(',')[0].trim() : ip;
+
+  const ua = req.headers['user-agent'] || '';
+
+  const ipHash = crypto.createHash('sha256').update(clientIp).digest('hex');
+  const uaHash = crypto.createHash('sha256').update(ua).digest('hex');
+
+  return { ipHash, uaHash };
+}
+
+/**
+ * Serializes the user session into an encrypted cookie value bound to the client's IP and UA.
+ * 
+ * @param {object} req - Next.js API request object.
+ * @param {string} userid - The student's username/userid.
+ * @param {string} psCookies - The raw PeopleSoft session cookies string.
+ * @returns {string} The encrypted, base64url-encoded cookie payload.
+ */
+export function serializeSessionCookie(req, userid, psCookies) {
+  if (!userid || !psCookies) return '';
+  const { ipHash, uaHash } = getClientContext(req);
+  const payload = `${userid}|||${uaHash}|||${ipHash}|||${psCookies}`;
+  return encryptSessionCookie(payload);
+}
+
+/**
+ * Deserializes and validates the user session from the request's PS_PROXY_SESSION cookie.
+ * Verifies that the client context (IP and User-Agent) matches the original hashes.
+ * 
+ * @param {object} req - Next.js API request object.
+ * @returns {string} The decrypted PeopleSoft session cookies if valid, or '' if invalid/hijacked.
+ */
+export function deserializeSessionCookie(req) {
+  try {
+    const cookies = req.headers.cookie || '';
+    const parsed = parseCookies(cookies);
+    const encoded = parsed.PS_PROXY_SESSION;
+    if (!encoded) return '';
+
+    const decrypted = decryptSessionCookie(encoded);
+    if (!decrypted) return '';
+
+    const parts = decrypted.split('|||');
+    if (parts.length >= 4) {
+      const userid = parts[0];
+      const uaHash = parts[1];
+      const ipHash = parts[2];
+      const psCookies = parts.slice(3).join('|||');
+
+      const { ipHash: currentIpHash, uaHash: currentUaHash } = getClientContext(req);
+
+      if (uaHash !== currentUaHash || ipHash !== currentIpHash) {
+        console.warn(`[SECURITY] Session binding verification failed for user: ${userid}. IP/UA mismatch detected!`);
+        return '';
+      }
+
+      req.userid = userid; // Store on request object for Set-Cookie refreshes
+      return psCookies;
+    }
+
+    // Fallback/Legacy transition support (without IP/UA hash)
+    // If the legacy cookie only contains userid|||cookies
+    if (parts.length >= 2) {
+      const userid = parts[0];
+      const psCookies = parts.slice(1).join('|||');
+      req.userid = userid;
+      return psCookies;
+    }
+
+    return '';
+  } catch (err) {
+    console.error('[COOKIE-CRYPTO] Deserialization failed:', err.message);
+    return '';
+  }
+}

@@ -29,7 +29,7 @@ services:
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
-        apk add --no-cache openvpn iproute2 wget 2>/dev/null
+        apk add --no-cache openvpn iproute2 2>/dev/null
         echo "[VPN] Packages installed."
 
         # Write credentials to a temporary file and lock it down
@@ -37,17 +37,18 @@ services:
         echo "$$VPN_PASS" >> /tmp/vpn-creds.txt
         chmod 600 /tmp/vpn-creds.txt
 
-        # Download OVPN config if it is not already present on the mounted volume
+        # Ensure the verified local usv2.ovpn config is present
         if [ ! -f /vpn/usv2.ovpn ]; then
-          echo "[VPN] usv2.ovpn not found locally — downloading from USV epass portal..."
-          if wget -q -O /vpn/usv2.ovpn https://epass.usv.ro/usv2.ovpn; then
-            echo "[VPN] Successfully downloaded usv2.ovpn"
-          else
-            echo "[VPN] ERROR: Failed to download usv2.ovpn!"
-            exit 1
-          fi
-        else
-          echo "[VPN] Using existing usv2.ovpn config."
+          echo "[VPN] ERROR: Local usv2.ovpn config not found in volume!"
+          exit 1
+        fi
+
+        # Verify usv2.ovpn SHA-256 checksum to prevent supply-chain attacks
+        EXPECTED_HASH="601fb7600123127681e4afa378266fc4238fc1793b4e510f146587abae0c0e35"
+        echo "$$EXPECTED_HASH  /vpn/usv2.ovpn" | sha256sum -c
+        if [ $$? -ne 0 ]; then
+          echo "[VPN] ERROR: usv2.ovpn checksum mismatch! The file is corrupt or has been tampered with."
+          exit 1
         fi
 
         echo "[VPN] Starting OpenVPN..."
@@ -55,8 +56,7 @@ services:
         exec openvpn \
           --config /vpn/usv2.ovpn \
           --auth-user-pass /tmp/vpn-creds.txt \
-          --data-ciphers AES-256-GCM:AES-128-GCM:CHACHA20-POLY1305:AES-128-CBC \
-          --script-security 2
+          --data-ciphers AES-256-GCM:AES-128-GCM:CHACHA20-POLY1305:AES-128-CBC
 
   # ─────────────────────────────────────────────────────────────────────────────
   # usv-proxy: Next.js application container.
@@ -79,6 +79,10 @@ services:
     # All application environment variables (cookie key, etc.) come from .env
     env_file:
       - .env
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
 
     # Memory limits remain the same for VPS stability
     deploy:
@@ -109,10 +113,16 @@ services:
     # Environment variables for Caddy (basic_auth hash, etc.)
     env_file:
       - .env
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
     restart: always
     depends_on:
       - usv-vpn
-    # Joined to the monitoring network so Prometheus can reach the admin API on port :2019
+    # Joined to the monitoring network so Prometheus can reach the metrics endpoint on port :2018
     networks:
       - default
       - monitoring_net

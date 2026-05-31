@@ -7,7 +7,7 @@
 # exposing it on the host.
 # ─────────────────────────────────────────────────────────────────────────────
 {
-    admin 0.0.0.0:2019
+    admin 127.0.0.1:2019
     # Enable HTTP server metrics collection (requests, latency, status codes).
     # Without this, the admin /metrics endpoint only exposes Go runtime stats.
     metrics
@@ -88,4 +88,24 @@ stats.noteusv.tech:8080 {
 # ─────────────────────────────────────────────────────────────────────────────
 localhost:8080, 127.0.0.1:8080 {
     reverse_proxy usv-vpn:3000
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Prometheus Metrics Exposer (Exposes ONLY /metrics on port 2018)
+# ─────────────────────────────────────────────────────────────────────────────
+:2018 {
+    # Match only /metrics
+    @onlyMetrics {
+        path /metrics
+    }
+    
+    # Proxy /metrics internally to Caddy's locked admin interface
+    reverse_proxy @onlyMetrics 127.0.0.1:2019 {
+        header_up Host 127.0.0.1:2019
+    }
+    
+    # Respond with 403 Forbidden for all other paths
+    handle {
+        respond "Forbidden" 403
+    }
 }
