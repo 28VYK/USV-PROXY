@@ -131,17 +131,12 @@ localhost:8080, 127.0.0.1:8080 {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Prometheus Metrics Exposer (Exposes ONLY /metrics on port 2018)
-# ─────────────────────────────────────────────────────────────────────────────
 :2018 {
-    # Match only /metrics
-    @onlyMetrics {
-        path /metrics
-    }
-    
-    # Proxy /metrics internally to Caddy's locked admin interface
-    reverse_proxy @onlyMetrics 127.0.0.1:2019 {
-        header_up Host 127.0.0.1:2019
+    handle /metrics {
+        # Proxy /metrics internally to Caddy's locked admin interface
+        reverse_proxy 127.0.0.1:2019 {
+            header_up Host 127.0.0.1:2019
+        }
     }
     
     # Respond with 403 Forbidden for all other paths
