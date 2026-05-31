@@ -32,13 +32,18 @@ const IV_LENGTH = 12; // 96-bit IV — standard recommended size for GCM
 const SCRYPT_SALT = 'usv-portal-cookie-salt-v1'; // static — change to rotate all sessions
 const KEY_LENGTH = 32; // 256 bits
 
+// Ensure the application does not start without a secure session key.
+if (!process.env.COOKIE_ENCRYPTION_KEY) {
+  throw new Error('FATAL: COOKIE_ENCRYPTION_KEY is not defined in the environment variables. The application cannot start securely.');
+}
+
 /**
  * Derive a stable 32-byte AES key from the configured passphrase.
  * scryptSync is intentionally called once at module load time; the result is
  * cached in this constant for the lifetime of the Node.js process.
  */
 const ENCRYPTION_KEY = crypto.scryptSync(
-  process.env.COOKIE_ENCRYPTION_KEY || 'dev-fallback-do-not-use-in-production-replace-me!',
+  process.env.COOKIE_ENCRYPTION_KEY,
   SCRYPT_SALT,
   KEY_LENGTH
 );
@@ -67,8 +72,7 @@ export function encryptSessionCookie(cookieValue) {
     return Buffer.from(raw, 'utf8').toString('base64url');
   } catch (err) {
     console.error('[COOKIE-CRYPTO] Encryption failed:', err.message);
-    // Absolute last-resort fallback: return plain base64url so the app does not crash.
-    return Buffer.from(cookieValue, 'utf8').toString('base64url');
+    throw new Error('Encryption failed: Secure session token generation is unavailable.');
   }
 }
 
