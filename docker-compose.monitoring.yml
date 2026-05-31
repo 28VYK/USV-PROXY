@@ -85,6 +85,8 @@ services:
       # Admin credentials injected from .env
       - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER}
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
       # Disable public self-registration
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_USERS_DEFAULT_THEME=dark

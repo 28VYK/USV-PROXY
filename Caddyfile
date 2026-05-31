@@ -62,6 +62,15 @@ noteusv.tech, www.noteusv.tech, noteusv.tech:8080, www.noteusv.tech:8080 {
         header_up -Forwarded
     }
 
+    # ── Custom Error Page (Glassmorphic) ──────────────────────────────────────
+    # Serve our custom error page when Next.js or VPN is offline/restarting (502/503).
+    handle_errors {
+        rewrite * /error.html
+        file_server {
+            root /var/www/html
+        }
+    }
+
     # Structured logging with automatic rotation
     log {
         output file /var/log/caddy/access.log {

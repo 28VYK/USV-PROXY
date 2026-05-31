@@ -1,0 +1,73 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Grafana Auto-Provisioning: Alerting Configuration
+# Configures Telegram alerts and Prometheus metric warning triggers.
+# ─────────────────────────────────────────────────────────────────────────────
+
+apiVersion: 1
+
+contactPoints:
+  - orgId: 1
+    name: "infra-alerts"
+    receivers:
+      - uid: "telegram-alerts"
+        type: "telegram"
+        disableResolveMessage: false
+        settings:
+          bottoken: "${TELEGRAM_BOT_TOKEN}"
+          chatid: "${TELEGRAM_CHAT_ID}"
+
+policies:
+  - orgId: 1
+    receiver: "infra-alerts"
+    group_by: ["alertname", "grafana_folder"]
+    group_wait: "30s"
+    group_interval: "5m"
+    repeat_interval: "4h"
+
+groups:
+  - orgId: 1
+    name: "USV Infrastructure Alerts"
+    folder: "Production Alerts"
+    interval: "1m"
+    rules:
+      # Alert 1: VPS Host Down (Node Exporter Offline)
+      - uid: "vps_host_down"
+        title: "🚨 Alert: VPS Host Down"
+        condition: "A"
+        data:
+          - refId: "A"
+            datasourceUid: "prometheus"
+            relativeTimeRange:
+              from: 300
+              to: 0
+            model:
+              expr: 'up{job="node-exporter"} == 0'
+              refId: "A"
+              type: "query"
+        for: "1m"
+        annotations:
+          summary: "VPS Host is unreachable or offline."
+          description: "Prometheus has lost contact with the physical VPS server node-exporter probe."
+        labels:
+          severity: "critical"
+
+      # Alert 2: Proxy Backend 5xx Spikes (Next.js crashing)
+      - uid: "nextjs_proxy_down"
+        title: "⚠️ Warning: Next.js Backend 5xx Spikes"
+        condition: "A"
+        data:
+          - refId: "A"
+            datasourceUid: "prometheus"
+            relativeTimeRange:
+              from: 300
+              to: 0
+            model:
+              expr: 'sum(rate(caddy_http_requests_total{status=~"5.."}[5m])) > 0.05'
+              refId: "A"
+              type: "query"
+        for: "2m"
+        annotations:
+          summary: "Caddy reverse proxy is returning excessive 5xx Gateway errors."
+          description: "High error rates detected in Caddy upstream proxying to Next.js."
+        labels:
+          severity: "critical"
