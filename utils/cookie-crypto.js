@@ -90,11 +90,10 @@ export function decryptSessionCookie(encoded) {
     const raw = Buffer.from(encoded, 'base64url').toString('utf8');
     const parts = raw.split(':');
 
-    // New encrypted format must have exactly 3 colon-separated parts.
+    // Reject non-encrypted format. Must have exactly 3 colon-separated parts.
     if (parts.length !== 3) {
-      // Backward-compatibility: treat as old plain base64url cookie.
-      console.warn('[COOKIE-CRYPTO] Legacy plain cookie detected — accepting for this request.');
-      return raw;
+      console.error('[COOKIE-CRYPTO] Invalid cookie format (missing encryption envelope).');
+      return '';
     }
 
     const [ivHex, authTagHex, encryptedHex] = parts;
@@ -208,15 +207,7 @@ export function deserializeSessionCookie(req) {
       return psCookies;
     }
 
-    // Fallback/Legacy transition support (without IP/UA hash)
-    // If the legacy cookie only contains userid|||cookies
-    if (parts.length >= 2) {
-      const userid = parts[0];
-      const psCookies = parts.slice(1).join('|||');
-      req.userid = userid;
-      return psCookies;
-    }
-
+    console.warn('[COOKIE-CRYPTO] Session cookie format invalid (missing context binding).');
     return '';
   } catch (err) {
     console.error('[COOKIE-CRYPTO] Deserialization failed:', err.message);
