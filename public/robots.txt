@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://noteusv.tech/sitemap.xml

@@ -125,7 +125,7 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - ./certs/origin.pem:/etc/caddy/certs/origin.pem
       - ./certs/origin.key:/etc/caddy/certs/origin.key
-      - ./public/error.html:/var/www/html/error.html:ro
+      - ./public:/var/www/html:ro
       - caddy_data:/data
       - caddy_config:/config
       - caddy_logs:/var/log/caddy

@@ -44,23 +44,34 @@ noteusv.tech, www.noteusv.tech, noteusv.tech:8080, www.noteusv.tech:8080 {
     # TLS using the Cloudflare Origin CA Certificate (15 years, gitignored)
     tls /etc/caddy/certs/origin.pem /etc/caddy/certs/origin.key
 
-    # Reverse proxy to the Next.js app.
-    # usv-proxy shares the network namespace of usv-vpn (sidecar pattern),
-    # so port 3000 is reachable via the usv-vpn container name.
-    reverse_proxy usv-vpn:3000 {
-        # Set X-Real-IP to the verified peer IP of the incoming connection
-        header_up X-Real-IP {client_ip}
-
-        # ── IP Header Sanitization (SEC-09 / P2) ──────────────────────────────────
-        # Strip any IP-related headers the client may have injected before they reach Next.js.
-        # This prevents header spoofing / smuggling. We do not strip X-Real-IP because we
-        # explicitly set it to the trusted client_ip above.
-        header_up -CF-Connecting-IP
-        header_up -X-Forwarded-For
-        header_up -X-Client-IP
-        header_up -X-Forwarded-Host
-        header_up -Forwarded
+    # ── Maintenance Mode Check ────────────────────────────────────────────────
+    # If maintenance.html exists in Caddy's root folder, all requests are rewritten
+    # and served from maintenance.html. Otherwise, traffic flows to Next.js.
+    root * /var/www/html
+    @maintenance file maintenance.enable
+    handle @maintenance {
+        rewrite * /maintenance.html
+        file_server
     }
+
+    # Fallback: reverse proxy to Next.js
+    handle {
+        reverse_proxy usv-vpn:3000 {
+            # Set X-Real-IP to the verified peer IP of the incoming connection
+            header_up X-Real-IP {client_ip}
+
+            # ── IP Header Sanitization (SEC-09 / P2) ──────────────────────────────────
+            # Strip any IP-related headers the client may have injected before they reach Next.js.
+            # This prevents header spoofing / smuggling. We do not strip X-Real-IP because we
+            # explicitly set it to the trusted client_ip above.
+            header_up -CF-Connecting-IP
+            header_up -X-Forwarded-For
+            header_up -X-Client-IP
+            header_up -X-Forwarded-Host
+            header_up -Forwarded
+        }
+    }
+
 
     # ── Custom Error Page (Glassmorphic) ──────────────────────────────────────
     # Serve our custom error page when Next.js or VPN is offline/restarting (502/503).

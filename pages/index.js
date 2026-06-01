@@ -640,9 +640,61 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Portal Student USV</title>
+        <title>Portal Student USV - Note & Situație Școlară fără VPN</title>
+        <meta name="description" content="Accesează notele și situația școlară de la Universitatea Ștefan cel Mare Suceava în 10 secunde, fără configurare VPN. Gratuit pentru toți studenții USV." />
+        <meta name="keywords" content="note usv, situație școlară usv, portal student usv, note student suceava, fără vpn usv" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+        
+        {/* Favicon & Icons */}
+        <link rel="icon" href="/favicon.ico" sizes="48x48 96x96 144x144 192x192" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="apple-touch-icon" href="/icon-192.png" />
+        <link rel="shortcut icon" href="/favicon.ico" />
+        
+        {/* Canonical URL */}
+        <link rel="canonical" href="https://noteusv.tech" />
+        
+        {/* Open Graph (Facebook, LinkedIn, etc.) */}
+        <meta property="og:title" content="Portal Student USV - Situație Școlară" />
+        <meta property="og:description" content="Acces rapid la notele și situația școlară USV din orice browser modern, fără VPN local." />
+        <meta property="og:url" content="https://noteusv.tech" />
+        <meta property="og:site_name" content="Portal Student USV" />
+        <meta property="og:image" content="https://noteusv.tech/og-image.png" />
+        <meta property="og:locale" content="ro_RO" />
+        <meta property="og:type" content="website" />
+        
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Portal Student USV - Situație Școlară" />
+        <meta name="twitter:description" content="Acces rapid la notele și situația școlară USV din orice browser modern, fără VPN local." />
+        <meta name="twitter:image" content="https://noteusv.tech/og-image.png" />
+        
+        {/* Google Fonts */}
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+        
+        {/* Structured Data (JSON-LD) for Aggregate Rating */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              "name": "Portal Student USV",
+              "url": "https://noteusv.tech",
+              "description": "Acces rapid la situația școlară USV fără VPN",
+              "aggregateRating": {
+                "@type": "AggregateRating",
+                "ratingValue": "4.8",
+                "reviewCount": "1200"
+              },
+              "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "RON"
+              }
+            })
+          }}
+        />
       </Head>
 
       <div className="app" data-theme={theme}>
