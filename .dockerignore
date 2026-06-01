@@ -14,3 +14,4 @@ certs
 *.zip
 *.tar
 .agents
+generate-assets.js

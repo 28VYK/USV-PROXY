@@ -1,3 +1,24 @@
+# Caddy Snippet for Maintenance Mode Check
+(maintenance_check) {
+    root * /var/www/html
+    @maintenance file maintenance.enable
+    handle @maintenance {
+        rewrite * /maintenance.html
+        file_server
+    }
+}
+
+# Caddy Snippet for Custom Error Page
+(custom_error_handling) {
+    handle_errors {
+        rewrite * /error.html
+        file_server {
+            root /var/www/html
+            status 200
+        }
+    }
+}
+
 # Caddy Reverse Proxy with Cloudflare SSL
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -44,15 +65,8 @@ noteusv.tech, www.noteusv.tech, noteusv.tech:8080, www.noteusv.tech:8080 {
     # TLS using the Cloudflare Origin CA Certificate (15 years, gitignored)
     tls /etc/caddy/certs/origin.pem /etc/caddy/certs/origin.key
 
-    # ── Maintenance Mode Check ────────────────────────────────────────────────
-    # If maintenance.html exists in Caddy's root folder, all requests are rewritten
-    # and served from maintenance.html. Otherwise, traffic flows to Next.js.
-    root * /var/www/html
-    @maintenance file maintenance.enable
-    handle @maintenance {
-        rewrite * /maintenance.html
-        file_server
-    }
+    # ── Maintenance Mode Check (using snippet) ─────────────────────────────────
+    import maintenance_check
 
     # Fallback: reverse proxy to Next.js
     handle {
@@ -73,17 +87,8 @@ noteusv.tech, www.noteusv.tech, noteusv.tech:8080, www.noteusv.tech:8080 {
     }
 
 
-    # ── Custom Error Page (Glassmorphic) ──────────────────────────────────────
-    # Serve our custom error page when Next.js or VPN is offline/restarting (502/503).
-    # We override the status code to 200 OK using the status directive so that
-    # Cloudflare does not intercept the page and replace it with its default 502 page.
-    handle_errors {
-        rewrite * /error.html
-        file_server {
-            root /var/www/html
-            status 200
-        }
-    }
+    # ── Custom Error Page (using snippet) ──────────────────────────────────────
+    import custom_error_handling
 
     # Structured logging with automatic rotation
     log {
@@ -133,12 +138,18 @@ stats.noteusv.tech, stats.noteusv.tech:8080 {
 # Local development block (Automatic HTTPS via Caddy's internal CA)
 # ─────────────────────────────────────────────────────────────────────────────
 localhost:8080, 127.0.0.1:8080 {
-    reverse_proxy usv-vpn:3000 {
-        header_up X-Real-IP {client_ip}
-        header_up -CF-Connecting-IP
-        header_up -X-Forwarded-For
-        header_up -X-Client-IP
+    import maintenance_check
+
+    handle {
+        reverse_proxy usv-vpn:3000 {
+            header_up X-Real-IP {client_ip}
+            header_up -CF-Connecting-IP
+            header_up -X-Forwarded-For
+            header_up -X-Client-IP
+        }
     }
+
+    import custom_error_handling
 }
 
 # ─────────────────────────────────────────────────────────────────────────────

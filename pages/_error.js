@@ -9,57 +9,65 @@ function Error({ statusCode }) {
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
         
         {/* Favicon & Icons */}
-        <link rel="icon" href="/favicon.ico" sizes="48x48 96x96 144x144 192x192" />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-        <link rel="apple-touch-icon" href="/icon-192.png" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link rel="shortcut icon" href="/favicon.ico" />
         
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@600;700;800;900&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
       </Head>
 
-      <div className="glow-blob glow-blob-1"></div>
-      <div className="glow-blob glow-blob-2"></div>
+      <div className="error-page-wrapper">
+        <div className="glow-blob glow-blob-1"></div>
+        <div className="glow-blob glow-blob-2"></div>
 
-      <div className="container">
-        <div className="card">
-          <div className="error-code">{statusCode || '500'}</div>
-          <h1>A apărut o eroare</h1>
-          <p>
-            {statusCode === 404 
-              ? 'Pagina pe care o cauți nu există sau a fost mutată.'
-              : 'A apărut o eroare neașteptată pe server. Te rugăm să reîncarci pagina sau să încerci mai târziu.'
-            }
-          </p>
+        <div className="container">
+          <div className="card">
+            <div className="error-code">{statusCode || '500'}</div>
+            <h1>A apărut o eroare</h1>
+            <p>
+              {statusCode === 404 
+                ? 'Pagina pe care o cauți nu există sau a fost mutată.'
+                : 'A apărut o eroare neașteptată pe server. Te rugăm să reîncarci pagina sau să încerci mai târziu.'
+              }
+            </p>
 
-          <div className="actions">
-            <button onClick={() => window.location.reload()} className="btn-primary">
-              Reîncarcă pagina
-            </button>
-            <Link href="/" legacyBehavior>
-              <a className="btn-secondary">Înapoi la portal</a>
-            </Link>
+            <div className="actions">
+              <button onClick={() => window.location.reload()} className="btn-primary">
+                Reîncarcă pagina
+              </button>
+              <Link href="/" legacyBehavior>
+                <a className="btn-secondary">Înapoi la portal</a>
+              </Link>
+            </div>
           </div>
         </div>
       </div>
 
       <style jsx global>{`
-        body {
+        html, body, #__next {
           margin: 0;
           padding: 0;
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-          background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%);
-          color: #334155;
+          width: 100%;
           min-height: 100vh;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          overflow: hidden;
-          position: relative;
-          -webkit-font-smoothing: antialiased;
         }
       `}</style>
 
       <style jsx>{`
+        .error-page-wrapper {
+          min-height: 100vh;
+          width: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+          background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%);
+          color: #334155;
+          overflow: hidden;
+          position: relative;
+          -webkit-font-smoothing: antialiased;
+          padding: 20px;
+        }
         .glow-blob {
           position: absolute;
           border-radius: 50%;

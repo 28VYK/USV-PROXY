@@ -8,17 +8,18 @@ export default function Document() {
         
         {/* Web App Manifest and PWA integration */}
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#6366f1" />
+        <meta name="theme-color" content="#254AA5" />
         
         {/* Apple iOS Web App enhancements for standalone execution */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="USV Portal" />
-        <link rel="apple-touch-icon" href="/icon-192.png" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         
         {/* Favicon & Shortcut Icons */}
-        <link rel="icon" type="image/png" href="/icon-192.png" />
-        <link rel="shortcut icon" href="/icon-192.png" />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="shortcut icon" href="/favicon.ico" />
 
         {/* Google Fonts preconnect and optimization */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
