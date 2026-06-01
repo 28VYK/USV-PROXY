@@ -672,7 +672,7 @@ export default function Home() {
         {/* Google Fonts */}
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
         
-        {/* Structured Data (JSON-LD) for Aggregate Rating */}
+        {/* Structured Data (JSON-LD) — WebSite schema */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -682,9 +682,35 @@ export default function Home() {
               "name": "Portal Student USV",
               "url": "https://noteusv.tech",
               "description": "Acces rapid la situația școlară USV fără VPN",
+              "potentialAction": {
+                "@type": "SearchAction",
+                "target": {
+                  "@type": "EntryPoint",
+                  "urlTemplate": "https://noteusv.tech/?q={search_term_string}"
+                },
+                "query-input": "required name=search_term_string"
+              }
+            })
+          }}
+        />
+
+        {/* Structured Data (JSON-LD) — SoftwareApplication schema with rating & offer */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "SoftwareApplication",
+              "name": "Portal Student USV",
+              "url": "https://noteusv.tech",
+              "description": "Acces rapid la situația școlară USV fără VPN, direct din browser.",
+              "applicationCategory": "EducationalApplication",
+              "operatingSystem": "Web",
               "aggregateRating": {
                 "@type": "AggregateRating",
                 "ratingValue": "4.8",
+                "bestRating": "5",
+                "worstRating": "1",
                 "reviewCount": "1200"
               },
               "offers": {
