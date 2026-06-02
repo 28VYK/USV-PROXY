@@ -44,3 +44,15 @@ scrape_configs:
           service: 'caddy'
     metrics_path: /metrics
     scrape_interval: 10s
+
+  # ── 4. Next.js App — Custom application metrics ────────────────────────────
+  - job_name: 'nextjs-app'
+    static_configs:
+      - targets: ['usv-proxy-ssl:2018']
+        labels:
+          service: 'nextjs-app'
+    metrics_path: /api/metrics
+    bearer_token_file: /etc/prometheus/metrics_token.txt
+    scrape_interval: 15s
+
+

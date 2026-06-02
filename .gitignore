@@ -34,6 +34,7 @@ yarn-error.log*
 /utils/session-validator.js
 /pages/api/session-sync.js
 /vpn/*.json
+/monitoring/prometheus/metrics_token.txt
 # /vpn/usv2.ovpn
 
 # SSH keys and PEM certificates (bulletproof lock)

@@ -62,7 +62,7 @@ if [ ! -f "$ENV_FILE" ]; then
 fi
 
 MISSING_VARS=()
-for var in GRAFANA_ADMIN_USER GRAFANA_ADMIN_PASSWORD GRAFANA_BASIC_AUTH_USER GRAFANA_BASIC_AUTH_HASH; do
+for var in GRAFANA_ADMIN_USER GRAFANA_ADMIN_PASSWORD GRAFANA_BASIC_AUTH_USER GRAFANA_BASIC_AUTH_HASH METRICS_TOKEN; do
     if ! grep -q "^${var}=" "$ENV_FILE"; then
         MISSING_VARS+=("$var")
     fi
@@ -83,6 +83,13 @@ if [ ${#MISSING_VARS[@]} -gt 0 ]; then
 fi
 
 log_ok "All required environment variables are present."
+
+# Dynamically extract and generate metrics_token.txt from .env for Prometheus
+METRICS_TOKEN_VAL=$(grep "^METRICS_TOKEN=" "$ENV_FILE" | cut -d'=' -f2- | tr -d '\r\n ')
+mkdir -p "$SCRIPT_DIR/monitoring/prometheus"
+echo -n "$METRICS_TOKEN_VAL" > "$SCRIPT_DIR/monitoring/prometheus/metrics_token.txt"
+log_ok "metrics_token.txt generated dynamically from .env."
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # STEP 3: Download Grafana Dashboards

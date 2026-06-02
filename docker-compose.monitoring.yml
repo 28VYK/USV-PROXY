@@ -55,6 +55,7 @@ services:
 
     volumes:
       - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus/metrics_token.txt:/etc/prometheus/metrics_token.txt:ro
       - prometheus_data:/prometheus
 
     command:
@@ -136,6 +137,7 @@ services:
     volumes:
       - ./monitoring/promtail/config.yml:/etc/promtail/config.yml:ro
       - caddy_logs:/var/log/caddy:ro
+      - promtail_data:/data
     command: -config.file=/etc/promtail/config.yml
     networks:
       - monitoring_net
@@ -148,6 +150,8 @@ volumes:
   grafana_data:
     driver: local
   loki_data:
+    driver: local
+  promtail_data:
     driver: local
   caddy_logs:
     name: usv-proxy_caddy_logs

@@ -226,9 +226,14 @@ export function deserializeSessionCookie(req) {
 
       const { ipHash: currentIpHash, uaHash: currentUaHash } = getClientContext(req);
 
-      if (uaHash !== currentUaHash || ipHash !== currentIpHash) {
-        console.warn(`[SECURITY] Session binding verification failed for user: ${userid}. IP/UA mismatch detected!`);
+      if (uaHash !== currentUaHash) {
+        console.warn(`[SECURITY] Session binding verification failed for user: ${userid}. User-Agent mismatch detected!`);
         return '';
+      }
+
+      // Soft IP logging without blocking (prevents dropping dual-stack IPv4/IPv6 or mobile CGNAT users)
+      if (ipHash !== currentIpHash) {
+        console.info(`[INFO] Dual-stack or CGNAT IP transition detected for user: ${userid}. Allowing session.`);
       }
 
       req.userid = userid; // Store on request object for Set-Cookie refreshes

@@ -164,6 +164,18 @@ localhost:8080, 127.0.0.1:8080 {
             header_up Host 127.0.0.1:2019
         }
     }
+
+    handle /api/metrics {
+        # Proxy Next.js application metrics securely to the backend Next.js container
+        reverse_proxy usv-vpn:3000 {
+            header_up X-Real-IP {client_ip}
+            header_up -CF-Connecting-IP
+            header_up -X-Forwarded-For
+            header_up -X-Client-IP
+            header_up -X-Forwarded-Host
+            header_up -Forwarded
+        }
+    }
     
     # Respond with 403 Forbidden for all other paths
     handle {
