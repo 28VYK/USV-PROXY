@@ -81,9 +81,9 @@ flowchart LR
 
 ## 🛠️ Stack
 
-- **Next.js 14** — framework + API routes `![](https://img.shields.io/badge/Next.js-black?style=flat-square&logo=nextdotjs&logoColor=white)`
-- **Caddy 2** — TLS termination `![](https://img.shields.io/badge/Caddy-00E5FF?style=flat-square&logo=caddy&logoColor=white)`
-- **Docker + OpenVPN** — containerizare & VPN `![](https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white)` `![](https://img.shields.io/badge/OpenVPN-EA7B00?style=flat-square&logo=openvpn&logoColor=white)`
+- **Next.js 14** — framework + API routes ![](https://img.shields.io/badge/Next.js-black?style=flat-square&logo=nextdotjs&logoColor=white)
+- **Caddy 2** — TLS termination ![](https://img.shields.io/badge/Caddy-00E5FF?style=flat-square&logo=caddy&logoColor=white)
+- **Docker + OpenVPN** — containerizare & VPN ![](https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white) ![](https://img.shields.io/badge/OpenVPN-EA7B00?style=flat-square&logo=openvpn&logoColor=white)
 
 ---
 
