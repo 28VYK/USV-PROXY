@@ -282,6 +282,55 @@ export default function Home() {
     }
   }, [loggedIn]);
 
+  // High-performance direct DOM number counter animation
+  useEffect(() => {
+    if (!loggedIn || activeTab !== 'analytics') return;
+
+    // Small delay to allow the tab mount transition to start
+    const timer = setTimeout(() => {
+      const elements = document.querySelectorAll('[data-animate-value]');
+      elements.forEach(el => {
+        const valAttr = el.getAttribute('data-animate-value');
+        if (!valAttr) {
+          el.innerText = '—';
+          return;
+        }
+
+        const target = parseFloat(valAttr);
+        if (isNaN(target)) {
+          el.innerText = valAttr;
+          return;
+        }
+
+        const decimals = parseInt(el.getAttribute('data-animate-decimals') || '0', 10);
+        const duration = 750; // animation length in ms
+        const startTime = performance.now();
+        const startValue = 0;
+
+        const updateVal = (now) => {
+          const elapsed = now - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          
+          // Easing function (easeOutQuad)
+          const easedProgress = progress * (2 - progress);
+          const current = startValue + easedProgress * (target - startValue);
+
+          el.innerText = current.toFixed(decimals);
+
+          if (progress < 1) {
+            requestAnimationFrame(updateVal);
+          } else {
+            el.innerText = target.toFixed(decimals);
+          }
+        };
+
+        requestAnimationFrame(updateVal);
+      });
+    }, 50);
+
+    return () => clearTimeout(timer);
+  }, [loggedIn, activeTab, selectedYear, simulatedGrades, yearData]);
+
   useEffect(() => {
     if (!loggedIn || !userid) return;
 
@@ -922,6 +971,12 @@ export default function Home() {
                 <div className="card-header dashboard-card-header dashboard-controls-bar" style={{ marginBottom: 0 }}>
                   <div className="dashboard-controls-left">
                     <div className="dashboard-tabs">
+                      <div
+                        className="dashboard-tabs-indicator"
+                        style={{
+                          transform: `translateX(${activeTab === 'notes' ? '0%' : '100%'})`,
+                        }}
+                      />
                       <button
                         type="button"
                         className={`dashboard-tab ${activeTab === 'notes' ? 'active' : ''}`}

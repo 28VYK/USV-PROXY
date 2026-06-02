@@ -109,7 +109,10 @@ export default function AnalyticsTab({
           </div>
           <div className="kpi-info">
             <span>Medie Ponderată ECTS</span>
-            <strong>
+            <strong
+              data-animate-value={arithmeticAnalysis.ectsAll.average !== null ? arithmeticAnalysis.ectsAll.average : ''}
+              data-animate-decimals={2}
+            >
               {arithmeticAnalysis.ectsAll.average !== null
                 ? arithmeticAnalysis.ectsAll.average.toFixed(2)
                 : '—'}
@@ -129,7 +132,9 @@ export default function AnalyticsTab({
           </div>
           <div className="kpi-info">
             <span>Puncte Credit</span>
-            <strong>
+            <strong
+              data-animate-value={arithmeticAnalysis.ectsAll.totalPoints || 0}
+            >
               {arithmeticAnalysis.ectsAll.totalPoints || 0}
             </strong>
             <p>
@@ -149,7 +154,10 @@ export default function AnalyticsTab({
           </div>
           <div className="kpi-info">
             <span>Medie Aritmetică Anuală</span>
-            <strong>
+            <strong
+              data-animate-value={arithmeticAnalysis.all.average !== null ? arithmeticAnalysis.all.average : ''}
+              data-animate-decimals={2}
+            >
               {arithmeticAnalysis.all.average !== null
                 ? arithmeticAnalysis.all.average.toFixed(2)
                 : '—'}
@@ -173,7 +181,10 @@ export default function AnalyticsTab({
             <span>Semestrul 1</span>
             <div className="kpi-dual-values">
               <div>
-                <strong>
+                <strong
+                  data-animate-value={arithmeticAnalysis.sem1.average !== null ? arithmeticAnalysis.sem1.average : ''}
+                  data-animate-decimals={2}
+                >
                   {arithmeticAnalysis.sem1.average !== null
                     ? arithmeticAnalysis.sem1.average.toFixed(2)
                     : '—'}
@@ -182,7 +193,10 @@ export default function AnalyticsTab({
               </div>
               <div className="kpi-separator" />
               <div>
-                <strong>
+                <strong
+                  data-animate-value={arithmeticAnalysis.ectsSem1.average !== null ? arithmeticAnalysis.ectsSem1.average : ''}
+                  data-animate-decimals={2}
+                >
                   {arithmeticAnalysis.ectsSem1.average !== null
                     ? arithmeticAnalysis.ectsSem1.average.toFixed(2)
                     : '—'}
@@ -208,7 +222,10 @@ export default function AnalyticsTab({
             <span>Semestrul 2</span>
             <div className="kpi-dual-values">
               <div>
-                <strong>
+                <strong
+                  data-animate-value={arithmeticAnalysis.sem2.average !== null ? arithmeticAnalysis.sem2.average : ''}
+                  data-animate-decimals={2}
+                >
                   {arithmeticAnalysis.sem2.average !== null
                     ? arithmeticAnalysis.sem2.average.toFixed(2)
                     : '—'}
@@ -217,7 +234,10 @@ export default function AnalyticsTab({
               </div>
               <div className="kpi-separator" />
               <div>
-                <strong>
+                <strong
+                  data-animate-value={arithmeticAnalysis.ectsSem2.average !== null ? arithmeticAnalysis.ectsSem2.average : ''}
+                  data-animate-decimals={2}
+                >
                   {arithmeticAnalysis.ectsSem2.average !== null
                     ? arithmeticAnalysis.ectsSem2.average.toFixed(2)
                     : '—'}
