@@ -1,0 +1,18 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Grafana Auto-Provisioning: Loki Datasource
+# Grafana reads this file automatically on startup and configures Loki
+# as an active logs datasource — no manual setup required.
+# ─────────────────────────────────────────────────────────────────────────────
+
+apiVersion: 1
+
+datasources:
+  - name: Loki
+    type: loki
+    uid: loki
+    # Internal Docker URL — Grafana reaches Loki through monitoring_net
+    url: http://usv-loki:3100
+    access: proxy
+    editable: false
+    jsonData:
+      maxLines: 2000

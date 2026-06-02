@@ -334,17 +334,43 @@ export default function Home() {
   useEffect(() => {
     if (!loggedIn || !userid) return;
 
+    let interval;
+    let consecutiveFailures = 0;
+
     const sendHeartbeat = () => {
       fetch('/api/heartbeat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userid }),
-      }).catch(() => {});
+      })
+        .then((res) => {
+          if (res.status === 401 || res.status === 403) {
+            console.warn('[Heartbeat] Session expired or unauthorized on server. Stopping heartbeat and logging out...');
+            handleLogout();
+            if (interval) clearInterval(interval);
+          } else if (!res.ok) {
+            consecutiveFailures++;
+            if (consecutiveFailures >= 3 && interval) {
+              console.warn('[Heartbeat] Repeated failures. Stopping heartbeat interval...');
+              clearInterval(interval);
+            }
+          } else {
+            consecutiveFailures = 0;
+          }
+        })
+        .catch(() => {
+          consecutiveFailures++;
+          if (consecutiveFailures >= 3 && interval) {
+            clearInterval(interval);
+          }
+        });
     };
 
     sendHeartbeat();
-    const interval = setInterval(sendHeartbeat, 30000);
-    return () => clearInterval(interval);
+    interval = setInterval(sendHeartbeat, 30000);
+    return () => {
+      if (interval) clearInterval(interval);
+    };
   }, [loggedIn, userid]);
 
   /**

@@ -62,6 +62,10 @@ noteusv.tech, www.noteusv.tech, noteusv.tech:8080, www.noteusv.tech:8080 {
     }
     redir @notDomain https://noteusv.tech{uri} permanent
 
+    # Apple Touch Icons rewrite to prevent 404 logs
+    @apple_icons path_regexp ^/apple-touch-icon(-.*)?\.png$
+    rewrite @apple_icons /apple-touch-icon.png
+
     # TLS using the Cloudflare Origin CA Certificate (15 years, gitignored)
     tls /etc/caddy/certs/origin.pem /etc/caddy/certs/origin.key
 
