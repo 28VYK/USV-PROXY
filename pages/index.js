@@ -481,6 +481,7 @@ export default function Home() {
   };
 
   const fetchGrades = async () => {
+    setLoading(true);
     try {
       const response = await fetch('/api/proxy', {
         method: 'POST',
@@ -493,21 +494,57 @@ export default function Home() {
       const data = await response.json();
       if (data.success && data.html) {
         const extractedGrades = extractGrades(data.html);
-        setGrades(extractedGrades);
+        
+        // Preserve the currently selected year if it was already selected
+        const currentActiveYear = selectedYear;
 
         // Extract PS context to enable multi-year fetching
         const ctx = extractPsContextFromHtml(data.html);
         if (ctx) {
           const strm = ctx.currentStrm;
           setPsContext(ctx);
-          setSelectedYear(strm);
-          setYearData({ [strm]: extractedGrades });
-          // Kick off background discovery of other academic years (no await — fire & forget)
-          discoverAllYears(ctx, strm);
+
+          // Standard path: user is viewing the default latest STRM, or hasn't selected a year yet
+          if (!currentActiveYear || currentActiveYear === strm) {
+            setGrades(extractedGrades);
+            setSelectedYear(strm);
+            setYearData({ [strm]: extractedGrades });
+            
+            // Kick off background discovery of other academic years
+            discoverAllYears(ctx, strm);
+          } else {
+            // User was viewing a past year. We must fetch it synchronously
+            // so the shimmer loading table covers the whole fetch process.
+            try {
+              const targetGrades = await fetchGradesForStrm(currentActiveYear, ctx);
+              if (targetGrades.length > 0) {
+                setGrades(targetGrades);
+                setSelectedYear(currentActiveYear);
+                setYearData({
+                  [strm]: extractedGrades,
+                  [currentActiveYear]: targetGrades
+                });
+              } else {
+                // Fallback to default if target year has no data
+                setGrades(extractedGrades);
+                setSelectedYear(strm);
+                setYearData({ [strm]: extractedGrades });
+              }
+            } catch (e) {
+              setGrades(extractedGrades);
+              setSelectedYear(strm);
+              setYearData({ [strm]: extractedGrades });
+            }
+            
+            // Re-run background discovery to populate the year tabs list again
+            discoverAllYears(ctx, strm);
+          }
         }
       }
     } catch (err) {
       console.error('Failed to fetch grades:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
