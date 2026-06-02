@@ -1,6 +1,14 @@
 # USV Portal 🎓
 
-[![Licență: MIT](https://img.shields.io/badge/Licen%C8%9B%C4%83-MIT-6366f1?style=flat-square)](LICENSE)
+<p align="left">
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/Licen%C8%9B%C4%83-MIT-6366f1?style=flat-square" alt="Licență: MIT" />
+  </a>
+  <img src="https://img.shields.io/badge/Next.js-14-black?style=flat-square&logo=nextdotjs" alt="Next.js" />
+  <img src="https://img.shields.io/badge/Docker-Enabled-2496ED?style=flat-square&logo=docker" alt="Docker" />
+  <img src="https://img.shields.io/badge/Caddy-Reverse_Proxy-00E5FF?style=flat-square&logo=caddy" alt="Caddy" />
+  <img src="https://img.shields.io/badge/OpenVPN-Secure_Tunnel-EA7B00?style=flat-square&logo=openvpn" alt="OpenVPN" />
+</p>
 
 > Portal neoficial pentru accesarea platformei `scolaritate.usv.ro` din orice browser modern, fără VPN local.
 
@@ -53,25 +61,29 @@ docker compose up --build -d
 
 ## 🏗️ Arhitectură
 
-```
-Browser → Cloudflare (HTTPS) → Caddy (TLS termination :8080)
-        → usv-vpn:3000 (Next.js via shared network namespace)
-        → OpenVPN tunnel (usv-vpn sidecar) → scolaritate.usv.ro
+```mermaid
+flowchart LR
+    A[Browser] -->|HTTPS| B[Cloudflare]
+    B --> C[Caddy :8080]
+    C --> D[usv-vpn :3000]
+    D -->|OpenVPN Tunnel| E[scolaritate.usv.ro]
+    style D fill:#0066FF,stroke:#333,stroke-width:2px,color:#fff
+    style C fill:#00E5FF,stroke:#333,stroke-width:2px
 ```
 
-| Serviciu | Rol |
-|----------|-----|
-| `caddy:2-alpine` | Reverse proxy cu TLS (Cloudflare Origin CA) |
-| `Next.js 14` | Frontend + API Routes (proxy logic) — rulează ca user non-root |
-| `usv-vpn` (sidecar) | Container izolat: OpenVPN + NET_ADMIN + /dev/net/tun |
+| Serviciu | Rol | Tehnologie |
+|----------|-----|------------|
+| **Caddy** | Reverse proxy cu TLS (Cloudflare Origin CA) | `caddy:2-alpine` |
+| **Next.js 14** | Frontend + API Routes (proxy logic) — rulează ca user non-root | `Next.js` |
+| **usv-vpn** (sidecar) | Container izolat: OpenVPN + NET_ADMIN + /dev/net/tun | `openvpn` |
 
 ---
 
 ## 🛠️ Stack
 
-- **Next.js 14** — framework + API routes
-- **Caddy 2** — TLS termination
-- **Docker + OpenVPN** — containerizare & VPN
+- **Next.js 14** — framework + API routes `![](https://img.shields.io/badge/Next.js-black?style=flat-square&logo=nextdotjs&logoColor=white)`
+- **Caddy 2** — TLS termination `![](https://img.shields.io/badge/Caddy-00E5FF?style=flat-square&logo=caddy&logoColor=white)`
+- **Docker + OpenVPN** — containerizare & VPN `![](https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white)` `![](https://img.shields.io/badge/OpenVPN-EA7B00?style=flat-square&logo=openvpn&logoColor=white)`
 
 ---
 
