@@ -1,4 +1,4 @@
-import { SEMESTER_OPTIONS, strmToYearLabel } from '../lib/formatters';
+import { SEMESTER_OPTIONS } from '../lib/formatters';
 
 /**
  * GradeTable — Card cu tabelul de note, year bar și filtru de semestru.
@@ -25,13 +25,65 @@ export default function GradeTable({
   semesterCounts,
   onSemesterChange,
 }) {
+  // Find index of the active option to drive the sliding indicator
+  const activeIndex = SEMESTER_OPTIONS.findIndex(option => option.value === semesterFilter);
+
   return (
-    <div className="grade-table-content">
+    <div className="grade-table-content animate-fade">
       {/* ── Conținut principal ── */}
       {loading ? (
-        <div className="loading-state">
-          <div className="spinner" />
-          <p>Se încarcă datele...</p>
+        /* ── Modern Shimmer Skeleton Loader ── */
+        <div className="skeleton-container">
+          <div className="skeleton-controls">
+            <div className="skeleton-label"></div>
+            <div className="skeleton-segmented"></div>
+          </div>
+          <div className="table-wrapper">
+            <table className="skeleton-table">
+              <thead>
+                <tr>
+                  <th>Disciplină</th>
+                  <th>Semestru</th>
+                  <th>Pondere</th>
+                  <th>Curs</th>
+                  <th>Seminar</th>
+                  <th>Final</th>
+                  <th>Credite</th>
+                  <th>Puncte</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <tr key={i}>
+                    <td className="course">
+                      <div className="skeleton-bar title"></div>
+                    </td>
+                    <td>
+                      <div className="skeleton-bar pill"></div>
+                    </td>
+                    <td className="muted">
+                      <div className="skeleton-bar small"></div>
+                    </td>
+                    <td>
+                      <div className="skeleton-bar small"></div>
+                    </td>
+                    <td>
+                      <div className="skeleton-bar small"></div>
+                    </td>
+                    <td className="final">
+                      <div className="skeleton-bar final-pill"></div>
+                    </td>
+                    <td>
+                      <div className="skeleton-bar small"></div>
+                    </td>
+                    <td className="points">
+                      <div className="skeleton-bar small"></div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       ) : grades.length > 0 ? (
         <>
@@ -39,6 +91,13 @@ export default function GradeTable({
           <div className="grade-controls">
             <span className="control-label">Semestru</span>
             <div className="segmented-control" aria-label="Semestru">
+              {/* Sliding Background Capsule */}
+              <div
+                className="segmented-indicator"
+                style={{
+                  transform: `translateX(${activeIndex * 100}%)`,
+                }}
+              />
               {SEMESTER_OPTIONS.map(option => {
                 const count =
                   option.value === 'all'
@@ -49,7 +108,7 @@ export default function GradeTable({
                   <button
                     key={option.value}
                     type="button"
-                    className={semesterFilter === option.value ? 'active' : ''}
+                    className={`segmented-button ${semesterFilter === option.value ? 'active' : ''}`}
                     onClick={() => onSemesterChange(option.value)}
                     aria-pressed={semesterFilter === option.value}
                   >
@@ -63,7 +122,7 @@ export default function GradeTable({
 
           {/* Tabel sau stare goală */}
           {displayedGrades.length > 0 ? (
-            <div className="table-wrapper">
+            <div className="table-wrapper animate-fade">
               <table>
                 <thead>
                   <tr>
@@ -112,13 +171,13 @@ export default function GradeTable({
               </table>
             </div>
           ) : (
-            <div className="empty-state compact">
+            <div className="empty-state compact animate-fade">
               <p>Nu există note pentru {semesterFilter}.</p>
             </div>
           )}
         </>
       ) : (
-        <div className="empty-state">
+        <div className="empty-state animate-fade">
           <p>Nu am putut încărca notele. Încearcă din nou.</p>
         </div>
       )}

@@ -533,32 +533,57 @@
 }
 
 .segmented-control {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px;
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  width: 100%;
+  max-width: 320px;
+  padding: 3px;
   background: var(--segmented-bg);
   border: 1px solid rgba(15, 23, 42, 0.04);
-  border-radius: 10px;
+  border-radius: 12px;
+}
+
+.segmented-indicator {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc((100% - 6px) / 3);
+  background: var(--segmented-active-bg);
+  border-radius: 9px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 1;
+}
+
+[data-theme="dark"] .segmented-indicator {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
 .segmented-control button {
+  position: relative;
+  z-index: 2; /* Sit on top of the indicator */
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   min-height: 34px;
-  min-width: 82px;
   padding: 7px 14px;
-  background: transparent;
+  background: transparent !important; /* Managed by indicator background */
   color: var(--text);
   border: 0;
-  border-radius: 8px;
+  border-radius: 9px;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: color 0.2s ease, transform 0.1s ease;
   white-space: nowrap;
+  box-shadow: none !important; /* Managed by indicator shadow */
+}
+
+.segmented-control button:active {
+  transform: scale(0.97);
 }
 
 .segmented-control button:hover {
@@ -566,9 +591,7 @@
 }
 
 .segmented-control button.active {
-  background: var(--segmented-active-bg);
-  color: var(--blue);
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+  color: var(--blue) !important;
 }
 
 .count {
@@ -710,6 +733,85 @@ tr:hover td {
   border-radius: 50%;
   animation: spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
   margin: 0 auto 16px;
+}
+
+/* ── Modern Table Shimmer Skeleton Loader ── */
+.skeleton-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.skeleton-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding: 8px 16px;
+}
+
+.skeleton-label {
+  width: 60px;
+  height: 12px;
+  background: var(--line);
+  border-radius: 4px;
+}
+
+.skeleton-segmented {
+  width: 260px;
+  height: 34px;
+  background: var(--segmented-bg);
+  border-radius: 10px;
+}
+
+.skeleton-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.skeleton-bar {
+  height: 16px;
+  background: linear-gradient(
+    90deg,
+    var(--surface-strong) 25%,
+    var(--line-strong) 37%,
+    var(--surface-strong) 63%
+  );
+  background-size: 400% 100%;
+  animation: shimmer-pulse 1.4s ease infinite;
+  border-radius: 6px;
+}
+
+.skeleton-bar.title {
+  width: 80%;
+  max-width: 180px;
+}
+
+.skeleton-bar.pill {
+  width: 54px;
+  height: 20px;
+  border-radius: 99px;
+  margin: 0 auto;
+}
+
+.skeleton-bar.small {
+  width: 26px;
+  margin: 0 auto;
+}
+
+.skeleton-bar.final-pill {
+  width: 32px;
+  height: 22px;
+  border-radius: 6px;
+  margin: 0 auto;
+}
+
+@keyframes shimmer-pulse {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 /* ── 11. Footer ── */
