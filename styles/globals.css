@@ -109,3 +109,61 @@ body,
     transform: translateY(0);
   }
 }
+
+/* ── 4. Smooth Scrolling & Premium Custom Scrollbars ── */
+
+html {
+  scroll-behavior: smooth;
+  /* Firefox scrollbar support */
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+html.dark-theme {
+  /* Firefox dark scrollbar support */
+  scrollbar-color: #1e293b #020617;
+}
+
+/* Webkit Scrollbars (Chrome, Safari, Edge, Opera) */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 99px;
+  border: 2px solid #f1f5f9;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Dark Theme Webkit Scrollbars */
+html.dark-theme ::-webkit-scrollbar-track {
+  background: #020617;
+}
+
+html.dark-theme ::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border: 2px solid #020617;
+}
+
+html.dark-theme ::-webkit-scrollbar-thumb:hover {
+  background: #0066ff; /* Cyber-Ocean Blue highlight on hover */
+}
+
+/* Inner containers (like tables or responsive scrolls) get thinner scrollbars */
+.table-wrapper ::-webkit-scrollbar,
+.analytics-tab ::-webkit-scrollbar,
+.scroll-container ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
