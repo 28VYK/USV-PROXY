@@ -6,9 +6,14 @@ export default function Privacy() {
   const [theme, setTheme] = useState('light');
 
   useEffect(() => {
-    // Initialize Theme - temporarily locked to light mode
-    setTheme('light');
-    document.documentElement.classList.remove('dark-theme');
+    // Initialize Theme - manual choice only
+    const savedTheme = localStorage.getItem('usv_theme') || 'light';
+    setTheme(savedTheme);
+    if (savedTheme === 'dark') {
+      document.documentElement.classList.add('dark-theme');
+    } else {
+      document.documentElement.classList.remove('dark-theme');
+    }
   }, []);
 
   return (

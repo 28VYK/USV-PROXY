@@ -8,7 +8,7 @@ export default function Document() {
         
         {/* Web App Manifest and PWA integration */}
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#254AA5" />
+        <meta name="theme-color" content="#1E40AF" />
         
         {/* Apple iOS Web App enhancements for standalone execution */}
         <meta name="apple-mobile-web-app-capable" content="yes" />

@@ -15,10 +15,12 @@
   --paper: #ffffff;
   --surface: #f8fafc;
   --surface-strong: #f1f5f9;
-  --blue: #254AA5;
-  --blue-rgb: 37, 74, 165;
-  --blue-dark: #1b3678;
-  --blue-dark-rgb: 27, 54, 120;
+  --blue: #1E40AF;
+  --blue-rgb: 30, 64, 175;
+  --blue-dark: #1E3A8A;
+  --blue-dark-rgb: 30, 58, 138;
+  --blue-accent: #93C5FD;
+  --blue-accent-rgb: 147, 197, 253;
   --green: #10b981;
   --red: #ef4444;
   --amber: #f59e0b;
@@ -69,10 +71,12 @@
   --paper: #0b0f19;
   --surface: #020617;
   --surface-strong: #1e293b;
-  --blue: #4f78e2;
-  --blue-rgb: 79, 120, 226;
-  --blue-dark: #254AA5;
-  --blue-dark-rgb: 37, 74, 165;
+  --blue: #60A5FA;
+  --blue-rgb: 96, 165, 250;
+  --blue-dark: #1E40AF;
+  --blue-dark-rgb: 30, 64, 175;
+  --blue-accent: #ADCDFE;
+  --blue-accent-rgb: 173, 205, 254;
   --green: #34d399;
   --red: #f87171;
   --amber: #fbbf24;
@@ -112,7 +116,7 @@
 /* Dark mode header h1 and login h1 */
 .app[data-theme="dark"] .login-header h1,
 .app[data-theme="dark"] .dashboard-header h1 {
-  background: linear-gradient(135deg, #ffffff 0%, #87C2EA 100%);
+  background: linear-gradient(135deg, #ffffff 0%, var(--blue-accent) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -238,7 +242,7 @@
   gap: 6px;
   min-height: 40px;
   padding: 0 16px;
-  background: linear-gradient(135deg, var(--blue) 0%, #87C2EA 100%);
+  background: linear-gradient(135deg, var(--blue) 0%, var(--blue-accent) 100%);
   color: white;
   text-decoration: none;
   border-radius: 99px;
@@ -286,7 +290,7 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--blue) 0%, #87C2EA 100%);
+  background: linear-gradient(135deg, var(--blue) 0%, var(--blue-accent) 100%);
   color: #ffffff;
   font-size: 10px;
   font-weight: 800;
@@ -845,7 +849,7 @@ tr:hover td {
   align-items: center;
   justify-content: center;
   min-height: 48px;
-  background: linear-gradient(135deg, var(--blue) 0%, #87C2EA 100%);
+  background: linear-gradient(135deg, var(--blue) 0%, var(--blue-accent) 100%);
   color: #ffffff;
   text-decoration: none;
   border-radius: 12px;

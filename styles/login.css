@@ -30,7 +30,7 @@
 .glow-blob-1 {
   width: 400px;
   height: 400px;
-  background: radial-gradient(circle, rgba(var(--blue-rgb), 0.6) 0%, rgba(135, 194, 234, 0) 70%);
+  background: radial-gradient(circle, rgba(var(--blue-rgb), 0.6) 0%, rgba(var(--blue-accent-rgb), 0) 70%);
   top: -10%;
   left: 10%;
 }
@@ -233,7 +233,7 @@
   width: 100%;
   min-height: 48px;
   padding: 12px 20px;
-  background: linear-gradient(135deg, var(--blue) 0%, #87C2EA 100%);
+  background: linear-gradient(135deg, var(--blue) 0%, var(--blue-accent) 100%);
   color: #ffffff;
   border: none;
   border-radius: 12px;

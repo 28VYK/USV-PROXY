@@ -2,6 +2,7 @@ import '../styles/globals.css';
 import '../styles/layout.css';
 import '../styles/login.css';
 import '../styles/analytics.css';
+import '../styles/error.css';
 import { useEffect } from 'react';
 
 export default function App({ Component, pageProps }) {
