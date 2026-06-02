@@ -317,9 +317,9 @@
   display: inline-flex;
   align-items: center;
   padding: 2.5px 8px;
-  background: rgba(168, 85, 247, 0.12);
-  color: #a855f7;
-  border: 1px solid rgba(168, 85, 247, 0.2);
+  background: rgba(6, 182, 212, 0.12);
+  color: #0891b2;
+  border: 1px solid rgba(6, 182, 212, 0.24);
   border-radius: 8px;
   font-size: 10px;
   font-weight: 800;
@@ -327,6 +327,13 @@
   text-transform: uppercase;
   letter-spacing: 0.02em;
   white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.app[data-theme="dark"] .badge-backpaper {
+  background: rgba(34, 211, 238, 0.12);
+  color: #22d3ee;
+  border-color: rgba(34, 211, 238, 0.24);
 }
 
 .select-wrapper {
