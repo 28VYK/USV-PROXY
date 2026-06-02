@@ -26,7 +26,7 @@ Este o soluție independentă (Proof of Concept) creată de un student, utilizat
 Platforma funcționează ca **reverse proxy** — cererile (inclusiv credențialele) trec temporar prin serverul nostru, exclusiv în memorie, fără stocare persistentă.
 Codul este complet open-source.
 
-→ [Politică de Confidențialitate](./docs/PRIVACY.md) · [Politică de Securitate](./docs/SECURITY.md) · [Ghid de Contribuție](./docs/CONTRIBUTING.md) · [Credite & Autori](./docs/CREDITS.md)
+→ [Politică de Confidențialitate](./.github/PRIVACY.md) · [Politică de Securitate](./.github/SECURITY.md) · [Ghid de Contribuție](./.github/CONTRIBUTING.md) · [Credite & Autori](./.github/CREDITS.md)
 
 ---
 
@@ -90,7 +90,7 @@ flowchart LR
 ## 🤝 Contribuie la proiect
 
 Proiectul este 100% open-source și dezvoltat din pasiune în timpul liber. Orice ajutor este binevenit! 
-Dacă vrei să contribui cu cod, să raportezi un bug sau să îmbunătățești documentația, te rugăm să citești mai întâi **[Ghidul de Contribuție](./docs/CONTRIBUTING.md)** pentru detalii legate de rularea locală cu Docker și stilul de cod.
+Dacă vrei să contribui cu cod, să raportezi un bug sau să îmbunătățești documentația, te rugăm să citești mai întâi **[Ghidul de Contribuție](./.github/CONTRIBUTING.md)** pentru detalii legate de rularea locală cu Docker și stilul de cod.
 
 ---
 
@@ -106,4 +106,4 @@ Serverul VPS are costuri lunare. Dacă platforma îți este utilă:
 
 Acest proiect este distribuit în mod deschis sub licența **MIT**. Întregul cod sursă și designul platformei sunt dezvoltate de **Vichiriuc Adrian (28VYK)**.
 
-Vezi fișierele [LICENSE](LICENSE) și [docs/CREDITS.md](./docs/CREDITS.md) pentru textul juridic complet și lista detaliată a creditelor de dezvoltare.
+Vezi fișierele [LICENSE](LICENSE) și [.github/CREDITS.md](./.github/CREDITS.md) pentru textul juridic complet și lista detaliată a creditelor de dezvoltare.
