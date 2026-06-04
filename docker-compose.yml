@@ -68,6 +68,13 @@ services:
           --config /vpn/usv2.ovpn \
           --auth-user-pass /tmp/vpn-creds.txt \
           --data-ciphers AES-256-GCM:AES-128-GCM:CHACHA20-POLY1305:AES-128-CBC
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 150M
+        reservations:
+          memory: 30M
 
   # ─────────────────────────────────────────────────────────────────────────────
   # usv-proxy: Next.js application container.
@@ -102,10 +109,11 @@ services:
       retries: 3
       start_period: 15s
 
-    # Memory limits remain the same for VPS stability
+    # Resources limits remain the same for VPS stability
     deploy:
       resources:
         limits:
+          cpus: '1.0'
           memory: 180M
         reservations:
           memory: 50M
@@ -147,6 +155,13 @@ services:
     networks:
       - default
       - monitoring_net
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 250M
+        reservations:
+          memory: 50M
 
 volumes:
   caddy_data:

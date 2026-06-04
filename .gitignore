@@ -55,8 +55,14 @@ yarn-error.log*
 # Cloudflare Origin Certificates folder
 /certs/
 
-# Grafana dashboard JSON files (downloaded by monitoring/setup.sh — do not commit)
-/monitoring/grafana/dashboards/*.json
+# Prometheus configuration, metrics tokens, and data (never upload to GitHub)
+/monitoring/prometheus/
+
+# Grafana dashboards and provisioning configuration
+/monitoring/grafana/dashboards/
+/monitoring/grafana/provisioning/alerting/
+/monitoring/grafana/provisioning/dashboards/
 
 # Local development override for monitoring stack (Windows Docker Desktop only)
 docker-compose.monitoring.override.yml
+

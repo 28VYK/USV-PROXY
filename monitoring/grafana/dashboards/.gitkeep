@@ -1,2 +1,0 @@
-# Grafana dashboard JSON files are downloaded by monitoring/setup.sh
-# This file keeps the directory tracked in Git (the .json files are gitignored)

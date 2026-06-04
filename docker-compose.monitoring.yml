@@ -39,6 +39,13 @@ services:
       - '--path.sysfs=/host/sys'
       # Exclude virtual filesystems from disk metrics
       - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 100M
+        reservations:
+          memory: 10M
 
   # ───────────────────────────────────────────────────────────────────────────
   # prometheus: Time-series database. Scrapes Caddy + Node Exporter.
@@ -71,6 +78,40 @@ services:
 
     depends_on:
       - node-exporter
+      - cadvisor
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1000M
+        reservations:
+          memory: 100M
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # cadvisor: Exposes docker container metrics (CPU, Memory, Network, Disk).
+  # ───────────────────────────────────────────────────────────────────────────
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    container_name: usv-cadvisor
+    restart: always
+    privileged: true
+    devices:
+      - /dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    networks:
+      - monitoring_net
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 300M
+        reservations:
+          memory: 30M
 
   # ───────────────────────────────────────────────────────────────────────────
   # grafana: Visual dashboards. Connected to Prometheus as a datasource.
@@ -97,6 +138,11 @@ services:
       # Disable Grafana telemetry
       - GF_ANALYTICS_REPORTING_ENABLED=false
       - GF_ANALYTICS_CHECK_FOR_UPDATES=false
+      # Enable environment variable substitution in provisioning configurations
+      - GF_PROVISIONING_ENV_VARS_SUBSTITUTION=true
+      # Telegram credentials for alerting contact point
+      - TELEGRAM_BOT_TOKEN=${ALERTING_TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
 
     volumes:
       - grafana_data:/var/lib/grafana
@@ -111,6 +157,13 @@ services:
     depends_on:
       - prometheus
       - loki
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 500M
+        reservations:
+          memory: 50M
 
   # ───────────────────────────────────────────────────────────────────────────
   # loki: Log aggregation engine.
@@ -126,6 +179,13 @@ services:
     command: -config.file=/etc/loki/local-config.yaml
     networks:
       - monitoring_net
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 1500M
+        reservations:
+          memory: 200M
 
   # ───────────────────────────────────────────────────────────────────────────
   # promtail: Scrapes Caddy logs in real time and pushes them to Loki.
@@ -143,6 +203,13 @@ services:
       - monitoring_net
     depends_on:
       - loki
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 200M
+        reservations:
+          memory: 20M
 
 volumes:
   prometheus_data:
