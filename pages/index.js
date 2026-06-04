@@ -3,6 +3,7 @@ import Head from 'next/head';
 import DonateModal from '../components/DonateModal';
 import GradeTable from '../components/GradeTable';
 import AnalyticsTab from '../components/AnalyticsTab';
+import CookieBanner from '../components/CookieBanner';
 import { calculateEstimatedFinalGrade, calculateEctsStats, processMultiYearAcademicData } from '../lib/formatters';
 
 const SEMESTER_OPTIONS = [
@@ -229,6 +230,55 @@ export default function Home() {
 
   // Simulated grades state
   const [simulatedGrades, setSimulatedGrades] = useState({}); // { [originalIndex]: gradeValue }
+
+  // VPN Health state
+  const [vpnOnline, setVpnOnline] = useState(true);
+  const [vpnShowSuccess, setVpnShowSuccess] = useState(false);
+
+  // Cookie Banner state
+  const [showCookieBanner, setShowCookieBanner] = useState(false);
+
+  const checkVpnHealth = async () => {
+    try {
+      const res = await fetch('/api/health/vpn');
+      const data = await res.json();
+      if (data && typeof data.online === 'boolean') {
+        setVpnOnline(prevOnline => {
+          if (!prevOnline && data.online) {
+            setVpnShowSuccess(true);
+            setTimeout(() => {
+              setVpnShowSuccess(false);
+            }, 3000);
+          }
+          return data.online;
+        });
+      }
+    } catch (err) {
+      setVpnOnline(false);
+    }
+  };
+
+  useEffect(() => {
+    checkVpnHealth();
+    const healthInterval = setInterval(checkVpnHealth, 30000);
+    return () => clearInterval(healthInterval);
+  }, []);
+
+  // Client-side detection of cookie consent
+  useEffect(() => {
+    const accepted = localStorage.getItem('usv_cookies_accepted') === 'true';
+    if (!accepted) {
+      const timer = setTimeout(() => {
+        setShowCookieBanner(true);
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  const handleAcceptCookies = () => {
+    localStorage.setItem('usv_cookies_accepted', 'true');
+    setShowCookieBanner(false);
+  };
 
   const toggleTheme = () => {
     const nextTheme = theme === 'dark' ? 'light' : 'dark';
@@ -550,6 +600,7 @@ export default function Home() {
       }
     } catch (err) {
       setError('Eroare de conexiune');
+      checkVpnHealth();
     } finally {
       setLoading(false);
     }
@@ -618,6 +669,7 @@ export default function Home() {
       }
     } catch (err) {
       console.error('Failed to fetch grades:', err);
+      checkVpnHealth();
     } finally {
       setLoading(false);
     }
@@ -840,7 +892,19 @@ export default function Home() {
         />
       </Head>
 
-      <div className="app" data-theme={theme}>
+      <div className={`app ${(!vpnOnline || vpnShowSuccess) ? 'has-vpn-banner' : ''}`} data-theme={theme}>
+        {/* VPN Health Status Banner */}
+        <div className={`vpn-status-banner ${(!vpnOnline || vpnShowSuccess) ? 'visible' : ''} ${vpnShowSuccess ? 'success' : ''}`}>
+          <div className="vpn-status-content">
+            <span className="vpn-status-pulse" />
+            <span>
+              {vpnShowSuccess 
+                ? 'Conexiune restabilită!' 
+                : 'Conexiunea securizată cu universitatea este offline. Se încearcă reconectarea...'}
+            </span>
+          </div>
+        </div>
+
         <header className="header">
           <div className="header-content">
             <div className="logo">
@@ -1119,12 +1183,18 @@ export default function Home() {
             <a href="/privacy" className="footer-link">
               Politică de Confidențialitate & Disclaimer
             </a>
+            {' • '}
+            <a href="/terms" className="footer-link">
+              Termeni & Condiții
+            </a>
           </p>
         </footer>
 
         {showDonateModal && (
           <DonateModal onClose={() => setShowDonateModal(false)} />
         )}
+
+        <CookieBanner isVisible={showCookieBanner} onAccept={handleAcceptCookies} />
       </div>
 
     </>

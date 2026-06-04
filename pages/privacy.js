@@ -36,7 +36,7 @@ export default function Privacy() {
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@600;700;800&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet" />
       </Head>
 
-      <div className="app" data-theme={theme}>
+      <div className="app legal-page" data-theme={theme}>
         {/* Header */}
         <header className="header">
           <div className="header-content">
@@ -131,7 +131,21 @@ export default function Privacy() {
 
             {/* Section 5 */}
             <section className="section">
-              <h2>5. Licență Open-Source & Copyright (MIT)</h2>
+              <h2>5. Utilizarea Cookie-urilor (Politica de Cookie-uri)</h2>
+              <p>
+                Pentru a asigura buna funcționare a sesiunii tale, această platformă utilizează un singur cookie tehnic esențial:
+              </p>
+              <ul>
+                <li><strong>PS_PROXY_SESSION</strong>: Acest cookie funcțional de sesiune conține tokenul criptat necesar pentru a asigura comunicarea securizată între browserul tău și proxy pe parcursul interogării notelor. Este un cookie strict necesar conform ePrivacy și este șters automat la închiderea browserului sau la apăsarea butonului de deconectare.</li>
+              </ul>
+              <p>
+                Nu utilizăm niciun cookie de marketing, publicitate, profilare sau analiză a traficului (fără Google Analytics, tracker-e sau scripturi de urmărire de la terți).
+              </p>
+            </section>
+
+            {/* Section 6 */}
+            <section className="section">
+              <h2>6. Licență Open-Source & Copyright (MIT)</h2>
               <p>
                 Acest proiect este distribuit în mod deschis ca software liber sub <strong>Licența MIT</strong>. Întregul cod sursă, designul interfeței și arhitectura platformei sunt concepute și dezvoltate în totalitate de către <strong>Vichiriuc Adrian</strong> (@28VYK).
               </p>
@@ -146,369 +160,14 @@ export default function Privacy() {
               <Link href="/" legacyBehavior>
                 <a className="btn-back">← Înapoi la autentificare</a>
               </Link>
+              <Link href="/terms" legacyBehavior>
+                <a className="btn-back">Termeni & Condiții</a>
+              </Link>
             </footer>
 
           </article>
         </main>
       </div>
-
-      <style jsx>{`
-        .app {
-          min-height: 100vh;
-          display: flex;
-          flex-direction: column;
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-          background: #fafafa;
-          color: #1a1a1a;
-          transition: background-color 0.3s ease, color 0.3s ease;
-        }
-
-        .app[data-theme="dark"] {
-          background: #020617;
-          color: #cbd5e1;
-        }
-
-        .header, .doc-header, .logo-highlight, h1, h2, strong, p, li, .divider, code, .flow, .flow-step, .note, .callout, .btn-back {
-          transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
-        }
-
-        .app[data-theme="dark"] .header {
-          background: #0b0f19;
-          border-bottom-color: #1e293b;
-        }
-
-        .app[data-theme="dark"] .logo-highlight {
-          color: #f8fafc;
-        }
-
-        .app[data-theme="dark"] h1,
-        .app[data-theme="dark"] h2,
-        .app[data-theme="dark"] strong {
-          color: #f8fafc;
-        }
-
-        .app[data-theme="dark"] p,
-        .app[data-theme="dark"] li,
-        .app[data-theme="dark"] .doc-subtitle {
-          color: #cbd5e1;
-        }
-
-        .app[data-theme="dark"] .divider {
-          background: #1e293b;
-        }
-
-        .app[data-theme="dark"] code {
-          background: #1e293b;
-          color: #cbd5e1;
-        }
-
-        .app[data-theme="dark"] .flow {
-          border-color: #1e293b;
-        }
-
-        .app[data-theme="dark"] .flow-step {
-          border-bottom-color: #1e293b;
-        }
-
-        .app[data-theme="dark"] .flow-step p {
-          color: #cbd5e1;
-        }
-
-        .app[data-theme="dark"] .note {
-          background: #0f172a;
-          border-left-color: #334155;
-          color: #94a3b8;
-        }
-
-        .app[data-theme="dark"] .callout {
-          background: #0f172a;
-          border-color: #1e293b;
-        }
-
-        .app[data-theme="dark"] .callout p,
-        .app[data-theme="dark"] .callout li {
-          color: #cbd5e1;
-        }
-
-        .app[data-theme="dark"] .btn-back {
-          background: #0b0f19;
-          border-color: #1e293b;
-          color: #cbd5e1;
-        }
-
-        .app[data-theme="dark"] .btn-back:hover {
-          background: #1e293b;
-          border-color: #334155;
-          color: #f8fafc;
-        }
-
-        /* ── Header ── */
-        .header {
-          padding: 20px 32px;
-          border-bottom: 1px solid #ebebeb;
-          background: #fff;
-        }
-
-        .logo {
-          display: flex;
-          align-items: center;
-          gap: 5px;
-          font-family: 'Space Grotesk', sans-serif;
-          font-size: 18px;
-          letter-spacing: -0.03em;
-          user-select: none;
-          width: fit-content;
-        }
-
-        .logo-highlight {
-          font-weight: 600;
-          color: #0f172a;
-        }
-
-        .logo-text {
-          font-weight: 500;
-          color: #94a3b8;
-        }
-
-        /* ── Main ── */
-        .main {
-          flex: 1;
-          padding: 48px 24px 80px;
-          width: 100%;
-          max-width: 680px;
-          margin: 0 auto;
-          box-sizing: border-box;
-        }
-
-        /* ── Document ── */
-        .doc-header {
-          margin-bottom: 36px;
-        }
-
-        .doc-label {
-          font-size: 12px;
-          font-weight: 500;
-          color: #94a3b8;
-          text-transform: uppercase;
-          letter-spacing: 0.08em;
-          margin-bottom: 16px;
-        }
-
-        h1 {
-          font-family: 'Outfit', sans-serif;
-          font-size: 34px;
-          font-weight: 800;
-          color: #0f172a;
-          line-height: 1.15;
-          letter-spacing: -0.03em;
-          margin: 0 0 14px;
-        }
-
-        .doc-subtitle {
-          font-size: 15px;
-          color: #64748b;
-          line-height: 1.55;
-          margin: 0;
-        }
-
-        .divider {
-          height: 1px;
-          background: #ebebeb;
-          margin: 32px 0;
-        }
-
-        /* ── Sections ── */
-        .section {
-          margin-bottom: 36px;
-        }
-
-        h2 {
-          font-family: 'Outfit', sans-serif;
-          font-size: 17px;
-          font-weight: 700;
-          color: #0f172a;
-          margin: 0 0 12px;
-          letter-spacing: -0.01em;
-        }
-
-        p {
-          font-size: 14.5px;
-          line-height: 1.65;
-          color: #374151;
-          margin: 0 0 10px;
-        }
-
-        p:last-child {
-          margin-bottom: 0;
-        }
-
-        ul {
-          padding-left: 18px;
-          margin: 8px 0 0;
-        }
-
-        li {
-          font-size: 14px;
-          line-height: 1.65;
-          color: #374151;
-          margin-bottom: 6px;
-        }
-
-        strong {
-          color: #0f172a;
-          font-weight: 600;
-        }
-
-        code {
-          font-family: 'SF Mono', 'Fira Code', monospace;
-          font-size: 13px;
-          background: #f1f5f9;
-          padding: 1px 5px;
-          border-radius: 4px;
-          color: #334155;
-        }
-
-        /* ── Flow steps ── */
-        .flow {
-          display: flex;
-          flex-direction: column;
-          gap: 0;
-          margin: 16px 0;
-          border: 1px solid #e5e7eb;
-          border-radius: 12px;
-          overflow: hidden;
-        }
-
-        .flow-step {
-          display: flex;
-          align-items: center;
-          gap: 16px;
-          padding: 14px 18px;
-          border-bottom: 1px solid #f1f5f9;
-        }
-
-        .flow-step:last-child {
-          border-bottom: none;
-        }
-
-        .flow-index {
-          font-family: 'Space Grotesk', sans-serif;
-          font-size: 12px;
-          font-weight: 600;
-          color: #94a3b8;
-          letter-spacing: 0.04em;
-          flex-shrink: 0;
-          width: 22px;
-        }
-
-        .flow-step p {
-          font-size: 13.5px;
-          line-height: 1.5;
-          color: #374151;
-          margin: 0;
-        }
-
-        /* ── Note / Callout ── */
-        .note {
-          font-size: 13.5px;
-          color: #64748b;
-          background: #f8fafc;
-          border-left: 3px solid #e2e8f0;
-          padding: 12px 16px;
-          border-radius: 0 8px 8px 0;
-          margin-top: 16px !important;
-          line-height: 1.6;
-        }
-
-        .callout {
-          background: #f8fafc;
-          border: 1px solid #e5e7eb;
-          border-radius: 10px;
-          padding: 18px 20px;
-          margin-top: 14px;
-        }
-
-        .callout p {
-          font-size: 13.5px;
-          color: #374151;
-          margin-bottom: 8px;
-        }
-
-        .callout ul {
-          margin: 0;
-        }
-
-        .callout li {
-          font-size: 13.5px;
-          color: #4b5563;
-        }
-
-        /* ── Footer ── */
-        .doc-footer {
-          display: flex;
-          justify-content: flex-start;
-        }
-
-        .btn-back {
-          display: inline-flex;
-          align-items: center;
-          height: 40px;
-          padding: 0 18px;
-          background: #fff;
-          color: #374151;
-          text-decoration: none;
-          border: 1px solid #e5e7eb;
-          border-radius: 8px;
-          font-size: 13.5px;
-          font-weight: 500;
-          transition: all 0.15s ease;
-          font-family: 'Inter', sans-serif;
-        }
-
-        .btn-back:hover {
-          background: #f8fafc;
-          border-color: #cbd5e1;
-          color: #0f172a;
-        }
-
-        /* ── Mobile ── */
-        @media (max-width: 640px) {
-          .header {
-            padding: 16px 20px;
-          }
-
-          h1 {
-            font-size: 26px;
-          }
-
-          .main {
-            padding: 32px 16px 60px;
-          }
-        }
-      `}</style>
-
-      <style jsx global>{`
-        html {
-          margin: 0;
-          padding: 0;
-          width: 100%;
-          min-height: 100vh;
-          overflow-x: hidden;
-          background-color: #fafafa;
-          -webkit-font-smoothing: antialiased;
-          transition: background-color 0.3s ease;
-        }
-        html.dark-theme {
-          background-color: #020617;
-        }
-        body {
-          margin: 0;
-          padding: 0;
-          width: 100%;
-          min-height: 100vh;
-          background-color: inherit;
-        }
-      `}</style>
     </>
   );
 }

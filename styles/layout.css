@@ -153,7 +153,6 @@
   color: var(--blue);
 }
 
-/* ── 5. Floating Header ── */
 .header {
   position: relative;
   margin: 24px auto 0;
@@ -171,7 +170,11 @@
   -webkit-backdrop-filter: blur(24px);
   z-index: 100;
   box-shadow: 0 16px 36px rgba(15, 23, 42, 0.04), inset 0 1px 0 var(--glass-border);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1), margin-top 0.4s ease;
+}
+
+.app.has-vpn-banner .header {
+  margin-top: 12px;
 }
 
 .header:hover {
@@ -261,7 +264,7 @@
 
 .btn-donate:hover {
   transform: translateY(-1.5px);
-  box-shadow: 0 8px 20px rgba(168, 85, 247, 0.3);
+  box-shadow: 0 8px 20px rgba(var(--blue-rgb), 0.3);
   filter: brightness(1.03);
 }
 
@@ -860,7 +863,7 @@ tr:hover td {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 999;
+  z-index: 2000;
   padding: 20px;
   animation: fadeIn 0.25s ease;
 }
@@ -1300,3 +1303,293 @@ tr:hover td {
     max-width: 190px;
   }
 }
+
+/* ── 19. VPN Health Status Banner ── */
+.vpn-status-banner {
+  width: 100%;
+  max-height: 0;
+  overflow: hidden;
+  background-color: #fee2e2; /* Light mode default red */
+  color: #991b1b;
+  border-bottom: 0px solid transparent;
+  transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), border 0.4s ease, background-color 0.3s ease;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  z-index: 1000;
+  position: relative;
+}
+
+.vpn-status-banner.visible {
+  max-height: 42px; /* Slim height for notification bar */
+  border-bottom: 1px solid #fecaca;
+}
+
+/* Success state transition (connection restored) */
+.vpn-status-banner.success {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.vpn-status-banner.success.visible {
+  border-bottom: 1px solid #a7f3d0;
+}
+
+.vpn-status-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 41px; /* matches visible max-height minus border */
+  padding: 0 24px;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* Pulse animation dot */
+.vpn-status-pulse {
+  width: 8px;
+  height: 8px;
+  background-color: #ef4444; /* red dot */
+  border-radius: 50%;
+  flex-shrink: 0;
+  position: relative;
+  box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  animation: vpn-pulse-red 2s infinite;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.vpn-status-banner.success .vpn-status-pulse {
+  background-color: #10b981; /* green dot */
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: vpn-pulse-green 2s infinite;
+}
+
+@keyframes vpn-pulse-red {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 5px rgba(239, 68, 68, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
+
+@keyframes vpn-pulse-green {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 5px rgba(16, 185, 129, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+/* Dark mode overrides */
+.app[data-theme="dark"] .vpn-status-banner {
+  background-color: rgba(127, 29, 29, 0.45); /* translucent dark red */
+  color: #fecaca;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.app[data-theme="dark"] .vpn-status-banner.visible {
+  border-bottom: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.app[data-theme="dark"] .vpn-status-banner.success {
+  background-color: rgba(6, 95, 70, 0.45); /* translucent dark green */
+  color: #a7f3d0;
+}
+
+.app[data-theme="dark"] .vpn-status-banner.success.visible {
+  border-bottom: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+/* ── 20. Cookie Banner ── */
+.cookie-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1500;
+  padding: 16px;
+  transform: translateY(100%);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.cookie-banner.visible {
+  transform: translateY(0);
+}
+
+.cookie-banner-content {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  width: 100%;
+  max-width: 1100px;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 18px;
+  padding: 16px 24px;
+  box-shadow: 
+    0 20px 48px rgba(15, 23, 42, 0.08), 
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+.app[data-theme="dark"] .cookie-banner-content {
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 20px 48px rgba(0, 0, 0, 0.4), 
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.cookie-banner-text {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+}
+
+.cookie-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(var(--blue-rgb), 0.08);
+  color: var(--blue);
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+}
+
+.cookie-banner-content:hover .cookie-icon-wrapper {
+  transform: rotate(15deg) scale(1.05);
+}
+
+.cookie-icon-svg {
+  display: block;
+}
+
+.cookie-banner-text p {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.cookie-banner-text code {
+  font-family: 'Space Grotesk', monospace;
+  background: var(--surface-strong);
+  color: var(--ink);
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 12px;
+  border: 1px solid var(--line);
+  font-weight: 700;
+}
+
+.cookie-link {
+  color: var(--blue);
+  font-weight: 700;
+  text-decoration: none;
+  border-bottom: 1.5px solid rgba(var(--blue-rgb), 0.2);
+  transition: all 0.2s ease;
+}
+
+.cookie-link:hover {
+  color: var(--blue-dark);
+  border-bottom-color: var(--blue-dark);
+}
+
+.btn-cookie-accept {
+  min-height: 38px;
+  padding: 0 20px;
+  background: var(--ink);
+  color: var(--paper);
+  border: none;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.btn-cookie-accept:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  filter: brightness(1.08);
+}
+
+.btn-cookie-accept:active {
+  transform: translateY(0);
+}
+
+.app[data-theme="dark"] .btn-cookie-accept {
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .cookie-banner {
+    padding: 12px;
+  }
+  
+  .cookie-banner-content {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    padding: 16px;
+    border-radius: 16px;
+  }
+  
+  .cookie-banner-text {
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .cookie-icon-wrapper {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+  }
+  
+  .cookie-icon-svg {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .cookie-banner-text p {
+    font-size: 13px;
+  }
+  
+  .btn-cookie-accept {
+    width: 100%;
+    min-height: 42px;
+    font-size: 14px;
+  }
+}
+
+
