@@ -679,3 +679,30 @@
     font-size: 16px;
   }
 }
+
+/* ── 7. Simulator Semester Group Headers ── */
+.semester-section-row td {
+  background: var(--surface-strong) !important;
+  color: var(--ink);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 14px 20px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+
+.semester-section-row:hover td {
+  background: var(--surface-strong) !important;
+}
+
+@media (max-width: 768px) {
+  .semester-section-row td {
+    padding: 10px 16px;
+    font-size: 11px;
+  }
+}
+

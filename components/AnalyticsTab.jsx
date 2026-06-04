@@ -1,4 +1,6 @@
-import { strmToYearLabel, calculateEstimatedFinalGrade, calculateEctsStats } from '../lib/formatters';
+import { useState, useEffect } from 'react';
+import { strmToYearLabel, calculateEstimatedFinalGrade, calculateEctsStats, SEMESTER_OPTIONS } from '../lib/formatters';
+
 
 /**
  * Group duplicate course entries by course title and semester category.
@@ -92,6 +94,75 @@ export default function AnalyticsTab({
   const strmKeys = Object.keys(resolvedYearData).map(Number);
   const maxStrm = strmKeys.length > 0 ? Math.max(...strmKeys) : null;
   const isSelectedYearActive = maxStrm !== null && parseInt(selectedYear, 10) === maxStrm;
+
+  const [simFilter, setSimFilter] = useState('all');
+  const activeFilterIndex = SEMESTER_OPTIONS.findIndex(option => option.value === simFilter);
+
+  useEffect(() => {
+    const savedFilter = localStorage.getItem('usv_sim_filter');
+    if (savedFilter) {
+      setSimFilter(savedFilter);
+    }
+  }, []);
+
+
+  // Group grades by semester category for the simulator display
+  const sem1Courses = grades.filter(g => g.filterCategory === 'SEM 1');
+  const sem2Courses = grades.filter(g => g.filterCategory === 'SEM 2');
+  const otherCourses = grades.filter(g => g.filterCategory !== 'SEM 1' && g.filterCategory !== 'SEM 2');
+
+  const renderRow = (grade) => {
+    const origIdx = grade.originalIndex;
+    const isSimulated = simulatedGrades[origIdx] !== undefined;
+    const activeVal = isSimulated ? simulatedGrades[origIdx] : '';
+
+    return (
+      <tr key={origIdx} className={isSimulated ? 'tr-simulated' : ''}>
+        <td className="course">
+          <div className="course-cell-wrapper">
+            <span>{grade.titlu}</span>
+            {isSimulated && (
+              <span className="badge-simulated">Simulată</span>
+            )}
+            {grade.isBackPaper && (
+              <span className="badge-backpaper" title="Disciplină recontractată din anii anteriori. Notele se vor propaga în anul de origine.">
+                Restanță {grade.originalYear ? strmToYearLabel(grade.originalYear) : ''}
+              </span>
+            )}
+          </div>
+        </td>
+        <td>
+          <span className={`semester-pill ${grade.sesiune || grade.filterCategory ? '' : 'unknown'}`}>
+            {grade.sesiune || grade.filterCategory || '—'}
+          </span>
+        </td>
+        <td>{grade.credite || '—'}</td>
+        <td className={`final ${parseFloat(grade.notaFinala) >= 5 ? 'pass' : parseFloat(grade.notaFinala) ? 'fail' : ''}`}>
+          {grade.isEstimatedFinal ? (
+            <span className="estimated-grade-badge" title="Calculată automat pe baza ponderii curs/seminar (catalog neînchis)">
+              {grade.notaFinala}<span className="est-star">*</span>
+            </span>
+          ) : (
+            grade.notaFinala || '—'
+          )}
+        </td>
+        <td>
+          <div className="select-wrapper">
+            <select
+              value={activeVal}
+              onChange={(e) => onSimulateGrade(origIdx, e.target.value)}
+              className={`simulator-select ${isSimulated ? 'active' : ''}`}
+            >
+              <option value="">Alege estimare...</option>
+              {[10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map(n => (
+                <option key={n} value={n}>{n}</option>
+              ))}
+            </select>
+          </div>
+        </td>
+      </tr>
+    );
+  };
 
   return (
     <div className="analytics-container animate-fade">
@@ -289,6 +360,44 @@ export default function AnalyticsTab({
           )}
         </div>
 
+        {/* Simulator controls */}
+        <div className="grade-controls">
+          <span className="control-label">Filtrează Semestru</span>
+          <div className="segmented-control" aria-label="Filtrează semestre">
+            {/* Sliding Background Capsule */}
+            <div
+              className="segmented-indicator"
+              style={{
+                transform: `translateX(${activeFilterIndex * 100}%)`,
+              }}
+            />
+            {SEMESTER_OPTIONS.map(option => {
+              const count =
+                option.value === 'all'
+                  ? grades.length
+                  : option.value === 'SEM 1'
+                  ? sem1Courses.length
+                  : sem2Courses.length;
+
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={`segmented-button ${simFilter === option.value ? 'active' : ''}`}
+                  onClick={() => {
+                    setSimFilter(option.value);
+                    localStorage.setItem('usv_sim_filter', option.value);
+                  }}
+                  aria-pressed={simFilter === option.value}
+                >
+                  <span>{option.label}</span>
+                  <span className="count">{count}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         <div className="table-wrapper">
           <table>
             <thead>
@@ -301,57 +410,34 @@ export default function AnalyticsTab({
               </tr>
             </thead>
             <tbody>
-              {grades.map((grade, idx) => {
-                const isSimulated = simulatedGrades[idx] !== undefined;
-                const activeVal = isSimulated ? simulatedGrades[idx] : '';
-
-                return (
-                  <tr key={idx} className={isSimulated ? 'tr-simulated' : ''}>
-                    <td className="course">
-                      <div className="course-cell-wrapper">
-                        <span>{grade.titlu}</span>
-                        {isSimulated && (
-                          <span className="badge-simulated">Simulată</span>
-                        )}
-                        {grade.isBackPaper && (
-                          <span className="badge-backpaper" title="Disciplină recontractată din anii anteriori. Notele se vor propaga în anul de origine.">
-                            Restanță {grade.originalYear ? strmToYearLabel(grade.originalYear) : ''}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td>
-                      <span className={`semester-pill ${grade.sesiune || grade.filterCategory ? '' : 'unknown'}`}>
-                        {grade.sesiune || grade.filterCategory || '—'}
-                      </span>
-                    </td>
-                    <td>{grade.credite || '—'}</td>
-                    <td className={`final ${parseFloat(grade.notaFinala) >= 5 ? 'pass' : parseFloat(grade.notaFinala) ? 'fail' : ''}`}>
-                      {grade.isEstimatedFinal ? (
-                        <span className="estimated-grade-badge" title="Calculată automat pe baza ponderii curs/seminar (catalog neînchis)">
-                          {grade.notaFinala}<span className="est-star">*</span>
-                        </span>
-                      ) : (
-                        grade.notaFinala || '—'
-                      )}
-                    </td>
-                    <td>
-                      <div className="select-wrapper">
-                        <select
-                          value={activeVal}
-                          onChange={(e) => onSimulateGrade(idx, e.target.value)}
-                          className={`simulator-select ${isSimulated ? 'active' : ''}`}
-                        >
-                          <option value="">Alege estimare...</option>
-                          {[10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map(n => (
-                            <option key={n} value={n}>{n}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </td>
+              {(simFilter === 'all' || simFilter === 'SEM 1') && sem1Courses.length > 0 && (
+                <>
+                  {simFilter === 'all' && (
+                    <tr className="semester-section-row">
+                      <td colSpan="5">Semestrul 1</td>
+                    </tr>
+                  )}
+                  {sem1Courses.map(renderRow)}
+                </>
+              )}
+              {(simFilter === 'all' || simFilter === 'SEM 2') && sem2Courses.length > 0 && (
+                <>
+                  {simFilter === 'all' && (
+                    <tr className="semester-section-row">
+                      <td colSpan="5">Semestrul 2</td>
+                    </tr>
+                  )}
+                  {sem2Courses.map(renderRow)}
+                </>
+              )}
+              {simFilter === 'all' && otherCourses.length > 0 && (
+                <>
+                  <tr className="semester-section-row">
+                    <td colSpan="5">Altele / Nespecificat</td>
                   </tr>
-                );
-              })}
+                  {otherCourses.map(renderRow)}
+                </>
+              )}
             </tbody>
           </table>
         </div>
