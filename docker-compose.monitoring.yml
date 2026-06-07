@@ -221,7 +221,7 @@ volumes:
   promtail_data:
     driver: local
   caddy_logs:
-    name: usv-proxy_caddy_logs
+    name: ${CADDY_LOGS_VOLUME:-usv-proxy_caddy_logs}
     external: true
 
 networks:
