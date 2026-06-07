@@ -1,9 +1,13 @@
+import { useTranslations } from 'next-intl';
+
 /**
  * DonateModal — Modal de susținere a proiectului USV Portal
  *
  * @param {{ onClose: () => void }} props
  */
 export default function DonateModal({ onClose }) {
+  const t = useTranslations('DonateModal');
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-card" onClick={(e) => e.stopPropagation()}>
@@ -24,19 +28,13 @@ export default function DonateModal({ onClose }) {
         </div>
 
         <div className="modal-header">
-          <h2>Susține Proiectul USV Portal</h2>
+          <h2>{t('title')}</h2>
         </div>
 
         <div className="modal-body">
-          <p>
-            Acest proiect este 100% independent și open-source, creat special pentru a face viața viitorilor colegi de facultate mult mai ușoară!
-          </p>
-          <p>
-            Datorită lui, oricine își poate verifica situația școlară instant, direct de pe telefon sau laptop, fără a fi nevoie să configureze manual VPN-ul greoi al universității sau să se mai lovească de erorile de certificat TLS învechit pe browserele moderne.
-          </p>
-          <p>
-            Pentru a menține platforma online, rapidă și gratuită pentru toată lumea, avem nevoie de susținerea ta. Orice contribuție ne ajută să acoperim costurile lunare de găzduire pe serverul VPS și lucrările de întreținere!
-          </p>
+          <p>{t('p1')}</p>
+          <p>{t('p2')}</p>
+          <p>{t('p3')}</p>
         </div>
 
         <div className="modal-actions">
@@ -47,10 +45,10 @@ export default function DonateModal({ onClose }) {
             className="btn-modal-donate"
             onClick={onClose}
           >
-            Donează pe Revolut
+            {t('btnDonate')}
           </a>
           <button onClick={onClose} className="btn-modal-close">
-            Mai târziu
+            {t('btnLater')}
           </button>
         </div>
       </div>

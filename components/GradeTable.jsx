@@ -1,4 +1,4 @@
-import { SEMESTER_OPTIONS } from '../lib/formatters';
+import { useTranslations } from 'next-intl';
 
 /**
  * GradeTable — Card cu tabelul de note, year bar și filtru de semestru.
@@ -25,8 +25,16 @@ export default function GradeTable({
   semesterCounts,
   onSemesterChange,
 }) {
+  const t = useTranslations('GradeTable');
+
+  const semesterOptions = [
+    { value: 'all', label: t('semesters.all') },
+    { value: 'SEM 1', label: t('semesters.sem1') },
+    { value: 'SEM 2', label: t('semesters.sem2') },
+  ];
+
   // Find index of the active option to drive the sliding indicator
-  const activeIndex = SEMESTER_OPTIONS.findIndex(option => option.value === semesterFilter);
+  const activeIndex = semesterOptions.findIndex(option => option.value === semesterFilter);
 
   return (
     <div className="grade-table-content animate-fade">
@@ -42,14 +50,14 @@ export default function GradeTable({
             <table className="skeleton-table">
               <thead>
                 <tr>
-                  <th>Disciplină</th>
-                  <th>Semestru</th>
-                  <th>Pondere</th>
-                  <th>Curs</th>
-                  <th>Seminar</th>
-                  <th>Final</th>
-                  <th>Credite</th>
-                  <th>Puncte</th>
+                  <th>{t('discipline')}</th>
+                  <th>{t('semester')}</th>
+                  <th>{t('weight')}</th>
+                  <th>{t('course')}</th>
+                  <th>{t('seminar')}</th>
+                  <th>{t('final')}</th>
+                  <th>{t('credits')}</th>
+                  <th>{t('points')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -89,8 +97,8 @@ export default function GradeTable({
         <>
           {/* Filtru semestru */}
           <div className="grade-controls">
-            <span className="control-label">Semestru</span>
-            <div className="segmented-control" aria-label="Semestru">
+            <span className="control-label">{t('semester')}</span>
+            <div className="segmented-control" aria-label={t('semester')}>
               {/* Sliding Background Capsule */}
               <div
                 className="segmented-indicator"
@@ -98,7 +106,7 @@ export default function GradeTable({
                   transform: `translateX(${activeIndex * 100}%)`,
                 }}
               />
-              {SEMESTER_OPTIONS.map(option => {
+              {semesterOptions.map(option => {
                 const count =
                   option.value === 'all'
                     ? grades.length
@@ -126,14 +134,14 @@ export default function GradeTable({
               <table>
                 <thead>
                   <tr>
-                    <th>Disciplină</th>
-                    <th>Semestru</th>
-                    <th>Pondere</th>
-                    <th>Curs</th>
-                    <th>Seminar</th>
-                    <th>Final</th>
-                    <th>Credite</th>
-                    <th>Puncte</th>
+                    <th>{t('discipline')}</th>
+                    <th>{t('semester')}</th>
+                    <th>{t('weight')}</th>
+                    <th>{t('course')}</th>
+                    <th>{t('seminar')}</th>
+                    <th>{t('final')}</th>
+                    <th>{t('credits')}</th>
+                    <th>{t('points')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -172,13 +180,17 @@ export default function GradeTable({
             </div>
           ) : (
             <div className="empty-state compact animate-fade">
-              <p>Nu există note pentru {semesterFilter}.</p>
+              <p>
+                {t('emptyState', {
+                  semester: semesterFilter === 'all' ? t('semesters.all') : semesterFilter
+                })}
+              </p>
             </div>
           )}
         </>
       ) : (
         <div className="empty-state animate-fade">
-          <p>Nu am putut încărca notele. Încearcă din nou.</p>
+          <p>{t('errorLoading')}</p>
         </div>
       )}
     </div>

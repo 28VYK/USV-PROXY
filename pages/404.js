@@ -1,11 +1,14 @@
 import Head from 'next/head';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 export default function NotFound() {
+  const t = useTranslations('Errors');
+
   return (
     <>
       <Head>
-        <title>404 — Pagina nu a fost găsită</title>
+        <title>{t('pageTitle404')}</title>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
         
         {/* Favicon & Icons */}
@@ -24,11 +27,11 @@ export default function NotFound() {
         <div className="container">
           <div className="card">
             <div className="error-code">404</div>
-            <h1>Pagina nu există</h1>
-            <p>Adresa pe care ai încercat să o accesezi nu există, a fost ștearsă sau mutată permanent.</p>
+            <h1>{t('title404')}</h1>
+            <p>{t('desc404')}</p>
 
             <Link href="/" legacyBehavior>
-              <a className="btn-back">Înapoi la portal</a>
+              <a className="btn-back">{t('btnBack')}</a>
             </Link>
           </div>
         </div>

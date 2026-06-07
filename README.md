@@ -87,6 +87,16 @@ flowchart LR
 
 ---
 
+## 🌐 Suport Multilingv (Internationalization)
+
+Aplicația oferă suport complet pentru limba **Română (ro)** și **Engleză (en)** folosind `next-intl`.
+
+- **Clean URLs:** Schimbarea limbii se face fără adăugarea de prefixe în URL (cum ar fi `/ro` sau `/en`), menținând adrese curate (ex: `/` sau `/privacy`).
+- **Detecție Automată:** O componentă de tip Middleware (`middleware.ts`) detectează preferințele de limbă ale browserului utilizatorului (din antetul `Accept-Language`) la prima vizită și setează automat cookie-ul `NEXT_LOCALE`.
+- **Persistență:** Limba selectată persistă printr-un cookie de sesiune și poate fi schimbată oricând din header-ul aplicației.
+
+---
+
 ## 🤝 Contribuie la proiect
 
 Proiectul este 100% open-source și dezvoltat din pasiune în timpul liber. Orice ajutor este binevenit! 

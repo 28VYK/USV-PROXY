@@ -1,11 +1,14 @@
 import Head from 'next/head';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 function Error({ statusCode }) {
+  const t = useTranslations('Errors');
+
   return (
     <>
       <Head>
-        <title>{statusCode ? `${statusCode} — Eroare de sistem` : 'Eroare de sistem'}</title>
+        <title>{statusCode ? `${statusCode} — ${t('pageTitle500')}` : t('pageTitle500')}</title>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
         
         {/* Favicon & Icons */}
@@ -24,20 +27,20 @@ function Error({ statusCode }) {
         <div className="container">
           <div className="card">
             <div className="error-code">{statusCode || '500'}</div>
-            <h1>A apărut o eroare</h1>
+            <h1>{t('title500')}</h1>
             <p>
               {statusCode === 404 
-                ? 'Pagina pe care o cauți nu există sau a fost mutată.'
-                : 'A apărut o eroare neașteptată pe server. Te rugăm să reîncarci pagina sau să încerci mai târziu.'
+                ? t('desc404ErrorPage')
+                : t('desc500')
               }
             </p>
 
             <div className="actions">
               <button onClick={() => window.location.reload()} className="btn-primary">
-                Reîncarcă pagina
+                {t('btnReload')}
               </button>
               <Link href="/" legacyBehavior>
-                <a className="btn-secondary">Înapoi la portal</a>
+                <a className="btn-secondary">{t('btnBack')}</a>
               </Link>
             </div>
           </div>

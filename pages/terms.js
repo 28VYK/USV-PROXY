@@ -1,8 +1,16 @@
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
+import { useTranslations, useLocale } from 'next-intl';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 export default function Terms() {
+  const router = useRouter();
+  const locale = useLocale();
+  const t = useTranslations('Terms');
+  const tCommon = useTranslations('Common');
+
   const [theme, setTheme] = useState('light');
 
   useEffect(() => {
@@ -16,11 +24,28 @@ export default function Terms() {
     }
   }, []);
 
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    localStorage.setItem('usv_theme', nextTheme);
+    if (nextTheme === 'dark') {
+      document.documentElement.classList.add('dark-theme');
+    } else {
+      document.documentElement.classList.remove('dark-theme');
+    }
+  };
+
+  const toggleLocale = () => {
+    const nextLocale = locale === 'ro' ? 'en' : 'ro';
+    document.cookie = `NEXT_LOCALE=${nextLocale}; path=/; max-age=31536000; SameSite=Lax`;
+    router.replace(router.asPath);
+  };
+
   return (
     <>
       <Head>
-        <title>Termeni și Condiții — USV Portal</title>
-        <meta name="description" content="Termenii și condițiile de utilizare pentru platforma neoficială USV Portal." />
+        <title>{t('pageTitle')}</title>
+        <meta name="description" content={t('metaDesc')} />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
         
         {/* Favicon & Icons */}
@@ -50,6 +75,33 @@ export default function Terms() {
               <span className="logo-highlight">USV</span>
               <span className="logo-text">Portal</span>
             </div>
+            <div className="header-actions">
+              <LanguageSwitcher locale={locale} onToggle={toggleLocale} />
+              <button
+                onClick={toggleTheme}
+                className="btn-theme-toggle"
+                title={theme === 'dark' ? tCommon('lightMode') : tCommon('darkMode')}
+                style={{ marginLeft: '8px' }}
+              >
+                {theme === 'dark' ? (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="5" />
+                    <line x1="12" y1="1" x2="12" y2="3" />
+                    <line x1="12" y1="21" x2="12" y2="23" />
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                    <line x1="1" y1="12" x2="3" y2="12" />
+                    <line x1="21" y1="12" x2="23" y2="12" />
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                  </svg>
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                  </svg>
+                )}
+              </button>
+            </div>
           </div>
         </header>
 
@@ -58,84 +110,70 @@ export default function Terms() {
 
             {/* Title block */}
             <div className="doc-header">
-              <p className="doc-label">Document public · Actualizat Iunie 2026</p>
-              <h1>Termeni și Condiții<br />de Utilizare</h1>
-              <p className="doc-subtitle">
-                Regulile și limitele legale privind utilizarea platformei neoficiale USV Portal.
-              </p>
+              <p className="doc-label">{t('updatedLabel')}</p>
+              <h1 dangerouslySetInnerHTML={{ __html: t('title').replace('\n', '<br />') }} />
+              <p className="doc-subtitle">{t('subtitle')}</p>
             </div>
 
             <div className="divider" />
 
             {/* Section 1 */}
             <section className="section">
-              <h2>1. Modul de Utilizare Acceptabil</h2>
-              <p>
-                Platforma <strong>USV Portal</strong> (<code>noteusv.tech</code>) este pusă la dispoziție exclusiv studenților și cadrelor didactice ale Universității „Ștefan cel Mare” din Suceava în scopuri informative și personale.
-              </p>
-              <p>
-                Prin utilizarea acestui serviciu, te angajezi să nu:
-              </p>
+              <h2>{t('sec1Title')}</h2>
+              <p dangerouslySetInnerHTML={{ __html: t('sec1Text1') }} />
+              <p>{t('sec1Text2')}</p>
               <ul>
-                <li>Utilizezi scripturi automate, boți sau alte tehnici de scraping agresiv care pot supraîncărca serverul proxy sau infrastructura oficială USV.</li>
-                <li>Abuzezi de API-ul de autentificare prin trimiterea de cereri repetate sau malițioase (brute-force).</li>
-                <li>Folosești platforma în scopul obținerii de acces neautorizat la conturile altor studenți.</li>
+                <li>{t('rule1')}</li>
+                <li>{t('rule2')}</li>
+                <li>{t('rule3')}</li>
               </ul>
             </section>
 
             {/* Section 2 */}
             <section className="section">
-              <h2>2. Declinarea Răspunderii (Disclaimer)</h2>
-              <p>
-                Acest serviciu funcționează ca un <strong>reverse proxy independent</strong> menit să modernizeze experiența de vizualizare a notelor.
-              </p>
+              <h2>{t('sec2Title')}</h2>
+              <p dangerouslySetInnerHTML={{ __html: t('sec2Text1') }} />
               <div className="callout">
-                <p><strong>Limitări tehnice și juridice importante:</strong></p>
+                <p><strong>{t('limitationsTitle')}</strong></p>
                 <ul>
-                  <li><strong>Lipsa de afiliere:</strong> Proiectul nu are nicio legătură administrativă sau juridică cu Universitatea „Ștefan cel Mare” din Suceava.</li>
-                  <li><strong>Acuratețea datelor:</strong> Datele afișate sunt preluate în timp real din sistemul PeopleSoft original. În caz de neconcordanțe sau erori de parsare, datele oficiale din registrul universității rămân singura sursă de adevăr incontestabilă.</li>
-                  <li><strong>Securitatea locală:</strong> Deși conexiunea este criptată cap-la-cap (HTTPS), utilizatorul este direct responsabil de securitatea dispozitivului propriu de pe care se autentifică.</li>
+                  <li dangerouslySetInnerHTML={{ __html: t('lim1') }} />
+                  <li dangerouslySetInnerHTML={{ __html: t('lim2') }} />
+                  <li dangerouslySetInnerHTML={{ __html: t('lim3') }} />
                 </ul>
               </div>
             </section>
 
             {/* Section 3 */}
             <section className="section">
-              <h2>3. Limitarea Răspunderii Dezvoltatorului</h2>
-              <p>
-                În limitele permise de legea aplicabilă, autorul și dezvoltatorul acestui proiect <strong>nu pot fi trași la răspundere</strong> sub nicio formă pentru:
-              </p>
+              <h2>{t('sec3Title')}</h2>
+              <p dangerouslySetInnerHTML={{ __html: t('sec3Text1') }} />
               <ul>
-                <li>Orice daune directe, indirecte, accidentale sau speciale rezultate din utilizarea sau imposibilitatea de utilizare a platformei.</li>
-                <li>Întreruperi ale serviciului, erori de conexiune VPN cu rețeaua universității, pierderi temporare de acces sau blocări ale contului de student survenite în urma politicilor de securitate ale universității.</li>
-                <li>Modificări ale structurii platformei oficiale USV care pot dezactiva parțial sau total funcționalitățile acestui portal.</li>
+                <li>{t('limDev1')}</li>
+                <li>{t('limDev2')}</li>
+                <li>{t('limDev3')}</li>
               </ul>
             </section>
 
             {/* Section 4 */}
             <section className="section">
-              <h2>4. Proprietate Intelectuală & Open-Source</h2>
-              <p>
-                Codul sursă al platformei este public și disponibil sub <strong>Licența MIT</strong>. Utilizatorii au libertatea de a audita, modifica sau rula instanțe proprii ale acestui serviciu pe servere locale pentru a beneficia de control complet și transparență totală asupra modului de procesare a datelor.
-              </p>
+              <h2>{t('sec4Title')}</h2>
+              <p>{t('sec4Text1')}</p>
             </section>
 
             {/* Section 5 */}
             <section className="section">
-              <h2>5. Modificări ale Termenilor</h2>
-              <p>
-                Deoarece infrastructura universității și tehnologiile web evoluează, acești termeni pot fi actualizați periodic pentru a reflecta noile realități de securitate și funcționalitate. Continuarea utilizării platformei după publicarea modificărilor constituie acceptarea implicită a noilor termeni.
-              </p>
+              <h2>{t('sec5Title')}</h2>
+              <p>{t('sec5Text1')}</p>
             </section>
 
             <div className="divider" />
 
             <footer className="doc-footer">
               <Link href="/" legacyBehavior>
-                <a className="btn-back">← Înapoi la autentificare</a>
+                <a className="btn-back">{t('btnBack')}</a>
               </Link>
               <Link href="/privacy" legacyBehavior>
-                <a className="btn-back">Politică de Confidențialitate</a>
+                <a className="btn-back">{t('btnPrivacy')}</a>
               </Link>
             </footer>
 

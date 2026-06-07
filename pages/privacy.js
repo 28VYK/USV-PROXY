@@ -1,8 +1,16 @@
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
+import { useTranslations, useLocale } from 'next-intl';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 export default function Privacy() {
+  const router = useRouter();
+  const locale = useLocale();
+  const t = useTranslations('Privacy');
+  const tCommon = useTranslations('Common');
+
   const [theme, setTheme] = useState('light');
 
   useEffect(() => {
@@ -16,11 +24,28 @@ export default function Privacy() {
     }
   }, []);
 
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    localStorage.setItem('usv_theme', nextTheme);
+    if (nextTheme === 'dark') {
+      document.documentElement.classList.add('dark-theme');
+    } else {
+      document.documentElement.classList.remove('dark-theme');
+    }
+  };
+
+  const toggleLocale = () => {
+    const nextLocale = locale === 'ro' ? 'en' : 'ro';
+    document.cookie = `NEXT_LOCALE=${nextLocale}; path=/; max-age=31536000; SameSite=Lax`;
+    router.replace(router.asPath);
+  };
+
   return (
     <>
       <Head>
-        <title>Confidențialitate & Disclaimer — USV Portal</title>
-        <meta name="description" content="Politica de confidențialitate și disclaimer-ul pentru utilizarea platformei neoficiale USV Portal." />
+        <title>{t('pageTitle')}</title>
+        <meta name="description" content={t('metaDesc')} />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
         
         {/* Favicon & Icons */}
@@ -50,6 +75,33 @@ export default function Privacy() {
               <span className="logo-highlight">USV</span>
               <span className="logo-text">Portal</span>
             </div>
+            <div className="header-actions">
+              <LanguageSwitcher locale={locale} onToggle={toggleLocale} />
+              <button
+                onClick={toggleTheme}
+                className="btn-theme-toggle"
+                title={theme === 'dark' ? tCommon('lightMode') : tCommon('darkMode')}
+                style={{ marginLeft: '8px' }}
+              >
+                {theme === 'dark' ? (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="5" />
+                    <line x1="12" y1="1" x2="12" y2="3" />
+                    <line x1="12" y1="21" x2="12" y2="23" />
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                    <line x1="1" y1="12" x2="3" y2="12" />
+                    <line x1="21" y1="12" x2="23" y2="12" />
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                  </svg>
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                  </svg>
+                )}
+              </button>
+            </div>
           </div>
         </header>
 
@@ -58,110 +110,90 @@ export default function Privacy() {
 
             {/* Title block */}
             <div className="doc-header">
-              <p className="doc-label">Document public · Actualizat Mai 2026</p>
-              <h1>Politică de Confidențialitate<br />& Disclaimer</h1>
-              <p className="doc-subtitle">
-                Informații despre cum funcționează acest proiect și cum sunt gestionate datele tale.
-              </p>
+              <p className="doc-label">{t('updatedLabel')}</p>
+              <h1 dangerouslySetInnerHTML={{ __html: t('title').replace('\n', '<br />') }} />
+              <p className="doc-subtitle">{t('subtitle')}</p>
             </div>
 
             <div className="divider" />
 
             {/* Section 1 */}
             <section className="section">
-              <h2>1. Caracterul Neoficial al Soluției</h2>
-              <p>
-                Această aplicație este un <strong>proiect independent (Proof of Concept)</strong> și nu este afiliat, asociat, autorizat sau în vreun fel legat oficial de Universitatea „Ștefan cel Mare" din Suceava.
-              </p>
-              <p>
-                Scopul este de a oferi o interfață modernă pentru portalul studențesc PeopleSoft, ocolind limitările tehnice ale platformei originale care blochează accesul din browserele moderne.
-              </p>
+              <h2>{t('sec1Title')}</h2>
+              <p dangerouslySetInnerHTML={{ __html: t('sec1Text1') }} />
+              <p>{t('sec1Text2')}</p>
             </section>
 
             {/* Section 2 */}
             <section className="section">
-              <h2>2. Cum sunt gestionate datele tale</h2>
+              <h2>{t('sec2Title')}</h2>
               <div className="flow">
                 <div className="flow-step">
                   <span className="flow-index">01</span>
-                  <p>Introduci datele de conectare în browserul tău local.</p>
+                  <p>{t('step1')}</p>
                 </div>
                 <div className="flow-step">
                   <span className="flow-index">02</span>
-                  <p>Serverul proxy le transmite direct către <code>scolaritate.usv.ro</code> prin VPN-ul universitar intern.</p>
+                  <p dangerouslySetInnerHTML={{ __html: t('step2') }} />
                 </div>
                 <div className="flow-step">
                   <span className="flow-index">03</span>
-                  <p>USV răspunde cu datele tale, serverul le formatează și le returnează browserului tău.</p>
+                  <p>{t('step3')}</p>
                 </div>
               </div>
-              <p className="note">
-                Serverul este <strong>stateless</strong> — nu există baze de date, nu se stochează parole sau date personale pe disc. Datele există exclusiv în memorie pe durata sesiunii.
-              </p>
+              <p className="note" dangerouslySetInnerHTML={{ __html: t('statelessNote') }} />
             </section>
 
             {/* Section 3 */}
             <section className="section">
-              <h2>3. Criptarea Conexiunii (HTTPS)</h2>
-              <p>
-                Platforma este accesibilă la <strong>https://noteusv.tech</strong>. Conexiunea dintre browser și server este complet criptată prin rețeaua Cloudflare (SSL/TLS).
-              </p>
+              <h2>{t('sec3Title')}</h2>
+              <p dangerouslySetInnerHTML={{ __html: t('sec3Text') }} />
               <div className="callout">
-                <p><strong>Recomandări de securitate:</strong></p>
+                <p><strong>{t('securityRecommendations')}</strong></p>
                 <ul>
-                  <li>Nu activa „Ține minte utilizatorul" pe calculatoare publice sau partajate.</li>
-                  <li>Utilizează întotdeauna conexiunea HTTPS — nu accesa portalul pe rețele Wi-Fi nesecurizate.</li>
-                  <li>Codul este open-source — poți clona repository-ul și rula serverul local pentru control deplin.</li>
+                  <li>{t('rec1')}</li>
+                  <li>{t('rec2')}</li>
+                  <li>{t('rec3')}</li>
                 </ul>
               </div>
             </section>
 
             {/* Section 4 */}
             <section className="section">
-              <h2>4. Declinarea Răspunderii (Disclaimer)</h2>
-              <p>
-                Serviciul este furnizat „ca atare" (as is), fără nicio garanție explicită sau implicită. Autorul nu își asumă răspunderea pentru:
-              </p>
+              <h2>{t('sec4Title')}</h2>
+              <p>{t('sec4Text')}</p>
               <ul>
-                <li>Erori, indisponibilitate sau disfuncționalități ale platformei USV.</li>
-                <li>Incidente de securitate cauzate de utilizarea pe rețele nesecurizate.</li>
-                <li>Blocarea contului ca urmare a utilizării incorecte a API-ului de autentificare.</li>
+                <li>{t('disclaimer1')}</li>
+                <li>{t('disclaimer2')}</li>
+                <li>{t('disclaimer3')}</li>
               </ul>
             </section>
 
             {/* Section 5 */}
             <section className="section">
-              <h2>5. Utilizarea Cookie-urilor (Politica de Cookie-uri)</h2>
-              <p>
-                Pentru a asigura buna funcționare a sesiunii tale, această platformă utilizează un singur cookie tehnic esențial:
-              </p>
+              <h2>{t('sec5Title')}</h2>
+              <p>{t('sec5Text')}</p>
               <ul>
-                <li><strong>PS_PROXY_SESSION</strong>: Acest cookie funcțional de sesiune conține tokenul criptat necesar pentru a asigura comunicarea securizată între browserul tău și proxy pe parcursul interogării notelor. Este un cookie strict necesar conform ePrivacy și este șters automat la închiderea browserului sau la apăsarea butonului de deconectare.</li>
+                <li dangerouslySetInnerHTML={{ __html: t('cookieDetail') }} />
               </ul>
-              <p>
-                Nu utilizăm niciun cookie de marketing, publicitate, profilare sau analiză a traficului (fără Google Analytics, tracker-e sau scripturi de urmărire de la terți).
-              </p>
+              <p>{t('cookieMarketing')}</p>
             </section>
 
             {/* Section 6 */}
             <section className="section">
-              <h2>6. Licență Open-Source & Copyright (MIT)</h2>
-              <p>
-                Acest proiect este distribuit în mod deschis ca software liber sub <strong>Licența MIT</strong>. Întregul cod sursă, designul interfeței și arhitectura platformei sunt concepute și dezvoltate în totalitate de către <strong>Vichiriuc Adrian</strong> (@28VYK).
-              </p>
-              <p>
-                Codul fiind complet public, oricine are posibilitatea de a-i inspecta transparența, securitatea și de a rula propria instanță locală pentru control deplin. Condițiile legale complete și detaliile de atribuire pot fi consultate în fișierele de licență din repository-ul proiectului.
-              </p>
+              <h2>{t('sec6Title')}</h2>
+              <p dangerouslySetInnerHTML={{ __html: t('sec6Text1') }} />
+              <p>{t('sec6Text2')}</p>
             </section>
 
             <div className="divider" />
 
             <footer className="doc-footer">
               <Link href="/" legacyBehavior>
-                <a className="btn-back">← Înapoi la autentificare</a>
+                <a className="btn-back">{t('btnBack')}</a>
               </Link>
               <Link href="/terms" legacyBehavior>
-                <a className="btn-back">Termeni & Condiții</a>
+                <a className="btn-back">{t('btnTerms')}</a>
               </Link>
             </footer>
 

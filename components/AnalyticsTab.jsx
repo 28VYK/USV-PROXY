@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { strmToYearLabel, calculateEstimatedFinalGrade, calculateEctsStats, SEMESTER_OPTIONS } from '../lib/formatters';
-
+import { useTranslations } from 'next-intl';
+import { strmToYearLabel, calculateEstimatedFinalGrade, calculateEctsStats } from '../lib/formatters';
 
 /**
  * Group duplicate course entries by course title and semester category.
@@ -90,13 +90,23 @@ export default function AnalyticsTab({
   onResetSimulation,
   onSwitchYear,
 }) {
+  const t = useTranslations('Analytics');
+  const tGrade = useTranslations('GradeTable');
+
   const resolvedYearData = processedYearData || yearData;
   const strmKeys = Object.keys(resolvedYearData).map(Number);
   const maxStrm = strmKeys.length > 0 ? Math.max(...strmKeys) : null;
   const isSelectedYearActive = maxStrm !== null && parseInt(selectedYear, 10) === maxStrm;
 
   const [simFilter, setSimFilter] = useState('all');
-  const activeFilterIndex = SEMESTER_OPTIONS.findIndex(option => option.value === simFilter);
+
+  const semesterOptions = [
+    { value: 'all', label: tGrade('semesters.all') },
+    { value: 'SEM 1', label: tGrade('semesters.sem1') },
+    { value: 'SEM 2', label: tGrade('semesters.sem2') },
+  ];
+
+  const activeFilterIndex = semesterOptions.findIndex(option => option.value === simFilter);
 
   useEffect(() => {
     const savedFilter = localStorage.getItem('usv_sim_filter');
@@ -104,7 +114,6 @@ export default function AnalyticsTab({
       setSimFilter(savedFilter);
     }
   }, []);
-
 
   // Group grades by semester category for the simulator display
   const sem1Courses = grades.filter(g => g.filterCategory === 'SEM 1');
@@ -122,11 +131,11 @@ export default function AnalyticsTab({
           <div className="course-cell-wrapper">
             <span>{grade.titlu}</span>
             {isSimulated && (
-              <span className="badge-simulated">Simulată</span>
+              <span className="badge-simulated">{t('simulatedBadge')}</span>
             )}
             {grade.isBackPaper && (
-              <span className="badge-backpaper" title="Disciplină recontractată din anii anteriori. Notele se vor propaga în anul de origine.">
-                Restanță {grade.originalYear ? strmToYearLabel(grade.originalYear) : ''}
+              <span className="badge-backpaper" title={t('backPaperTitle')}>
+                {t('backPaperBadge', { year: grade.originalYear ? strmToYearLabel(grade.originalYear) : '' })}
               </span>
             )}
           </div>
@@ -139,7 +148,7 @@ export default function AnalyticsTab({
         <td>{grade.credite || '—'}</td>
         <td className={`final ${parseFloat(grade.notaFinala) >= 5 ? 'pass' : parseFloat(grade.notaFinala) ? 'fail' : ''}`}>
           {grade.isEstimatedFinal ? (
-            <span className="estimated-grade-badge" title="Calculată automat pe baza ponderii curs/seminar (catalog neînchis)">
+            <span className="estimated-grade-badge" title={t('estimatedGradeTitle')}>
               {grade.notaFinala}<span className="est-star">*</span>
             </span>
           ) : (
@@ -153,7 +162,7 @@ export default function AnalyticsTab({
               onChange={(e) => onSimulateGrade(origIdx, e.target.value)}
               className={`simulator-select ${isSimulated ? 'active' : ''}`}
             >
-              <option value="">Alege estimare...</option>
+              <option value="">{t('selectEstimation')}</option>
               {[10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map(n => (
                 <option key={n} value={n}>{n}</option>
               ))}
@@ -179,7 +188,7 @@ export default function AnalyticsTab({
             </svg>
           </div>
           <div className="kpi-info">
-            <span>Medie Ponderată ECTS</span>
+            <span>{t('kpiEcts')}</span>
             <strong
               data-animate-value={arithmeticAnalysis.ectsAll.average !== null ? arithmeticAnalysis.ectsAll.average : ''}
               data-animate-decimals={2}
@@ -189,7 +198,7 @@ export default function AnalyticsTab({
                 : '—'}
             </strong>
             <p>
-              {arithmeticAnalysis.ectsAll.totalCredits} credite luate în calcul
+              {t('kpiEctsCredits', { count: arithmeticAnalysis.ectsAll.totalCredits })}
             </p>
           </div>
         </div>
@@ -202,14 +211,14 @@ export default function AnalyticsTab({
             </svg>
           </div>
           <div className="kpi-info">
-            <span>Puncte Credit</span>
+            <span>{t('kpiPoints')}</span>
             <strong
               data-animate-value={arithmeticAnalysis.ectsAll.totalPoints || 0}
             >
               {arithmeticAnalysis.ectsAll.totalPoints || 0}
             </strong>
             <p>
-              Puncte obținute din note &ge; 5
+              {t('kpiPointsDetail')}
             </p>
           </div>
         </div>
@@ -224,7 +233,7 @@ export default function AnalyticsTab({
             </svg>
           </div>
           <div className="kpi-info">
-            <span>Medie Aritmetică Anuală</span>
+            <span>{t('kpiArithmetic')}</span>
             <strong
               data-animate-value={arithmeticAnalysis.all.average !== null ? arithmeticAnalysis.all.average : ''}
               data-animate-decimals={2}
@@ -234,8 +243,7 @@ export default function AnalyticsTab({
                 : '—'}
             </strong>
             <p>
-              {arithmeticAnalysis.all.calculatedCount} din{' '}
-              {arithmeticAnalysis.all.totalCount} note introduse
+              {t('kpiArithmeticDetail', { count: arithmeticAnalysis.all.calculatedCount, total: arithmeticAnalysis.all.totalCount })}
             </p>
           </div>
         </div>
@@ -249,7 +257,7 @@ export default function AnalyticsTab({
             </svg>
           </div>
           <div className="kpi-info" style={{ width: '100%' }}>
-            <span>Semestrul 1</span>
+            <span>{t('sem1')}</span>
             <div className="kpi-dual-values">
               <div>
                 <strong
@@ -260,7 +268,7 @@ export default function AnalyticsTab({
                     ? arithmeticAnalysis.sem1.average.toFixed(2)
                     : '—'}
                 </strong>
-                <p className="kpi-label-sub">Aritmetică</p>
+                <p className="kpi-label-sub">{t('arithmetic')}</p>
               </div>
               <div className="kpi-separator" />
               <div>
@@ -272,11 +280,11 @@ export default function AnalyticsTab({
                     ? arithmeticAnalysis.ectsSem1.average.toFixed(2)
                     : '—'}
                 </strong>
-                <p className="kpi-label-sub">Pond. ECTS</p>
+                <p className="kpi-label-sub">{t('ectsPond')}</p>
               </div>
             </div>
             <p className="kpi-footer-text">
-              {arithmeticAnalysis.ectsSem1.totalPoints} puncte • {arithmeticAnalysis.ectsSem1.totalCredits} credite
+              {arithmeticAnalysis.ectsSem1.totalPoints} {t('pointsLabel')} • {arithmeticAnalysis.ectsSem1.totalCredits} {t('creditsLabel')}
             </p>
           </div>
         </div>
@@ -290,7 +298,7 @@ export default function AnalyticsTab({
             </svg>
           </div>
           <div className="kpi-info" style={{ width: '100%' }}>
-            <span>Semestrul 2</span>
+            <span>{t('sem2')}</span>
             <div className="kpi-dual-values">
               <div>
                 <strong
@@ -301,7 +309,7 @@ export default function AnalyticsTab({
                     ? arithmeticAnalysis.sem2.average.toFixed(2)
                     : '—'}
                 </strong>
-                <p className="kpi-label-sub">Aritmetică</p>
+                <p className="kpi-label-sub">{t('arithmetic')}</p>
               </div>
               <div className="kpi-separator" />
               <div>
@@ -313,11 +321,11 @@ export default function AnalyticsTab({
                     ? arithmeticAnalysis.ectsSem2.average.toFixed(2)
                     : '—'}
                 </strong>
-                <p className="kpi-label-sub">Pond. ECTS</p>
+                <p className="kpi-label-sub">{t('ectsPond')}</p>
               </div>
             </div>
             <p className="kpi-footer-text">
-              {arithmeticAnalysis.ectsSem2.totalPoints} puncte • {arithmeticAnalysis.ectsSem2.totalCredits} credite
+              {arithmeticAnalysis.ectsSem2.totalPoints} {t('pointsLabel')} • {arithmeticAnalysis.ectsSem2.totalCredits} {t('creditsLabel')}
             </p>
           </div>
         </div>
@@ -335,9 +343,7 @@ export default function AnalyticsTab({
             </svg>
           </div>
           <span>
-            Sesiune în curs: Lipsesc{' '}
-            <strong>{arithmeticAnalysis.all.missingCount} note</strong>{' '}
-            pentru acest an universitar. Folosește estimatorul de mai jos pentru a simula notele și a previzualiza media finală!
+            {t('warningMissingNotes', { count: arithmeticAnalysis.all.missingCount })}
           </span>
         </div>
       )}
@@ -346,8 +352,8 @@ export default function AnalyticsTab({
       <div className="card simulator-card">
         <div className="card-header">
           <div className="card-title">
-            <h2>Simulator Note Estimate</h2>
-            <p>Alege note estimate pentru disciplinele din sesiune ca să vezi evoluția mediei live.</p>
+            <h2>{t('simulatorTitle')}</h2>
+            <p>{t('simulatorSub')}</p>
           </div>
           {Object.keys(simulatedGrades).length > 0 && (
             <button
@@ -355,15 +361,15 @@ export default function AnalyticsTab({
               onClick={onResetSimulation}
               className="btn-secondary"
             >
-              Resetează simularea
+              {t('resetSimulation')}
             </button>
           )}
         </div>
 
         {/* Simulator controls */}
         <div className="grade-controls">
-          <span className="control-label">Filtrează Semestru</span>
-          <div className="segmented-control" aria-label="Filtrează semestre">
+          <span className="control-label">{t('filterSemester')}</span>
+          <div className="segmented-control" aria-label={t('filterSemester')}>
             {/* Sliding Background Capsule */}
             <div
               className="segmented-indicator"
@@ -371,7 +377,7 @@ export default function AnalyticsTab({
                 transform: `translateX(${activeFilterIndex * 100}%)`,
               }}
             />
-            {SEMESTER_OPTIONS.map(option => {
+            {semesterOptions.map(option => {
               const count =
                 option.value === 'all'
                   ? grades.length
@@ -402,11 +408,11 @@ export default function AnalyticsTab({
           <table>
             <thead>
               <tr>
-                <th>Disciplină</th>
-                <th>Semestru</th>
-                <th>Credite</th>
-                <th>Nota Reală</th>
-                <th style={{ width: '200px' }}>Notă Estimată (Simulare)</th>
+                <th>{t('thDiscipline')}</th>
+                <th>{t('thSemester')}</th>
+                <th>{t('thCredits')}</th>
+                <th>{t('thRealGrade')}</th>
+                <th style={{ width: '200px' }}>{t('thEstimatedGrade')}</th>
               </tr>
             </thead>
             <tbody>
@@ -414,7 +420,7 @@ export default function AnalyticsTab({
                 <>
                   {simFilter === 'all' && (
                     <tr className="semester-section-row">
-                      <td colSpan="5">Semestrul 1</td>
+                      <td colSpan="5">{t('sem1')}</td>
                     </tr>
                   )}
                   {sem1Courses.map(renderRow)}
@@ -424,7 +430,7 @@ export default function AnalyticsTab({
                 <>
                   {simFilter === 'all' && (
                     <tr className="semester-section-row">
-                      <td colSpan="5">Semestrul 2</td>
+                      <td colSpan="5">{t('sem2')}</td>
                     </tr>
                   )}
                   {sem2Courses.map(renderRow)}
@@ -433,7 +439,7 @@ export default function AnalyticsTab({
               {simFilter === 'all' && otherCourses.length > 0 && (
                 <>
                   <tr className="semester-section-row">
-                    <td colSpan="5">Altele / Nespecificat</td>
+                    <td colSpan="5">{t('otherSemesterSection')}</td>
                   </tr>
                   {otherCourses.map(renderRow)}
                 </>
@@ -448,8 +454,8 @@ export default function AnalyticsTab({
         <div className="card evolution-card">
           <div className="card-header">
             <div className="card-title">
-              <h2>Evoluție Academică Globală</h2>
-              <p>Parcursul tău academic și media aritmetică generală pe fiecare an de studii.</p>
+              <h2>{t('evolutionTitle')}</h2>
+              <p>{t('evolutionSub')}</p>
             </div>
           </div>
           <div className="evolution-timeline">
@@ -517,42 +523,42 @@ export default function AnalyticsTab({
                           onSwitchYear(strm);
                         }
                       }}
-                      title={isActiveYear ? undefined : `Afișează notele pentru anul ${strmToYearLabel(strm)}`}
+                      title={isActiveYear ? undefined : t('showGradesTitle', { year: strmToYearLabel(strm) })}
                     >
                       <div className="timeline-content-header">
-                        <h3>An universitar {strmToYearLabel(strm)}</h3>
+                        <h3>{t('evolutionYearLabel', { year: strmToYearLabel(strm) })}</h3>
                         {isActiveYear && (
-                          <span className="badge-timeline-active">An selectat</span>
+                          <span className="badge-timeline-active">{t('selectedYearBadge')}</span>
                         )}
                       </div>
                       <div className="timeline-stats">
                         <div className="timeline-stat">
-                          <span className="stat-label">Medie Aritmetică</span>
+                          <span className="stat-label">{t('arithmeticAverage')}</span>
                           <strong className="stat-value">
                             {strmAvg !== null ? strmAvg : '—'}
                           </strong>
                         </div>
                         <div className="timeline-stat">
-                          <span className="stat-label">Medie ECTS</span>
+                          <span className="stat-label">{t('ectsAverage')}</span>
                           <strong className="stat-value" style={{ color: 'var(--blue)' }}>
                             {ectsStats.average !== null ? ectsStats.average.toFixed(2) : '—'}
                           </strong>
                         </div>
                         <div className="timeline-stat">
-                          <span className="stat-label">Puncte Credit</span>
+                          <span className="stat-label">{t('kpiPoints')}</span>
                           <strong className="stat-value" style={{ color: 'var(--blue)' }}>
                             {ectsStats.totalPoints}
                           </strong>
                         </div>
                         <div className="timeline-stat">
-                          <span className="stat-label">Promovate</span>
+                          <span className="stat-label">{t('passed')}</span>
                           <strong className="stat-value">
                             {passedCount} / {groupedStrmGrades.filter(g => !g.isBackPaper).length}
                           </strong>
                         </div>
                         {failedCount > 0 && (
                           <div className="timeline-stat">
-                            <span className="stat-label">Restanțe</span>
+                            <span className="stat-label">{t('backlog')}</span>
                             <strong className="stat-value restante">{failedCount}</strong>
                           </div>
                         )}

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 /**
  * CookieBanner — Informational banner for the strictly necessary cookie PS_PROXY_SESSION.
@@ -6,6 +7,8 @@ import Link from 'next/link';
  * @param {{ isVisible: boolean, onAccept: () => void }} props
  */
 export default function CookieBanner({ isVisible, onAccept }) {
+  const t = useTranslations('CookieBanner');
+
   return (
     <div className={`cookie-banner ${isVisible ? 'visible' : ''}`}>
       <div className="cookie-banner-content">
@@ -31,11 +34,15 @@ export default function CookieBanner({ isVisible, onAccept }) {
             </svg>
           </div>
           <p>
-            Folosim doar cookie-uri tehnice esențiale, strict necesare pentru a menține sesiunea ta de autentificare securizată. Nu stocăm și nu urmărim datele tale. Detalii în <Link href="/privacy" legacyBehavior><a className="cookie-link">Politica de Confidențialitate</a></Link>.
+            {t('text')}
+            <Link href="/privacy" legacyBehavior>
+              <a className="cookie-link">{t('linkText')}</a>
+            </Link>
+            .
           </p>
         </div>
         <button className="btn-cookie-accept" onClick={onAccept}>
-          Am înțeles
+          {t('accept')}
         </button>
       </div>
     </div>

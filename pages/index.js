@@ -1,16 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
+import { useTranslations, useLocale } from 'next-intl';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import DonateModal from '../components/DonateModal';
 import GradeTable from '../components/GradeTable';
 import AnalyticsTab from '../components/AnalyticsTab';
 import CookieBanner from '../components/CookieBanner';
 import { calculateEstimatedFinalGrade, calculateEctsStats, processMultiYearAcademicData } from '../lib/formatters';
-
-const SEMESTER_OPTIONS = [
-  { value: 'all', label: 'Toate' },
-  { value: 'SEM 1', label: 'SEM 1' },
-  { value: 'SEM 2', label: 'SEM 2' }
-];
 
 function normalizeGradeText(value) {
   return String(value || '')
@@ -202,6 +199,12 @@ function formatUseridAsName(uid) {
 const PS_PAGE_TITLE_PATTERN = /vizualiz|notelor|my grade|sign.in|portal|bun\s*venit|oracle|peoplesoft/i;
 
 export default function Home() {
+  const router = useRouter();
+  const locale = useLocale();
+  const t = useTranslations('Common');
+  const tLogin = useTranslations('Login');
+  const tDashboard = useTranslations('Dashboard');
+
   const [userid, setUserid] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
@@ -479,8 +482,6 @@ export default function Home() {
       });
   }, [grades, semesterFilter]);
 
-  const activeSemesterLabel = SEMESTER_OPTIONS.find(option => option.value === semesterFilter)?.label || 'Toate';
-
   /**
    * Safe calculation of arithmetic average, ECTS weighted average, and statistics for active academic year.
    * Groups statistics globally and per-semester for the selected year.
@@ -562,9 +563,7 @@ export default function Home() {
     const trimmedUserid = userid.trim();
 
     if (!USV_USERNAME_REGEX.test(trimmedUserid)) {
-      setError(
-        'Format utilizator invalid. Folosește PRENUME.NUME, PRENUME.NUME1, prenume.nume@student.usv.ro sau prenume.nume@usv.ro.'
-      );
+      setError(tLogin('errorInvalidFormat'));
       return;
     }
 
@@ -592,14 +591,14 @@ export default function Home() {
         }
         await fetchGrades();
       } else {
-        setError(data.error || 'Autentificare eșuată');
+        setError(data.error || tLogin('errorFailed'));
         if (rememberMe) {
           localStorage.removeItem('usv_userid');
           localStorage.removeItem('usv_remember');
         }
       }
     } catch (err) {
-      setError('Eroare de conexiune');
+      setError(tLogin('errorConnection'));
       checkVpnHealth();
     } finally {
       setLoading(false);
@@ -806,12 +805,18 @@ export default function Home() {
     localStorage.removeItem('usv_semester');
   };
 
+  const toggleLocale = () => {
+    const nextLocale = locale === 'ro' ? 'en' : 'ro';
+    document.cookie = `NEXT_LOCALE=${nextLocale}; path=/; max-age=31536000; SameSite=Lax`;
+    router.replace(router.asPath);
+  };
+
   return (
     <>
       <Head>
-        <title>Portal Student USV - Note & Situație Școlară fără VPN</title>
-        <meta name="description" content="Accesează notele și situația școlară de la Universitatea Ștefan cel Mare Suceava în 10 secunde, fără configurare VPN. Gratuit pentru toți studenții USV." />
-        <meta name="keywords" content="note usv, situație școlară usv, portal student usv, note student suceava, fără vpn usv" />
+        <title>{t('title')}</title>
+        <meta name="description" content={t('description')} />
+        <meta name="keywords" content={t('keywords')} />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
         
         {/* Favicon & Icons */}
@@ -824,18 +829,18 @@ export default function Home() {
         <link rel="canonical" href="https://noteusv.tech" />
         
         {/* Open Graph (Facebook, LinkedIn, etc.) */}
-        <meta property="og:title" content="Portal Student USV - Situație Școlară" />
-        <meta property="og:description" content="Acces rapid la notele și situația școlară USV din orice browser modern, fără VPN local." />
+        <meta property="og:title" content={t('ogTitle')} />
+        <meta property="og:description" content={t('ogDescription')} />
         <meta property="og:url" content="https://noteusv.tech" />
-        <meta property="og:site_name" content="Portal Student USV" />
+        <meta property="og:site_name" content={t('siteName')} />
         <meta property="og:image" content="https://noteusv.tech/og-image.png" />
-        <meta property="og:locale" content="ro_RO" />
+        <meta property="og:locale" content={locale === 'ro' ? 'ro_RO' : 'en_US'} />
         <meta property="og:type" content="website" />
         
         {/* Twitter Card */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Portal Student USV - Situație Școlară" />
-        <meta name="twitter:description" content="Acces rapid la notele și situația școlară USV din orice browser modern, fără VPN local." />
+        <meta name="twitter:title" content={t('ogTitle')} />
+        <meta name="twitter:description" content={t('ogDescription')} />
         <meta name="twitter:image" content="https://noteusv.tech/og-image.png" />
         
         {/* Google Fonts */}
@@ -848,9 +853,9 @@ export default function Home() {
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "WebSite",
-              "name": "Portal Student USV",
+              "name": t('siteName'),
               "url": "https://noteusv.tech",
-              "description": "Acces rapid la situația școlară USV fără VPN",
+              "description": t('description'),
               "potentialAction": {
                 "@type": "SearchAction",
                 "target": {
@@ -870,9 +875,9 @@ export default function Home() {
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "SoftwareApplication",
-              "name": "Portal Student USV",
+              "name": t('siteName'),
               "url": "https://noteusv.tech",
-              "description": "Acces rapid la situația școlară USV fără VPN, direct din browser.",
+              "description": t('description'),
               "applicationCategory": "EducationalApplication",
               "operatingSystem": "Web",
               "aggregateRating": {
@@ -899,8 +904,8 @@ export default function Home() {
             <span className="vpn-status-pulse" />
             <span>
               {vpnShowSuccess 
-                ? 'Conexiune restabilită!' 
-                : 'Conexiunea securizată cu universitatea este offline. Se încearcă reconectarea...'}
+                ? t('vpnOnline') 
+                : t('vpnOffline')}
             </span>
           </div>
         </div>
@@ -918,10 +923,11 @@ export default function Home() {
               <span className="logo-text">Portal</span>
             </div>
             <div className="header-actions">
+              <LanguageSwitcher locale={locale} onToggle={toggleLocale} />
               <button
                 onClick={toggleTheme}
                 className="btn-theme-toggle"
-                title={theme === 'dark' ? "Mod luminos" : "Mod întunecat"}
+                title={theme === 'dark' ? t('lightMode') : t('darkMode')}
                 style={{ marginRight: '8px' }}
               >
                 {theme === 'dark' ? (
@@ -950,10 +956,10 @@ export default function Home() {
                   <line x1="10" y1="1" x2="10" y2="4" />
                   <line x1="14" y1="1" x2="14" y2="4" />
                 </svg>
-                <span>Susține</span>
+                <span>{t('support')}</span>
               </button>
               {loggedIn && (
-                <button onClick={handleLogout} className="btn-logout-icon" title="Deconectare" style={{ marginLeft: '8px' }}>
+                <button onClick={handleLogout} className="btn-logout-icon" title={t('logout')} style={{ marginLeft: '8px' }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                     <polyline points="16 17 21 12 16 7" />
@@ -971,7 +977,7 @@ export default function Home() {
               <div className="glow-blob glow-blob-1"></div>
               <div className="glow-blob glow-blob-2"></div>
               <div className="spinner" style={{ marginBottom: '16px', zIndex: 5 }}></div>
-              <p style={{ color: 'var(--muted)', fontWeight: 600, fontSize: '15px', zIndex: 5 }}>Se verifică sesiunea...</p>
+              <p style={{ color: 'var(--muted)', fontWeight: 600, fontSize: '15px', zIndex: 5 }}>{tLogin('checking')}</p>
             </div>
           ) : !loggedIn ? (
             <div className="login-section">
@@ -980,38 +986,36 @@ export default function Home() {
               <div className="login-shell">
                 <section className="login-card">
                   <div className="login-header">
-                    <h1>Autentificare</h1>
-                    <p>Folosește contul USV pentru sesiunea curentă.</p>
+                    <h1>{tLogin('header')}</h1>
+                    <p>{tLogin('subheader')}</p>
                   </div>
                   
                   {error && <div className="alert alert-error">{error}</div>}
 
-
-
                   <form onSubmit={handleLogin}>
                     <div className="field">
-                      <label>Utilizator</label>
+                      <label>{tLogin('username')}</label>
                       <input
                         type="text"
                         value={userid}
                         onChange={(e) => setUserid(e.target.value)}
-                        placeholder="PRENUME.NUME"
+                        placeholder={tLogin('usernamePlaceholder')}
                         required
                         disabled={loading}
                         autoCapitalize="none"
                         autoCorrect="off"
                         spellCheck="false"
                       />
-                      <span className="field-hint">Ex: Ion.Popescu sau ion.popescu@student.usv.ro</span>
+                      <span className="field-hint">{tLogin('usernameHint')}</span>
                     </div>
 
                     <div className="field">
-                      <label>Parolă</label>
+                      <label>{tLogin('password')}</label>
                       <input
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        placeholder="••••••••"
+                        placeholder={tLogin('passwordPlaceholder')}
                         required
                         disabled={loading}
                       />
@@ -1025,19 +1029,20 @@ export default function Home() {
                           onChange={(e) => setRememberMe(e.target.checked)}
                           disabled={loading}
                         />
-                        <span>Ține minte utilizatorul</span>
+                        <span>{tLogin('rememberMe')}</span>
                       </label>
                     </div>
 
                     <button type="submit" className="btn-primary" disabled={loading}>
-                      {loading ? 'Se conectează...' : 'Conectare'}
+                      {loading ? tLogin('connecting') : tLogin('connect')}
                     </button>
                   </form>
 
                   <div className="login-disclaimer">
-                    <p>Fără parole salvate • 100% Independent</p>
+                    <p>{tLogin('disclaimerLine1')}</p>
                     <p className="security-hint">
-                      Proxy independent. Datele tranzitează exclusiv pentru conectarea securizată la USV. <a href="/privacy" className="security-hint-link">Detalii și riscuri</a>
+                      {tLogin('disclaimerLine2')}{' '}
+                      <a href="/privacy" className="security-hint-link">{tLogin('detailsAndRisks')}</a>
                     </p>
                   </div>
                 </section>
@@ -1048,12 +1053,15 @@ export default function Home() {
               <div className="dashboard-header">
                 <div className="dashboard-title">
                   <h1>{studentName || userid}</h1>
-                  <p className="subtitle">{selectedYear ? `An universitar ${strmToYearLabel(selectedYear)}` : academicYear ? `An universitar ${academicYear}` : 'Sesiune activă'}</p>
+                  <p className="subtitle">
+                    {selectedYear 
+                      ? tDashboard('academicYear', { year: strmToYearLabel(selectedYear) }) 
+                      : academicYear 
+                      ? tDashboard('academicYear', { year: academicYear }) 
+                      : tDashboard('activeSession')}
+                  </p>
                 </div>
-
-
               </div>
-
 
               {/* Unified Dashboard Master Card */}
               <div className="card animate-fade dashboard-main-card">
@@ -1079,7 +1087,7 @@ export default function Home() {
                           <line x1="9" y1="13" x2="15" y2="13" />
                           <line x1="9" y1="17" x2="15" y2="17" />
                         </svg>
-                        <span>Notele Mele</span>
+                        <span>{tDashboard('notesTab')}</span>
                       </button>
                       <button
                         type="button"
@@ -1092,7 +1100,7 @@ export default function Home() {
                           <line x1="12" y1="20" x2="12" y2="4" />
                           <line x1="6" y1="20" x2="6" y2="14" />
                         </svg>
-                        <span>Analiză Medii</span>
+                        <span>{tDashboard('analyticsTab')}</span>
                       </button>
                     </div>
                   </div>
@@ -1102,8 +1110,8 @@ export default function Home() {
                     {(Object.keys(yearData).length > 1 || loadingYears) && (
                       <div className="dashboard-year-selector">
                         <span className="control-label" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                          An universitar
-                          {loadingYears && <span className="year-spinner" title="Se caută ani..." />}
+                          {tDashboard('yearLabel')}
+                          {loadingYears && <span className="year-spinner" title={tDashboard('searchingYears')} />}
                         </span>
                         <div className="year-tabs">
                           {Object.keys(yearData)
@@ -1130,7 +1138,7 @@ export default function Home() {
                       className="btn-secondary"
                       disabled={loading}
                     >
-                      {loading ? 'Se actualizează...' : 'Actualizează'}
+                      {loading ? tDashboard('updating') : tDashboard('update')}
                     </button>
                   </div>
                 </div>
@@ -1166,26 +1174,23 @@ export default function Home() {
               </div>
             </div>
           )}
-
-
-
         </main>
 
         <footer className="footer">
-          <p>Proiect independent • Nu este afiliat cu USV • Nu stocăm date</p>
+          <p>{t('footerText')}</p>
           <p className="footer-small">
             <a href="https://github.com/28VYK/USV-PROXY" target="_blank" rel="noopener noreferrer" className="footer-link">
-              Cod sursă disponibil public
+              {t('footerSource')}
             </a>
             {' • '}
-            <span>Scop educațional</span>
+            <span>{t('footerEdu')}</span>
             {' • '}
             <a href="/privacy" className="footer-link">
-              Politică de Confidențialitate & Disclaimer
+              {t('footerPrivacy')}
             </a>
             {' • '}
             <a href="/terms" className="footer-link">
-              Termeni & Condiții
+              {t('footerTerms')}
             </a>
           </p>
         </footer>
@@ -1196,7 +1201,6 @@ export default function Home() {
 
         <CookieBanner isVisible={showCookieBanner} onAccept={handleAcceptCookies} />
       </div>
-
     </>
   );
 }
