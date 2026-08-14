@@ -1,11 +1,11 @@
 {
-  "name": "USV Portal Student",
+  "name": "USV Portal — Dezactivat Definitiv",
   "short_name": "USV Portal",
-  "description": "Portal neoficial pentru accesarea platformei scolaritate.usv.ro din orice browser modern, fără VPN local.",
+  "description": "Proxy-ul neoficial noteusv.tech a fost oprit definitiv la solicitarea Universității Ștefan cel Mare din Suceava.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#020617",
-  "theme_color": "#1E40AF",
+  "background_color": "#f4f5f2",
+  "theme_color": "#0f1b2d",
   "orientation": "portrait-primary",
   "icons": [
     {
