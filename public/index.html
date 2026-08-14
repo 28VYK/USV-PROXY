@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal USV — Dezactivat Definitiv</title>
+    <!-- Favicon & Icons -->
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <meta name="description" content="Funcționarea proxy-ului neoficial noteusv.tech a fost oprită definitiv. Proiectul rămâne public ca Proof of Concept open-source în portofoliul dezvoltatorului.">
+    <meta property="og:title" content="Portal USV — Dezactivat Definitiv">
+    <meta property="og:description" content="Funcționarea proxy-ului neoficial a fost oprită. Codul sursă rămâne public ca Proof of Concept.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://noteusv.tech">
+    <style>
+        :root {
+            --paper: #f4f5f2;
+            --paper-dim: #e8eae6;
+            --ink: #0f1b2d;
+            --ink-muted: #54606d;
+            --ink-faint: #8b96a1;
+            --rule: #c7d0d4;
+            --blue: #1d4ed8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--paper);
+            color: var(--ink-muted);
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        header {
+            border-bottom: 1px solid var(--rule);
+            padding: 24px 32px;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: baseline;
+            gap: 6px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--ink);
+            text-decoration: none;
+        }
+
+        .logo .dot {
+            color: var(--blue);
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 48px 24px;
+        }
+
+        .panel {
+            width: 100%;
+            max-width: 640px;
+            border: 1px solid var(--rule);
+            background: var(--paper);
+        }
+
+        .panel-label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--rule);
+            padding: 14px 28px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--ink-faint);
+        }
+
+        .panel-body {
+            padding: 44px 28px 36px;
+        }
+
+        .schematic {
+            display: flex;
+            align-items: center;
+            margin-bottom: 36px;
+        }
+
+        .schem-node {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .schem-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--ink-faint);
+        }
+
+        .schem-dot--live {
+            background: var(--ink);
+        }
+
+        .schem-dot--pulse {
+            background: var(--blue);
+            position: relative;
+        }
+
+        .schem-dot--pulse::after {
+            content: '';
+            position: absolute;
+            inset: -6px;
+            border-radius: 50%;
+            border: 1px solid var(--blue);
+            animation: schem-ping 2.4s cubic-bezier(0.2, 0.6, 0.4, 1) infinite;
+        }
+
+        @keyframes schem-ping {
+            0% { transform: scale(0.6); opacity: 0.9; }
+            100% { transform: scale(1.9); opacity: 0; }
+        }
+
+        .schem-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 0.02em;
+            color: var(--ink-muted);
+            white-space: nowrap;
+        }
+
+        .schem-node--muted .schem-label {
+            color: var(--ink-faint);
+        }
+
+        .schem-link {
+            flex: 1;
+            height: 1px;
+            background: var(--rule);
+            margin: 0 10px;
+            transform: translateY(-9px);
+        }
+
+        .schem-link--cut {
+            background: none;
+            border-top: 1px dashed var(--ink-faint);
+            position: relative;
+        }
+
+        .schem-break {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--paper);
+            padding: 0 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--ink-faint);
+            line-height: 1;
+        }
+
+        .schem-caption {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            color: var(--ink-faint);
+            letter-spacing: 0.02em;
+            margin: -22px 0 28px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .schem-dot--pulse::after {
+                animation: none;
+                display: none;
+            }
+        }
+
+        h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 34px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            line-height: 1.15;
+            color: var(--ink);
+            margin-bottom: 10px;
+        }
+
+        .status-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--blue);
+            margin-bottom: 28px;
+        }
+
+        p.text-paragraph {
+            font-size: 15px;
+            line-height: 1.65;
+            margin-bottom: 20px;
+            font-weight: 400;
+        }
+
+        p.text-paragraph strong {
+            color: var(--ink);
+            font-weight: 600;
+        }
+
+        p.text-paragraph a {
+            color: var(--blue);
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+        }
+
+        p.text-paragraph a:hover {
+            border-bottom-color: var(--blue);
+        }
+
+        .rule {
+            border: none;
+            border-top: 1px solid var(--rule);
+            margin: 28px 0;
+        }
+
+        .buttons-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn-official,
+        .btn-invoixy {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            min-height: 48px;
+            text-decoration: none;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 500;
+            font-size: 14px;
+            transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+        }
+
+        .btn-official {
+            background: var(--ink);
+            color: var(--paper);
+            border: 1px solid var(--ink);
+        }
+
+        .btn-official:hover {
+            background: var(--blue);
+            border-color: var(--blue);
+        }
+
+        .btn-invoixy {
+            background: transparent;
+            color: var(--ink);
+            border: 1px solid var(--rule);
+        }
+
+        .btn-invoixy:hover {
+            border-color: var(--ink);
+        }
+
+        footer {
+            border-top: 1px solid var(--rule);
+            background: var(--paper-dim);
+            padding: 20px 32px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--ink-muted);
+        }
+
+        footer a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            color: var(--ink);
+        }
+
+        .footer-separator {
+            color: var(--ink-faint);
+            user-select: none;
+        }
+
+        @media (max-width: 560px) {
+            header {
+                padding: 18px 20px;
+            }
+
+            main {
+                padding: 28px 16px;
+            }
+
+            .panel-label {
+                padding: 12px 20px;
+            }
+
+            .panel-body {
+                padding: 32px 20px 28px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            footer {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 18px 20px;
+            }
+
+            .footer-separator {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="https://invoixy.ro" class="logo" target="_blank" rel="noopener noreferrer">USV<span class="dot">.</span>Portal</a>
+    </header>
+
+    <main>
+        <div class="panel">
+            <div class="panel-label">
+                <span>NOTEUSV.TECH</span>
+                <span>STATUS / OPRIT</span>
+            </div>
+            <div class="panel-body">
+                <div class="schematic" aria-hidden="true">
+                    <div class="schem-node">
+                        <span class="schem-dot schem-dot--live"></span>
+                        <span class="schem-label">BROWSER</span>
+                    </div>
+                    <div class="schem-link"></div>
+                    <div class="schem-node">
+                        <span class="schem-dot schem-dot--pulse"></span>
+                        <span class="schem-label">NOTEUSV.TECH</span>
+                    </div>
+                    <div class="schem-link schem-link--cut">
+                        <span class="schem-break">&times;</span>
+                    </div>
+                    <div class="schem-node schem-node--muted">
+                        <span class="schem-dot"></span>
+                        <span class="schem-label">USV&nbsp;·&nbsp;PEOPLESOFT</span>
+                    </div>
+                </div>
+                <div class="schem-caption">FIG.&nbsp;01 — CONEXIUNE PROXY, ÎNTRERUPTĂ 29.06.2026</div>
+
+                <h1>Platformă dezactivată definitiv.</h1>
+                <div class="status-text">La solicitarea Universității „Ștefan cel Mare" din Suceava</div>
+
+                <p class="text-paragraph">
+                    Ca urmare a solicitării oficiale transmise în scris în data de 29 Iunie 2026 de către echipa tehnică a Universității (SCTI), funcționarea proxy-ului neoficial <strong>noteusv.tech</strong> a fost oprită definitiv.
+                </p>
+
+                <p class="text-paragraph">
+                    Universitatea a izolat portalul legacy PeopleSoft în rețeaua privată internă din motive de securitate instituțională și urmează să dezvolte un nou sistem de gestiune numit „Smart UMS". Proiectul rămâne public ca Proof of Concept open-source în portofoliul de Web Development al agenției <a href="https://invoixy.ro" target="_blank" rel="noopener noreferrer"><strong>invoixy<span style="color:var(--blue)">.</span></strong></a>
+                </p>
+
+                <hr class="rule">
+
+                <div class="buttons-group">
+                    <a href="https://scolaritate.usv.ro" class="btn-official" target="_blank" rel="noopener noreferrer">
+                        <span>Mergi la Școlaritate USV (Portal Oficial)</span>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </a>
+
+                    <a href="https://invoixy.ro" class="btn-invoixy" target="_blank" rel="noopener noreferrer">
+                        <span>Servicii Web Dev & Cloud @ invoixy<span style="color:var(--blue)">.</span></span>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="7" y1="17" x2="17" y2="7"></line>
+                            <polyline points="7 7 17 7 17 17"></polyline>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <span>Dezvoltat de <a href="https://github.com/28VYK" target="_blank" rel="noopener noreferrer">Adi Vichiriuc</a> @ <a href="https://invoixy.ro" target="_blank" rel="noopener noreferrer">invoixy<span style="color:var(--blue)">.</span></a></span>
+        <span class="footer-separator">•</span>
+        <span>Codul sursă este open-source pe <a href="https://github.com/28VYK/USV-PROXY" target="_blank" rel="noopener noreferrer">GitHub</a></span>
+    </footer>
+</body>
+</html>

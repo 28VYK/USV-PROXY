@@ -1,0 +1,175 @@
+/**
+ * USV Portal — Global Styles
+ *
+ * Conține:
+ *   1. CSS Reset de bază (*, html, body)
+ *   2. Stilizarea dark-theme pe elementul <html>
+ *   3. Toate animațiile (@keyframes) folosite în aplicație
+ *
+ * IMPORTANT: Variabilele CSS (--ink, --blue, etc.) rămân pe clasa .app
+ * în fișierele CSS Module respective, nu aici, pentru a nu polua :root global.
+ */
+
+/* ── 1. CSS Reset ── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background-color: #f8fafc;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease;
+}
+
+/* ── 2. Dark Theme pe <html> ── */
+html.dark-theme {
+  background-color: #020617;
+}
+
+body,
+#__next {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100vh;
+  background-color: inherit;
+}
+
+/* ── 3. Global @keyframes ── */
+
+/** Spinner de loading circular */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/** Glow blob plutitor (pagina de login) */
+@keyframes pulse {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    transform: translate(30px, -40px) scale(1.15);
+  }
+}
+
+/** Intrare de jos în sus (login card, dashboard) */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/** Fade simplu (modal overlay) */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/** Scale-up cu fade (modal card) */
+@keyframes scaleUp {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/** Intrare subtilă cu translate mic (tab analytics) */
+@keyframes fadeEnter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── 4. Smooth Scrolling & Premium Custom Scrollbars ── */
+
+html {
+  scroll-behavior: smooth;
+  /* Firefox scrollbar support */
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+html.dark-theme {
+  /* Firefox dark scrollbar support */
+  scrollbar-color: #1e293b #020617;
+}
+
+/* Webkit Scrollbars (Chrome, Safari, Edge, Opera) */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 99px;
+  border: 2px solid #f1f5f9;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Dark Theme Webkit Scrollbars */
+html.dark-theme ::-webkit-scrollbar-track {
+  background: #020617;
+}
+
+html.dark-theme ::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border: 2px solid #020617;
+}
+
+html.dark-theme ::-webkit-scrollbar-thumb:hover {
+  background: #0066ff; /* Cyber-Ocean Blue highlight on hover */
+}
+
+/* Inner containers (like tables or responsive scrolls) get thinner scrollbars */
+.table-wrapper ::-webkit-scrollbar,
+.analytics-tab ::-webkit-scrollbar,
+.scroll-container ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+/* ── 5. Mount Transition Animations ── */
+.animate-fade {
+  animation: fadeEnter 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+

@@ -1,0 +1,14 @@
+# Enforce LF line endings for OpenVPN configs, Shell scripts, and configurations on all platforms
+*.ovpn text eol=lf
+*.sh text eol=lf
+Caddyfile text eol=lf
+docker-compose*.yml text eol=lf
+Dockerfile text eol=lf
+.env.example text eol=lf
+.gitignore text eol=lf
+.dockerignore text eol=lf
+*.json text eol=lf
+*.js text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.md text eol=lf

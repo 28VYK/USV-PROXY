@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal USV — Temporar Indisponibil</title>
+    <!-- Favicon & Icons -->
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@600;700;800;900&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%);
+            --ink: #0f172a;
+            --text: #334155;
+            --muted: #64748b;
+            --blue: #1E40AF;
+            --blue-rgb: 30, 64, 175;
+            
+            --card-bg: rgba(255, 255, 255, 0.82);
+            --card-border: rgba(255, 255, 255, 0.6);
+            --card-inner-shadow: rgba(255, 255, 255, 0.8);
+            
+            --glow-1: rgba(30, 64, 175, 0.12);
+            --glow-2: rgba(147, 197, 253, 0.10);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Ambient Glow Blobs matching website style */
+        .glow-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(130px);
+            z-index: 1;
+            pointer-events: none;
+            mix-blend-mode: multiply;
+            animation: pulse 10s ease-in-out infinite alternate;
+        }
+
+        .glow-blob-1 {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, var(--glow-1) 0%, rgba(135, 194, 234, 0) 70%);
+            top: -10%;
+            left: 10%;
+        }
+
+        .glow-blob-2 {
+            width: 450px;
+            height: 450px;
+            background: radial-gradient(circle, var(--glow-2) 0%, rgba(56, 189, 248, 0) 70%);
+            bottom: 0%;
+            right: 5%;
+            animation-delay: -5s;
+        }
+
+        @keyframes pulse {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(30px, -40px) scale(1.15); }
+        }
+
+        .container {
+            position: relative;
+            z-index: 5;
+            width: 100%;
+            max-width: 440px;
+            padding: 20px;
+        }
+
+        /* Glassmorphic Login Card style matching website */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow:
+                0 30px 60px rgba(15, 23, 42, 0.05),
+                0 12px 24px rgba(15, 23, 42, 0.03),
+                inset 0 1px 0 var(--card-inner-shadow);
+            padding: 44px 36px;
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow:
+                0 35px 70px rgba(15, 23, 42, 0.07),
+                0 15px 30px rgba(15, 23, 42, 0.04),
+                inset 0 1px 0 var(--card-inner-shadow);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(24px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 32px;
+            font-weight: 900;
+            margin: 0 0 14px;
+            color: var(--ink);
+            letter-spacing: -0.03em;
+            background: linear-gradient(135deg, #0f172a 0%, #312e81 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p {
+            color: var(--muted);
+            font-size: 14.5px;
+            line-height: 1.65;
+            margin-bottom: 32px;
+            font-weight: 500;
+        }
+
+        /* Circular Timer UI */
+        .timer-shell {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 32px;
+            border-radius: 50%;
+            border: 2px solid rgba(var(--blue-rgb), 0.12);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(var(--blue-rgb), 0.02);
+            position: relative;
+        }
+
+        .timer-shell::before {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            border: 1px dashed rgba(var(--blue-rgb), 0.25);
+            animation: rotate-dashed 24s linear infinite;
+        }
+
+        @keyframes rotate-dashed {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .countdown {
+            font-family: 'Outfit', sans-serif;
+            font-size: 42px;
+            font-weight: 800;
+            color: var(--blue);
+            line-height: 1;
+        }
+
+        .countdown-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--muted);
+            font-weight: 600;
+            margin-top: 2px;
+        }
+
+        /* Footer Disclaimer */
+        .disclaimer {
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 1px dashed var(--line);
+        }
+
+        .disclaimer p {
+            margin: 0;
+            font-size: 12px;
+            color: #64748b;
+            font-weight: 500;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="glow-blob glow-blob-1"></div>
+    <div class="glow-blob glow-blob-2"></div>
+
+    <div class="container">
+        <div class="card">
+            <h1>Portal Indisponibil</h1>
+            <p>Portalul USV se auto-configurează și va reveni în câteva secunde. Procesul este automat și repară eventualele deconectări ale tunelului VPN.</p>
+
+            <div class="timer-shell">
+                <div class="countdown" id="timer">30</div>
+                <div class="countdown-label">sec</div>
+            </div>
+
+            <div class="disclaimer">
+                <p>Verificare inteligentă în fundal. Conexiunea se va restabili automat de îndată ce serverul este pregătit.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let timeLeft = 30;
+        const timerElement = document.getElementById('timer');
+
+        function startCountdown() {
+            timeLeft = 30;
+            timerElement.textContent = timeLeft;
+
+            const countdownInterval = setInterval(async () => {
+                timeLeft--;
+                timerElement.textContent = timeLeft;
+
+                if (timeLeft <= 0) {
+                    clearInterval(countdownInterval);
+                    timerElement.textContent = "...";
+
+                    // Smart background health check
+                    try {
+                        const res = await fetch('/?t=' + Date.now());
+                        const text = await res.text();
+
+                        // If response is successful and does not contain our unique error page indicator
+                        if (res.ok && !text.includes('Portal USV — Temporar Indisponibil')) {
+                            // Server is back! Reload browser to load the actual restored site
+                            window.location.reload();
+                        } else {
+                            // Server is still down (Caddy served our error page), restart countdown seamlessly
+                            startCountdown();
+                        }
+                    } catch (e) {
+                        // Network error or fetch failed, restart countdown seamlessly
+                        startCountdown();
+                    }
+                }
+            }, 1000);
+        }
+
+        startCountdown();
+    </script>
+</body>
+</html>

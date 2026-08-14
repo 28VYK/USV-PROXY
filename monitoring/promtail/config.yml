@@ -1,0 +1,47 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Promtail Configuration — Caddy Log Collector
+# ─────────────────────────────────────────────────────────────────────────────
+
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /data/positions.yaml
+
+clients:
+  - url: http://usv-loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: caddy-access
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: caddy
+          __path__: /var/log/caddy/*.log
+
+    pipeline_stages:
+      # 1. Parse the JSON log line
+      - json:
+          expressions:
+            level: level
+            ts: ts
+            msg: msg
+            status: status
+            duration: duration
+            size: size
+            host: "request.host"
+            method: "request.method"
+            uri: "request.uri"
+
+      # 2. Assign standard metadata labels for efficient querying
+      - labels:
+          host:
+          method:
+          status:
+
+      # 3. Synchronize Promtail's timestamp with the actual HTTP request timestamp from Caddy
+      - timestamp:
+          source: ts
+          format: Unix

@@ -1,0 +1,499 @@
+/**
+ * USV Portal — Status Page Styling
+ *
+ * Stiluri specifice pentru pagina nativă de status sisteme.
+ * Se integrează cu variabilele de temă din layout.css.
+ */
+
+/* ── 1. Page Container ── */
+.status-page-container {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 16px 40px 16px;
+  box-sizing: border-box;
+  animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ── 2. Page Header ── */
+.status-header-text {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.status-header-text h1 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 2.25rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+
+.status-header-text p {
+  font-size: 1rem;
+  color: var(--muted);
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+/* ── 3. Overall Status Banner ── */
+.status-banner {
+  padding: 20px 28px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 32px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.02);
+  transition: all 0.3s ease;
+}
+
+.status-banner-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.status-banner.state-operational {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: #065f46;
+}
+
+.app[data-theme="dark"] .status-banner.state-operational {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.15);
+  color: var(--green);
+}
+
+.status-banner.state-partial {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  color: #92400e;
+}
+
+.app[data-theme="dark"] .status-banner.state-partial {
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.15);
+  color: var(--amber);
+}
+
+.status-banner.state-down {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #991b1b;
+}
+
+.app[data-theme="dark"] .status-banner.state-down {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  color: var(--red);
+}
+
+/* ── 4. Services Group and Cards ── */
+.status-card-header {
+  padding: 16px 20px;
+  background: var(--card-header-bg);
+  border-bottom: 1px solid var(--line);
+  border-radius: 24px 24px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.status-card-title {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: var(--ink);
+  margin: 0;
+}
+
+.status-services-list {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── 5. Service Row ── */
+.status-service-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--line);
+  position: relative;
+  transition: background-color 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.status-service-row:last-child {
+  border-bottom: none;
+}
+
+.status-service-row:hover {
+  background: rgba(var(--blue-rgb), 0.035);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.04);
+  z-index: 2;
+}
+
+.status-service-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+  padding-right: 24px;
+}
+
+.status-service-header-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.status-service-name {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+
+.status-service-subtext {
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+/* Uptime percentage indicator */
+.status-badge {
+  font-family: 'Outfit', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 20px;
+  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+}
+
+.status-badge.bg-success {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: var(--green);
+}
+
+.status-badge.bg-danger {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: var(--red);
+}
+
+.status-badge.bg-warning {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  color: var(--amber);
+}
+
+.status-badge.bg-maintenance {
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: var(--blue);
+}
+
+/* ── 6. Heartbeat Bar ── */
+.status-heartbeat-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.status-heartbeat-bar {
+  display: flex;
+  gap: 3px;
+  align-items: flex-end;
+  height: 36px;
+  padding-bottom: 4px;
+}
+
+.status-beat-tick {
+  width: 4px;
+  height: 24px;
+  border-radius: 3px;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.status-beat-tick:hover {
+  transform: scaleY(1.25);
+  opacity: 1;
+}
+
+/* Heartbeat Tick Colors */
+.status-beat-tick.tick-up {
+  background-color: var(--green);
+}
+
+.status-beat-tick.tick-down {
+  background-color: var(--red);
+}
+
+.status-beat-tick.tick-pending {
+  background-color: var(--amber);
+}
+
+.status-beat-tick.tick-maintenance {
+  background-color: var(--blue);
+}
+
+.status-beat-tick.tick-empty {
+  background-color: rgba(15, 23, 42, 0.08);
+}
+
+.app[data-theme="dark"] .status-beat-tick.tick-empty {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Timeline labels below bar */
+.status-heartbeat-labels {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.65rem;
+  color: var(--muted);
+  font-weight: 500;
+  padding: 0 1px;
+}
+
+/* ── 7. Info Bar & Meta ── */
+.status-meta-info {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  margin-top: 32px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.status-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── 8. Back Button wrapper ── */
+.status-back-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 32px;
+}
+
+/* ── 9. Shimmer Skeleton Loader ── */
+.status-skeleton {
+  width: 100%;
+  border-radius: 24px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  box-shadow: 0 30px 60px rgba(15, 23, 42, 0.04);
+  padding: 28px;
+  box-sizing: border-box;
+}
+
+.status-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s infinite;
+}
+
+.app[data-theme="dark"] .status-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.05) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.status-skeleton-title {
+  height: 28px;
+  width: 150px;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.06);
+  margin-bottom: 24px;
+}
+
+.app[data-theme="dark"] .status-skeleton-title {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.status-skeleton-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.status-skeleton-row:last-child {
+  border-bottom: none;
+}
+
+.status-skeleton-left {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.status-skeleton-name {
+  height: 18px;
+  width: 180px;
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.06);
+}
+
+.status-skeleton-text {
+  height: 12px;
+  width: 120px;
+  border-radius: 4px;
+  background: rgba(15, 23, 42, 0.04);
+}
+
+.status-skeleton-right {
+  height: 28px;
+  width: 200px;
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.05);
+}
+
+.app[data-theme="dark"] .status-skeleton-name,
+.app[data-theme="dark"] .status-skeleton-right {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.app[data-theme="dark"] .status-skeleton-text {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* ── 10. Responsive Tweaks ── */
+@media (max-width: 600px) {
+  .status-service-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 18px 20px;
+  }
+  
+  .status-service-info {
+    padding-right: 0;
+    width: 100%;
+  }
+  
+  .status-heartbeat-container {
+    width: 100%;
+    align-items: flex-start;
+  }
+  
+  .status-heartbeat-bar {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .status-beat-tick {
+    width: 1.5%; /* Stretch ticks slightly in mobile */
+  }
+}
+
+/* ── 11. Premium Visual Additions (Pulse Dot & Ping Badges) ── */
+.status-banner-text-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  background-color: var(--green);
+  border-radius: 50%;
+  position: relative;
+  display: inline-block;
+  margin-top: 1px;
+}
+
+.pulse-dot::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  background-color: var(--green);
+  border-radius: 50%;
+  animation: pulse-ring 2.4s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+  60%, 100% {
+    transform: scale(3.5);
+    opacity: 0;
+  }
+}
+
+/* Ping Badges styling */
+.ping-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ping-badge.ping-fast {
+  background: rgba(16, 185, 129, 0.08);
+  color: var(--green);
+}
+
+.ping-badge.ping-medium {
+  background: rgba(var(--blue-rgb), 0.08);
+  color: var(--blue);
+}
+
+.ping-badge.ping-slow {
+  background: rgba(245, 158, 11, 0.08);
+  color: var(--amber);
+}
+
+.app[data-theme="dark"] .ping-badge.ping-medium {
+  background: rgba(96, 165, 250, 0.12);
+  color: var(--blue);
+}

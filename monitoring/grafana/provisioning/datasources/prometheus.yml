@@ -1,0 +1,23 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Grafana Auto-Provisioning: Prometheus Datasource
+# Grafana reads this file automatically on startup and configures Prometheus
+# as the default datasource — no manual setup required.
+# ─────────────────────────────────────────────────────────────────────────────
+
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    uid: prometheus
+    # Internal Docker URL — Grafana reaches Prometheus through monitoring_net
+    url: http://usv-prometheus:9090
+    isDefault: true
+    access: proxy
+    editable: false
+    jsonData:
+      httpMethod: POST
+      # Minimum scrape interval (matches prometheus.yml global setting)
+      timeInterval: '15s'
+      # Exemplar trace destinations (none configured)
+      exemplarTraceIdDestinations: []

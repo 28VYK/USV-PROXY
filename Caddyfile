@@ -1,0 +1,44 @@
+# Global Caddy Block
+{
+    admin 127.0.0.1:2019
+}
+
+# Redirect HTTP → HTTPS (for all subdomains)
+:80 {
+    redir https://{host}{uri} permanent
+}
+
+# Redirect www to non-www
+www.noteusv.tech, www.noteusv.tech:8080 {
+    tls /etc/caddy/certs/origin.pem /etc/caddy/certs/origin.key
+    redir https://noteusv.tech{uri} permanent
+}
+
+# Main production domain
+noteusv.tech, noteusv.tech:8080 {
+    # TLS using the Cloudflare Origin CA Certificate
+    tls /etc/caddy/certs/origin.pem /etc/caddy/certs/origin.key
+
+    # Define root directory for static files (mapped to /var/www/html)
+    root * /var/www/html
+
+    # Serve files if they exist (like favicon, CSS, styles, images)
+    file_server
+
+    # For all other requests, serve the permanent notice page
+    try_files {path} /maintenance.html
+
+    log {
+        output file /var/log/caddy/access.log {
+            roll_size 10mb
+            roll_keep 5
+        }
+    }
+}
+
+# Local development block
+localhost:8080, 127.0.0.1:8080 {
+    root * /var/www/html
+    file_server
+    try_files {path} /maintenance.html
+}

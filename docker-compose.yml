@@ -1,0 +1,45 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# USV Student Portal Proxy - Permanent Shutdown Web Server
+# ─────────────────────────────────────────────────────────────────────────────
+# Active configuration: Standalone Caddy serving the static permanent notice.
+# The proxy backend, OpenVPN tunnel and other components have been disabled.
+# For the full sidecar proxy compose, see: docker-compose.proxy.yml
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  usv-proxy-ssl:
+    image: caddy:2-alpine
+    container_name: usv-proxy-ssl
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ./certs/origin.pem:/etc/caddy/certs/origin.pem
+      - ./certs/origin.key:/etc/caddy/certs/origin.key
+      - ./public:/var/www/html:ro
+      - caddy_data:/data
+      - caddy_config:/config
+      - caddy_logs:/var/log/caddy
+    env_file:
+      - .env
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 64M
+        reservations:
+          memory: 16M
+
+volumes:
+  caddy_data:
+  caddy_config:
+  caddy_logs:
